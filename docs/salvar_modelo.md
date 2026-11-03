@@ -6,7 +6,9 @@ Este `.pt` também é o "pickle" pedido pelo professor.
 
 ## 1. Célula para colar no fim do notebook
 
-Rode o notebook inteiro antes, de cima para baixo: a célula usa `features`, `targets`, `escala`, `class_names`, `max_epochs`, `batch`, `lr`, `criterion` e, se existirem, `acc_scores` e `f1_scores`.
+Não precisa rodar os 5 folds de novo. Rode só as células de cima até a de hiperparâmetros (a que define `normalizar`, `max_epochs` etc.), **pule** as células de treino com folds, gráficos e `save_results`, e rode esta no fim. Ela usa `features`, `targets`, `escala`, `class_names`, `max_epochs`, `batch`, `lr` e `criterion`.
+
+As métricas mostradas no app vêm do `resultados.csv`: copie a linha da mesma configuração (mesmo câncer, modo e normalização).
 
 ```python
 # Treino final com todas as imagens (sem folds), para o app PixoraMed
@@ -34,6 +36,9 @@ modelo_final = treinar_modelo_final(features, targets, max_epochs, batch, criter
 cancer = "Mama"            # nome que aparece no app (ex.: "Colo do útero", "Pele")
 arquivo = "mama_cor.pt"    # <cancer>_<modo>.pt, sem acento
 
+# Métricas da validação cruzada (5 folds), copiadas do resultados.csv
+metricas = {"acc_media": 98.45, "acc_desvio": 0.56, "f1_media": 98.45, "f1_desvio": 0.56}
+
 Path("../modelos_pt").mkdir(exist_ok=True)
 torch.save(
     {
@@ -43,13 +48,7 @@ torch.save(
         "modo": "cor" if features.shape[1] == 3 else "cinza",
         "escala": escala,
         "cancer": cancer,
-        # Métricas da validação cruzada (5 folds), mostradas no app ao lado da previsão
-        "metricas": {
-            "acc_media": float(np.mean(acc_scores) * 100),
-            "acc_desvio": float(np.std(acc_scores) * 100),
-            "f1_media": float(np.mean(f1_scores) * 100),
-            "f1_desvio": float(np.std(f1_scores) * 100),
-        },
+        "metricas": metricas,
     },
     Path("../modelos_pt") / arquivo,
 )
