@@ -1,0 +1,142 @@
+# PixoraMed
+
+Classificação de imagens médicas de câncer com uma CNN em PyTorch, e um painel web para fazer previsões e comparar os resultados dos treinos.
+
+Projeto integrador do Bootcamp de IA (TCS / SENAI Londrina, 2026). Os notebooks de treino ficam no repositório **Projeto-ML-Cancer**. Este repositório tem o app que usa os modelos treinados lá.
+
+> **Aviso:** ferramenta acadêmica. Não é um dispositivo médico e não faz diagnóstico.
+
+## Arquitetura
+
+```
+Notebooks (PyTorch, GPU)
+   │  torch.save(.pt)          resultados.csv
+   ▼                                │
+scripts/exportar_onnx.py            │ Pandas
+   │  .onnx + .json                 ▼
+   ▼                         PostgreSQL / SQLite
+models/ ──► FastAPI (ONNX Runtime, CPU) ◄──┘
+                │  /api
+                ▼
+        React + Vite (painel)
+```
+
+| Camada | Tecnologia | Onde roda |
+|---|---|---|
+| Frontend | React 19, Vite, TypeScript, Tailwind CSS 4, Recharts, TanStack Query | Vercel |
+| API | FastAPI, ONNX Runtime, OpenCV, SQLAlchemy 2 | Render (Docker) |
+| Banco | PostgreSQL (SQLite no desenvolvimento) | Neon |
+| Infra | Docker Compose (local), Terraform (nuvem) | `infra/terraform` |
+
+O treino acontece em PyTorch na GPU. Para o app, o modelo é exportado para **ONNX**: um arquivo de uns 20 KB que roda na CPU com o ONNX Runtime, sem precisar do PyTorch no servidor. Isso cabe nos 512 MB de RAM do plano gratuito do Render.
+
+## Estrutura
+
+```
+backend/
+  app/
+    main.py          API FastAPI (rotas /api/...)
+    inferencia.py    carrega os .onnx e repete o pré-processamento dos notebooks
+    importacao.py    resultados.csv -> banco SQL com Pandas
+    tabelas.py       tabelas treinos e previsoes (SQLAlchemy)
+    routers/         treinos, modelos, previsoes
+  scripts/
+    exportar_onnx.py         .pt do notebook -> models/<id>.onnx + .json
+    importar_resultados.py   importa um resultados.csv para o banco
+  tests/
+frontend/            React (páginas Início, Analisar, Resultados, Limitações)
+models/              modelos ONNX carregados pela API
+data/resultados.csv  resultados dos treinos (cópia do Projeto-ML-Cancer)
+docs/                como salvar o modelo nos notebooks
+infra/terraform/     Neon + Render + Vercel
+docker-compose.yml
+```
+
+## Pré-requisitos
+
+- Python 3.12 ou mais novo
+- Node.js 22 ou mais novo
+- Docker Desktop (opcional, para subir tudo junto)
+
+## Rodando localmente
+
+### Opção 1: Docker (tudo junto)
+
+```bash
+docker compose up --build
+```
+
+- App: http://localhost:8080
+- Documentação da API: http://localhost:8000/docs
+
+### Opção 2: sem Docker (para desenvolver)
+
+Backend, em um terminal:
+
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate        # Linux/Mac: source .venv/bin/activate
+pip install -r requirements-dev.txt
+uvicorn app.main:app --reload
+```
+
+Sem `DATABASE_URL`, a API usa SQLite em `data/pixoramed.db` e importa o `data/resultados.csv` ao iniciar.
+
+Frontend, em outro terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Abra http://localhost:5173. O Vite repassa `/api` para o backend na porta 8000.
+
+### Testes
+
+```bash
+cd backend
+pytest
+```
+
+## Adicionando um modelo
+
+1. No notebook, rode a célula de `docs/salvar_modelo.md`. Ela treina o modelo final e salva o `.pt`.
+2. Converta para ONNX:
+   ```bash
+   cd backend
+   pip install torch --index-url https://download.pytorch.org/whl/cpu
+   python scripts/exportar_onnx.py ../modelos_pt/mama_cor.pt
+   ```
+3. Reinicie a API. O modelo aparece em "Analisar imagem".
+
+## Atualizando os resultados
+
+Substitua `data/resultados.csv` pela versão nova (mesmo formato dos notebooks: `;`, vírgula decimal) e reinicie a API, ou rode:
+
+```bash
+cd backend
+python scripts/importar_resultados.py ../data/resultados.csv
+```
+
+Só as execuções novas são inseridas (a chave é `data_hora` + `dataset`).
+
+## API
+
+| Método | Rota | O que faz |
+|---|---|---|
+| GET | `/api/saude` | Status e número de modelos carregados |
+| GET | `/api/treinos` | Treinos (filtros: `cancer`, `modo`, `normalizado`) |
+| GET | `/api/treinos/canceres` | Tipos de câncer com treinos |
+| GET | `/api/modelos` | Modelos disponíveis para previsão |
+| POST | `/api/previsoes` | Envia `modelo_id` + `arquivo` (imagem) e recebe a classe e as probabilidades |
+| GET | `/api/previsoes` | Histórico das últimas previsões |
+
+## Deploy na nuvem
+
+Ver [infra/README.md](infra/README.md).
+
+## Privacidade
+
+A imagem enviada é processada em memória e descartada. A tabela `previsoes` guarda só o modelo, a classe prevista, a confiança, o tempo e o horário.

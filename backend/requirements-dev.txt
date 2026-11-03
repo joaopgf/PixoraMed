@@ -1,0 +1,10 @@
+# Testes e exportação dos modelos (não vai para produção)
+-r requirements.txt
+pytest>=8.3
+httpx>=0.28
+
+# Exportação PyTorch -> ONNX (scripts/exportar_onnx.py).
+# A versão CPU basta: o export não precisa de GPU.
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+onnx>=1.17
+onnxscript>=0.1

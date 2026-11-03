@@ -1,0 +1,5 @@
+# Fins de linha LF no repositório (os arquivos vão para containers Linux)
+* text=auto eol=lf
+*.csv -text
+*.onnx binary
+*.png binary

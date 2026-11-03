@@ -1,0 +1,41 @@
+# Sobe o PixoraMed inteiro: docker compose up --build
+# App em http://localhost:8080 · API em http://localhost:8000/docs
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: pixoramed
+      POSTGRES_USER: pixoramed
+      POSTGRES_PASSWORD: pixoramed
+    volumes:
+      - dados_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pixoramed"]
+      interval: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://pixoramed:pixoramed@db:5432/pixoramed
+      CORS_ORIGINS: http://localhost:8080,http://localhost:5173
+    volumes:
+      # Modelos novos aparecem sem rebuild (reinicie o backend)
+      - ./models:/app/models:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  dados_db:
