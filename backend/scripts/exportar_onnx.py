@@ -1,10 +1,10 @@
 """Converte um modelo salvo pelo notebook (.pt) em <id>.onnx + <id>.json para a pasta models/.
 
 Uso (de dentro de backend/):
-    python scripts/exportar_onnx.py ../modelos_pt/mama_cor.pt
-    python scripts/exportar_onnx.py ../modelos_pt/mama_cor.pt --id mama_cor --saida ../models
+    python scripts/exportar_onnx.py caminho/modelos_pt/mama_cor.pt
+    python scripts/exportar_onnx.py caminho/modelos_pt/mama_cor.pt --id mama_cor --saida ../models
 
-O .pt é o dicionário salvo pela célula de docs/salvar_modelo.md. Se for só o state_dict,
+O .pt é o dicionário salvo pela seção "Salvar o modelo final" dos notebooks. Se for só o state_dict,
 passe também --cancer, --modo, --classes e --escala.
 
 Precisa do PyTorch (a versão CPU basta) e do onnx/onnxscript: pip install -r requirements-dev.txt

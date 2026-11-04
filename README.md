@@ -102,12 +102,12 @@ pytest
 
 ## Adicionando um modelo
 
-1. No notebook, rode a célula de `docs/salvar_modelo.md`. Ela treina o modelo final e salva o `.pt`.
+1. No notebook do Projeto-ML-Cancer, rode a seção "Salvar o modelo final" (passo a passo em `docs/salvar_modelo.md`). Ela treina o modelo final e salva o `.pt`.
 2. Converta para ONNX:
    ```bash
    cd backend
    pip install torch --index-url https://download.pytorch.org/whl/cpu
-   python scripts/exportar_onnx.py ../modelos_pt/mama_cor.pt
+   python scripts/exportar_onnx.py "C:\caminho\para\Projeto-ML-Cancer\modelos_pt\mama_cor.pt"
    ```
 3. Reinicie a API. O modelo aparece em "Analisar imagem".
 
