@@ -78,6 +78,21 @@ export default function Limitacoes() {
 
         <section className="panel">
           <div className="panel-head">
+            <h3>Limitação técnica e trabalhos futuros</h3>
+          </div>
+          <p className="texto">
+            O protótipo não verifica se a imagem é compatível com o módulo escolhido. Ele foi pensado para uso por médicos, que escolhem o
+            módulo e o exame corretos. Por isso, uma imagem sem relação, como um fundo ou um exame de outro tipo, também recebe uma das
+            classes do treino, e a confiança exibida não indica que o resultado seja válido.
+          </p>
+          <p className="texto" style={{ margin: 0 }}>
+            Como trabalho futuro, um filtro poderia recusar essas imagens antes da classificação, comparando-as com o padrão do treino ou
+            usando um modelo que identifique o tipo de exame.
+          </p>
+        </section>
+
+        <section className="panel">
+          <div className="panel-head">
             <h3>Datasets e créditos</h3>
           </div>
           <CreditosDatasets />

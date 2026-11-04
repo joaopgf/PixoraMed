@@ -137,6 +137,12 @@ Só as execuções novas são inseridas (a chave é `data_hora` + `dataset`).
 
 Ver [infra/README.md](infra/README.md).
 
+## Limitação técnica e trabalhos futuros
+
+O protótipo não verifica se a imagem é compatível com o módulo escolhido. Ele foi pensado para uso por médicos, que escolhem o módulo e o exame corretos, então não há uma trava para esse caso. Uma imagem sem relação, como um fundo ou um exame de outro tipo, também recebe uma das classes do treino.
+
+Como trabalho futuro, um filtro poderia recusar essas imagens antes da classificação, comparando-as com o padrão do treino ou usando um modelo que identifique o tipo de exame.
+
 ## Datasets e créditos
 
 Os modelos foram treinados no repositório Projeto-ML-Cancer com dois datasets públicos do Kaggle. As imagens não ficam neste repositório.
