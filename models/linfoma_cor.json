@@ -1,0 +1,20 @@
+{
+  "id": "linfoma_cor",
+  "cancer": "Linfoma",
+  "modo": "cor",
+  "tamanho": 128,
+  "escala": 255.0,
+  "classes": [
+    "cll",
+    "fl",
+    "mcl"
+  ],
+  "descricao": "",
+  "metricas": {
+    "acc_media": 97.87,
+    "acc_desvio": 0.71,
+    "f1_media": 97.86,
+    "f1_desvio": 0.71
+  },
+  "arquivo_onnx": "linfoma_cor.onnx"
+}

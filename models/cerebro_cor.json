@@ -1,0 +1,20 @@
+{
+  "id": "cerebro_cor",
+  "cancer": "Cérebro",
+  "modo": "cor",
+  "tamanho": 128,
+  "escala": 255.0,
+  "classes": [
+    "glioma",
+    "menin",
+    "tumor"
+  ],
+  "descricao": "",
+  "metricas": {
+    "acc_media": 90.13,
+    "acc_desvio": 0.97,
+    "f1_media": 90.11,
+    "f1_desvio": 0.95
+  },
+  "arquivo_onnx": "cerebro_cor.onnx"
+}

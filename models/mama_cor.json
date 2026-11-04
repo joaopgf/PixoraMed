@@ -1,0 +1,19 @@
+{
+  "id": "mama_cor",
+  "cancer": "Mama",
+  "modo": "cor",
+  "tamanho": 128,
+  "escala": 255.0,
+  "classes": [
+    "benign",
+    "malignant"
+  ],
+  "descricao": "",
+  "metricas": {
+    "acc_media": 98.45,
+    "acc_desvio": 0.56,
+    "f1_media": 98.45,
+    "f1_desvio": 0.56
+  },
+  "arquivo_onnx": "mama_cor.onnx"
+}

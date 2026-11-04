@@ -1,0 +1,19 @@
+{
+  "id": "oral_cor",
+  "cancer": "Oral",
+  "modo": "cor",
+  "tamanho": 128,
+  "escala": 255.0,
+  "classes": [
+    "normal",
+    "scc"
+  ],
+  "descricao": "",
+  "metricas": {
+    "acc_media": 85.25,
+    "acc_desvio": 1.78,
+    "f1_media": 85.22,
+    "f1_desvio": 1.79
+  },
+  "arquivo_onnx": "oral_cor.onnx"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "rim_cor",
+  "cancer": "Rim",
+  "modo": "cor",
+  "tamanho": 128,
+  "escala": 255.0,
+  "classes": [
+    "normal",
+    "tumor"
+  ],
+  "descricao": "",
+  "metricas": {
+    "acc_media": 99.95,
+    "acc_desvio": 0.1,
+    "f1_media": 99.95,
+    "f1_desvio": 0.1
+  },
+  "arquivo_onnx": "rim_cor.onnx"
+}
