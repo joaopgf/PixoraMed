@@ -15,7 +15,7 @@ export type Modulo = {
 // Os 9 datasets treinados no projeto (Multi Cancer e HAM10000)
 export const MODULOS: Modulo[] = [
   { id: "pele", slug: "pele", nome: "Pele", exame: "Dermatoscopia", area: "Dermatologia", descricao: "Lesões cutâneas (HAM10000).", icone: "skin" },
-  { id: "mama", slug: "mama", nome: "Mama", exame: "Mamografia", area: "Mastologia", descricao: "Imagens mamárias: benigno e maligno.", icone: "breast" },
+  { id: "mama", slug: "mama", nome: "Mama", exame: "Histopatologia", area: "Mastologia", descricao: "Lâminas de tecido mamário: benigno e maligno.", icone: "breast" },
   { id: "pulmao", slug: "pulmao", nome: "Pulmão", exame: "Histopatologia", area: "Tórax", descricao: "Lâminas de tecido pulmonar.", icone: "lungs" },
   { id: "cerebro", slug: "cerebro", nome: "Cérebro", exame: "Ressonância", area: "Neurologia", descricao: "Glioma, meningioma e tumor hipofisário.", icone: "brain" },
   { id: "rim", slug: "rim", nome: "Rim", exame: "Tomografia", area: "Urologia", descricao: "Imagens renais: normal e tumor.", icone: "kidney" },
