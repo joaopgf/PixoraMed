@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
+import CreditosDatasets from "../components/CreditosDatasets";
 import { Alerta } from "../components/Estrutura";
 import Icone from "../components/Icone";
 import Marca from "../components/Marca";
@@ -33,6 +34,7 @@ export default function Publica() {
           <a href="#inicio">Início</a>
           <a href="#public-modules">Módulos</a>
           <a href="#how">Como funciona</a>
+          <a href="#public-data">Dados</a>
           <a href="#public-about">Sobre</a>
         </nav>
         <button type="button" className="btn primary" onClick={acessar}>
@@ -115,6 +117,17 @@ export default function Publica() {
               </div>
             </div>
           ))}
+        </section>
+
+        <section className="public-modules" id="public-data" style={{ marginBottom: 20 }}>
+          <div className="section-head">
+            <div>
+              <div className="eyebrow">DADOS E CRÉDITOS</div>
+              <h2>Datasets usados</h2>
+              <p>Os modelos foram treinados com datasets públicos do Kaggle.</p>
+            </div>
+          </div>
+          <CreditosDatasets />
         </section>
 
         <section id="public-about">

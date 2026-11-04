@@ -17,7 +17,7 @@ export const MODULOS: Modulo[] = [
   { id: "pele", slug: "pele", nome: "Pele", exame: "Dermatoscopia", area: "Dermatologia", descricao: "Lesões cutâneas (HAM10000).", icone: "skin" },
   { id: "mama", slug: "mama", nome: "Mama", exame: "Mamografia", area: "Mastologia", descricao: "Imagens mamárias: benigno e maligno.", icone: "breast" },
   { id: "pulmao", slug: "pulmao", nome: "Pulmão", exame: "Histopatologia", area: "Tórax", descricao: "Lâminas de tecido pulmonar.", icone: "lungs" },
-  { id: "cerebro", slug: "cerebro", nome: "Cérebro", exame: "Ressonância", area: "Neurologia", descricao: "Glioma, meningioma e tumor.", icone: "brain" },
+  { id: "cerebro", slug: "cerebro", nome: "Cérebro", exame: "Ressonância", area: "Neurologia", descricao: "Glioma, meningioma e tumor hipofisário.", icone: "brain" },
   { id: "rim", slug: "rim", nome: "Rim", exame: "Tomografia", area: "Urologia", descricao: "Imagens renais: normal e tumor.", icone: "kidney" },
   { id: "colo-do-utero", slug: "colo_do_utero", nome: "Colo do útero", exame: "Citologia", area: "Ginecologia", descricao: "Células cervicais em lâmina.", icone: "uterus" },
   { id: "colon", slug: "colon", nome: "Cólon", exame: "Histopatologia", area: "Gastroenterologia", descricao: "Lâminas de tecido do cólon.", icone: "intestine" },

@@ -137,6 +137,33 @@ Só as execuções novas são inseridas (a chave é `data_hora` + `dataset`).
 
 Ver [infra/README.md](infra/README.md).
 
+## Datasets e créditos
+
+Os modelos foram treinados no repositório Projeto-ML-Cancer com dois datasets públicos do Kaggle. As imagens não ficam neste repositório.
+
+### Multi Cancer Dataset
+
+Usado em Cérebro, Colo do útero, Cólon, Linfoma, Mama, Oral, Pulmão e Rim. Crédito ao autor, **Obuli Sai Naren**, que pede a citação em pesquisas e projetos que usem o dataset:
+
+> Obuli Sai Naren. (2022). *Multi Cancer Dataset* [Data set]. Kaggle. https://doi.org/10.34740/KAGGLE/DSV/3415848
+
+- Página: https://www.kaggle.com/datasets/obulisainaren/multi-cancer
+- Licença: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Fontes originais indicadas pelo autor, para as classes que usamos: dataset do Figshare (cérebro), Anas Elmasry (mama), Prahlad Mehandiratta (colo do útero), CT Kidney (rim), Biplob Dey (pulmão e cólon), Andrew MvD (linfoma) e Ashenafi Fasil Kebede (oral).
+
+### Skin Cancer MNIST: HAM10000
+
+Usado em Pele. Publicado no Kaggle por K Scott Mader. Os autores do dataset são Tschandl, Rosendahl e Kittler:
+
+> Tschandl, P., Rosendahl, C. & Kittler, H. (2018). The HAM10000 dataset, a large collection of multi-source dermatoscopic images of common pigmented skin lesions. *Scientific Data*, 5, 180161. https://doi.org/10.1038/sdata.2018.161
+
+- Página: https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000
+- Licença: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+### Alterações e condições de uso
+
+Reduzimos as imagens para 128×128 e, no Multi Cancer, usamos 1000 imagens por classe. As duas licenças exigem crédito, proíbem o uso comercial e pedem que material derivado seja compartilhado pela mesma licença.
+
 ## Privacidade
 
 A imagem enviada é processada em memória e descartada. A tabela `previsoes` guarda só o modelo, a classe prevista, a confiança, o tempo e o horário.

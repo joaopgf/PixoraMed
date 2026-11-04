@@ -1,3 +1,4 @@
+import CreditosDatasets from "../components/CreditosDatasets";
 import { CabecalhoPagina } from "../components/Estrutura";
 import { NOTAS_DATASET, SUSPEITA_VAZAMENTO } from "../dados";
 
@@ -37,6 +38,10 @@ export default function Limitacoes() {
               </li>
             ))}
           </ul>
+          <p className="texto" style={{ margin: "12px 0 0" }}>
+            A documentação do Multi Cancer informa que as imagens foram aumentadas (rotação, deslocamento, zoom, espelhamento e brilho).
+            Por isso, o risco de vazamento pode valer também para Cérebro, Linfoma, Mama e Oral.
+          </p>
         </section>
 
         <section className="panel">
@@ -69,6 +74,13 @@ export default function Limitacoes() {
             <li>A imagem enviada é processada em memória e descartada. O banco guarda só o modelo usado, a classe prevista, a confiança e o horário.</li>
             <li>Não envie imagens com nome, documento ou qualquer dado que identifique um paciente.</li>
           </ul>
+        </section>
+
+        <section className="panel">
+          <div className="panel-head">
+            <h3>Datasets e créditos</h3>
+          </div>
+          <CreditosDatasets />
         </section>
       </div>
     </>
