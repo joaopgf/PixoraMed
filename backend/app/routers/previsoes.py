@@ -45,10 +45,12 @@ async def criar_previsao(
     confianca = float(probabilidades[indice])
 
     # Só o resultado vai para o banco; a imagem é descartada aqui
-    db.add(Previsao(modelo_id=modelo.id, classe_prevista=classe, confianca=confianca, tempo_ms=tempo_ms))
+    registro = Previsao(modelo_id=modelo.id, classe_prevista=classe, confianca=confianca, tempo_ms=tempo_ms)
+    db.add(registro)
     db.commit()
 
     return PrevisaoOut(
+        id=registro.id,
         modelo_id=modelo.id,
         cancer=modelo.cancer,
         classe_prevista=classe,

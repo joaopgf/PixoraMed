@@ -48,6 +48,7 @@ class Probabilidade(BaseModel):
 
 
 class PrevisaoOut(BaseModel):
+    id: int
     modelo_id: str
     cancer: str
     classe_prevista: str

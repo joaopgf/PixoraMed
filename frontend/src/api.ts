@@ -39,6 +39,7 @@ export type Modelo = {
 };
 
 export type ResultadoPrevisao = {
+  id: number;
   modelo_id: string;
   cancer: string;
   classe_prevista: string;
@@ -46,6 +47,15 @@ export type ResultadoPrevisao = {
   probabilidades: { classe: string; probabilidade: number }[];
   tempo_ms: number;
   aviso: string;
+};
+
+export type RegistroPrevisao = {
+  id: number;
+  criado_em: string;
+  modelo_id: string;
+  classe_prevista: string;
+  confianca: number;
+  tempo_ms: number;
 };
 
 async function pedir<T>(caminho: string, init?: RequestInit): Promise<T> {
@@ -60,6 +70,7 @@ async function pedir<T>(caminho: string, init?: RequestInit): Promise<T> {
 export const api = {
   treinos: () => pedir<Treino[]>("/api/treinos"),
   modelos: () => pedir<Modelo[]>("/api/modelos"),
+  previsoes: () => pedir<RegistroPrevisao[]>("/api/previsoes?limite=100"),
   prever: (modeloId: string, arquivo: File) => {
     const form = new FormData();
     form.append("modelo_id", modeloId);

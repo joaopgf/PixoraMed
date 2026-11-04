@@ -23,12 +23,12 @@ models/ ──► FastAPI (ONNX Runtime, CPU) ◄──┘
 
 | Camada | Tecnologia | Onde roda |
 |---|---|---|
-| Frontend | React 19, Vite, TypeScript, Tailwind CSS 4, Recharts, TanStack Query | Vercel |
+| Frontend | React 19, Vite, TypeScript, Recharts, TanStack Query (CSS próprio, em `frontend/src/styles`) | Vercel |
 | API | FastAPI, ONNX Runtime, OpenCV, SQLAlchemy 2 | Render (Docker) |
 | Banco | PostgreSQL (SQLite no desenvolvimento) | Neon |
 | Infra | Docker Compose (local), Terraform (nuvem) | `infra/terraform` |
 
-O treino acontece em PyTorch na GPU. Para o app, o modelo é exportado para **ONNX**: um arquivo de uns 20 KB que roda na CPU com o ONNX Runtime, sem precisar do PyTorch no servidor. Isso cabe nos 512 MB de RAM do plano gratuito do Render.
+O treino acontece em PyTorch na GPU. Para o app, o modelo é exportado para **ONNX**: um arquivo de uns 110 KB que roda na CPU com o ONNX Runtime, sem precisar do PyTorch no servidor. Isso cabe nos 512 MB de RAM do plano gratuito do Render.
 
 ## Estrutura
 
@@ -44,7 +44,7 @@ backend/
     exportar_onnx.py         .pt do notebook -> models/<id>.onnx + .json
     importar_resultados.py   importa um resultados.csv para o banco
   tests/
-frontend/            React (páginas Início, Analisar, Resultados, Limitações)
+frontend/            React (página pública, acesso simulado, painel, análise, histórico, resultados, modelos, limitações)
 models/              modelos ONNX carregados pela API
 data/resultados.csv  resultados dos treinos (cópia do Projeto-ML-Cancer)
 docs/                como salvar o modelo nos notebooks

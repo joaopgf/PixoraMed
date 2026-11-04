@@ -113,7 +113,8 @@ def main() -> None:
     # Entrada de exemplo no mesmo intervalo do treino: [0, 1] normalizado ou [0, 255] sem normalizar
     torch.manual_seed(0)
     exemplo = torch.rand(1, canais, info["tamanho"], info["tamanho"]) * (255.0 / info["escala"])
-    torch.onnx.export(modelo, (exemplo,), str(arquivo_onnx), input_names=["imagem"], output_names=["logits"])
+    # external_data=False: pesos dentro do próprio .onnx, sem um .onnx.data separado para perder
+    torch.onnx.export(modelo, (exemplo,), str(arquivo_onnx), input_names=["imagem"], output_names=["logits"], external_data=False)
 
     # Confere se o ONNX dá a mesma saída que o PyTorch
     with torch.no_grad():

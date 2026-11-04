@@ -1,57 +1,57 @@
-import { NavLink, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 
-import Analisar from "./pages/Analisar";
-import Inicio from "./pages/Inicio";
+import { Estrutura } from "./components/Estrutura";
+import { useEstado } from "./estado";
+import Catalogo from "./pages/Catalogo";
+import Conta from "./pages/Conta";
+import Historico from "./pages/Historico";
 import Limitacoes from "./pages/Limitacoes";
+import Login from "./pages/Login";
+import Modelos from "./pages/Modelos";
+import Painel from "./pages/Painel";
+import Preparar from "./pages/Preparar";
+import Publica from "./pages/Publica";
+import Resultado from "./pages/Resultado";
 import Resultados from "./pages/Resultados";
+import Revisao from "./pages/Revisao";
 
-const links = [
-  { para: "/", nome: "Início" },
-  { para: "/analisar", nome: "Analisar imagem" },
-  { para: "/resultados", nome: "Resultados" },
-  { para: "/limitacoes", nome: "Limitações e ética" },
-];
+function ExigeAcesso() {
+  const { logado } = useEstado();
+  return logado ? <Outlet /> : <Navigate to="/login" replace />;
+}
+
+function VoltarAoTopo() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [pathname]);
+  return null;
+}
 
 export default function App() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <NavLink to="/" className="flex items-center gap-2 text-lg font-semibold text-marca-900">
-            <img src="/icone.svg" alt="" className="h-7 w-7" />
-            PixoraMed
-          </NavLink>
-          <nav className="flex flex-wrap gap-1 text-sm">
-            {links.map((link) => (
-              <NavLink
-                key={link.para}
-                to={link.para}
-                end={link.para === "/"}
-                className={({ isActive }) =>
-                  `rounded-md px-3 py-1.5 font-medium transition ${
-                    isActive ? "bg-marca-50 text-marca-700" : "text-slate-600 hover:bg-slate-100"
-                  }`
-                }
-              >
-                {link.nome}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        <Routes>
-          <Route path="/" element={<Inicio />} />
-          <Route path="/analisar" element={<Analisar />} />
-          <Route path="/resultados" element={<Resultados />} />
-          <Route path="/limitacoes" element={<Limitacoes />} />
-        </Routes>
-      </main>
-
-      <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
-        PixoraMed · Projeto acadêmico do Bootcamp de IA (TCS / SENAI). Não é um dispositivo médico e não faz diagnóstico.
-      </footer>
-    </div>
+    <>
+      <VoltarAoTopo />
+      <Routes>
+        <Route path="/" element={<Publica />} />
+        <Route path="/login" element={<Login />} />
+        <Route element={<ExigeAcesso />}>
+          <Route element={<Estrutura />}>
+            <Route path="/painel" element={<Painel />} />
+            <Route path="/nova" element={<Catalogo />} />
+            <Route path="/analise/:moduloId" element={<Preparar />} />
+            <Route path="/revisao" element={<Revisao />} />
+            <Route path="/resultado/:id" element={<Resultado />} />
+            <Route path="/historico" element={<Historico />} />
+            <Route path="/resultados" element={<Resultados />} />
+            <Route path="/modelos" element={<Modelos />} />
+            <Route path="/limitacoes" element={<Limitacoes />} />
+            <Route path="/conta" element={<Conta />} />
+          </Route>
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
