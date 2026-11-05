@@ -2,6 +2,8 @@
 
 Classificação de imagens médicas de câncer com uma CNN em PyTorch, e um painel web para fazer previsões e comparar os resultados dos treinos.
 
+O app cobre três tipos de câncer: Pele, Oral e Cérebro.
+
 Projeto integrador do Bootcamp de IA (TCS / SENAI Londrina, 2026). Os notebooks de treino ficam no repositório **Projeto-ML-Cancer**. Este repositório tem o app que usa os modelos treinados lá.
 
 > **Aviso:** ferramenta acadêmica. Não é um dispositivo médico e não faz diagnóstico.
@@ -107,7 +109,7 @@ pytest
    ```bash
    cd backend
    pip install torch --index-url https://download.pytorch.org/whl/cpu
-   python scripts/exportar_onnx.py "C:\caminho\para\Projeto-ML-Cancer\modelos_pt\mama_cor.pt"
+   python scripts/exportar_onnx.py "C:\caminho\para\Projeto-ML-Cancer\modelos_pt\oral_cor.pt"
    ```
 3. Reinicie a API. O modelo aparece em "Analisar imagem".
 
@@ -149,13 +151,13 @@ Os modelos foram treinados no repositório Projeto-ML-Cancer com dois datasets p
 
 ### Multi Cancer Dataset
 
-Usado em Cérebro, Colo do útero, Cólon, Linfoma, Mama, Oral, Pulmão e Rim. Crédito ao autor, **Obuli Sai Naren**, que pede a citação em pesquisas e projetos que usem o dataset:
+Usado em Oral e Cérebro. Crédito ao autor, **Obuli Sai Naren**, que pede a citação em pesquisas e projetos que usem o dataset:
 
 > Obuli Sai Naren. (2022). *Multi Cancer Dataset* [Data set]. Kaggle. https://doi.org/10.34740/KAGGLE/DSV/3415848
 
 - Página: https://www.kaggle.com/datasets/obulisainaren/multi-cancer
 - Licença: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-- Fontes originais indicadas pelo autor, para as classes que usamos: dataset do Figshare (cérebro), Anas Elmasry (mama), Prahlad Mehandiratta (colo do útero), CT Kidney (rim), Biplob Dey (pulmão e cólon), Andrew MvD (linfoma) e Ashenafi Fasil Kebede (oral).
+- Fontes originais indicadas pelo autor, para as classes que usamos: dataset do Figshare (cérebro) e Ashenafi Fasil Kebede (oral).
 
 ### Skin Cancer MNIST: HAM10000
 
@@ -168,7 +170,7 @@ Usado em Pele. Publicado no Kaggle por K Scott Mader. Os autores do dataset são
 
 ### Alterações e condições de uso
 
-Reduzimos as imagens para 128×128 e, no Multi Cancer, usamos 1000 imagens por classe. As duas licenças exigem crédito, proíbem o uso comercial e pedem que material derivado seja compartilhado pela mesma licença.
+Reduzimos as imagens para 128×128 e, no Multi Cancer, usamos só uma parte das imagens de cada classe. As duas licenças exigem crédito, proíbem o uso comercial e pedem que material derivado seja compartilhado pela mesma licença.
 
 ## Privacidade
 

@@ -1,5 +1,8 @@
+import { MODULOS } from "./modulos";
+
 // Em desenvolvimento fica vazio e o Vite repassa /api ao backend; na Vercel aponta para a API no Render
 const BASE = import.meta.env.VITE_API_URL ?? "";
+const NOMES_MODULOS = new Set(MODULOS.map((modulo) => modulo.nome));
 
 export type Treino = {
   id: number;
@@ -68,7 +71,8 @@ async function pedir<T>(caminho: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  treinos: () => pedir<Treino[]>("/api/treinos"),
+  // O resultados.csv tem todos os treinos do projeto; o app mostra só os módulos do catálogo
+  treinos: async () => (await pedir<Treino[]>("/api/treinos")).filter((treino) => NOMES_MODULOS.has(treino.cancer)),
   modelos: () => pedir<Modelo[]>("/api/modelos"),
   previsoes: () => pedir<RegistroPrevisao[]>("/api/previsoes?limite=100"),
   prever: (modeloId: string, arquivo: File) => {

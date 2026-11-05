@@ -1,6 +1,6 @@
 import CreditosDatasets from "../components/CreditosDatasets";
 import { CabecalhoPagina } from "../components/Estrutura";
-import { NOTAS_DATASET, SUSPEITA_VAZAMENTO } from "../dados";
+import { NOTAS_DATASET } from "../dados";
 
 export default function Limitacoes() {
   return (
@@ -27,20 +27,10 @@ export default function Limitacoes() {
           <div className="panel-head">
             <h3>Vazamento entre treino e teste</h3>
           </div>
-          <p className="texto">
-            Nos datasets abaixo, cópias ou quase-cópias da mesma imagem podem cair no treino e no teste ao mesmo tempo. A acurácia alta
-            pode medir memorização, e não generalização para pacientes novos.
-          </p>
-          <ul className="notas">
-            {Object.entries(SUSPEITA_VAZAMENTO).map(([cancer, nota]) => (
-              <li key={cancer}>
-                <strong>{cancer}:</strong> {nota}
-              </li>
-            ))}
-          </ul>
-          <p className="texto" style={{ margin: "12px 0 0" }}>
-            A documentação do Multi Cancer informa que as imagens foram aumentadas (rotação, deslocamento, zoom, espelhamento e brilho).
-            Por isso, o risco de vazamento pode valer também para Cérebro, Linfoma, Mama e Oral.
+          <p className="texto" style={{ margin: 0 }}>
+            A documentação do Multi Cancer, usado em Oral e Cérebro, informa que as imagens foram aumentadas (rotação, deslocamento, zoom,
+            espelhamento e brilho). Variações da mesma imagem podem cair no treino e no teste ao mesmo tempo, então a acurácia alta pode
+            medir memorização, e não generalização para pacientes novos.
           </p>
         </section>
 

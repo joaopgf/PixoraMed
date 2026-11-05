@@ -12,17 +12,11 @@ export type Modulo = {
   icone: string;
 };
 
-// Os 9 datasets treinados no projeto (Multi Cancer e HAM10000)
+// Os 3 tipos de câncer do projeto: HAM10000 (Pele) e Multi Cancer (Oral e Cérebro)
 export const MODULOS: Modulo[] = [
   { id: "pele", slug: "pele", nome: "Pele", exame: "Dermatoscopia", area: "Dermatologia", descricao: "Lesões cutâneas (HAM10000).", icone: "skin" },
-  { id: "mama", slug: "mama", nome: "Mama", exame: "Histopatologia", area: "Mastologia", descricao: "Lâminas de tecido mamário: benigno e maligno.", icone: "breast" },
-  { id: "pulmao", slug: "pulmao", nome: "Pulmão", exame: "Histopatologia", area: "Tórax", descricao: "Lâminas de tecido pulmonar.", icone: "lungs" },
-  { id: "cerebro", slug: "cerebro", nome: "Cérebro", exame: "Ressonância", area: "Neurologia", descricao: "Glioma, meningioma e tumor hipofisário.", icone: "brain" },
-  { id: "rim", slug: "rim", nome: "Rim", exame: "Tomografia", area: "Urologia", descricao: "Imagens renais: normal e tumor.", icone: "kidney" },
-  { id: "colo-do-utero", slug: "colo_do_utero", nome: "Colo do útero", exame: "Citologia", area: "Ginecologia", descricao: "Células cervicais em lâmina.", icone: "uterus" },
-  { id: "colon", slug: "colon", nome: "Cólon", exame: "Histopatologia", area: "Gastroenterologia", descricao: "Lâminas de tecido do cólon.", icone: "intestine" },
-  { id: "linfoma", slug: "linfoma", nome: "Linfoma", exame: "Histopatologia", area: "Hematologia", descricao: "Subtipos CLL, FL e MCL.", icone: "lymph" },
   { id: "oral", slug: "oral", nome: "Oral", exame: "Histopatologia", area: "Estomatologia", descricao: "Tecido oral: normal e carcinoma.", icone: "mouth" },
+  { id: "cerebro", slug: "cerebro", nome: "Cérebro", exame: "Ressonância", area: "Neurologia", descricao: "Glioma, meningioma e tumor hipofisário.", icone: "brain" },
 ];
 
 export const obterModulo = (id: string | undefined) => MODULOS.find((modulo) => modulo.id === id);
@@ -30,7 +24,7 @@ export const obterModulo = (id: string | undefined) => MODULOS.find((modulo) => 
 export const modelosDoModulo = (modulo: Modulo, modelos: Modelo[] = []) =>
   modelos.filter((modelo) => modelo.cancer === modulo.nome);
 
-// "colo_do_utero_cor" -> módulo Colo do útero, modo cor. Vale também para modelos que saíram da pasta models/
+// "oral_cor" -> módulo Oral, modo cor. Modelos que saíram do catálogo ficam sem módulo, mas o histórico continua mostrando o id
 export function lerModeloId(modeloId: string) {
   const encontrado = modeloId.match(/^(.+)_(cor|cinza)$/);
   const slug = encontrado ? encontrado[1] : modeloId;

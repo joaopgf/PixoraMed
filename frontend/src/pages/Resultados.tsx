@@ -174,9 +174,9 @@ export default function Resultados() {
               <h3>Observações por dataset</h3>
             </div>
             <ul className="notas">
-              {Object.entries({ ...NOTAS_DATASET, ...SUSPEITA_VAZAMENTO }).map(([cancer, nota]) => (
+              {Object.entries(NOTAS_DATASET).map(([cancer, nota]) => (
                 <li key={cancer}>
-                  <strong>{cancer}:</strong> {nota}
+                  <strong>{cancer}:</strong> {nota} {SUSPEITA_VAZAMENTO[cancer]}
                 </li>
               ))}
             </ul>

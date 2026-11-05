@@ -2,7 +2,7 @@ const DATASETS = [
   {
     nome: "Multi Cancer Dataset",
     autor: "Obuli Sai Naren",
-    uso: "Cérebro, Colo do útero, Cólon, Linfoma, Mama, Oral, Pulmão e Rim",
+    uso: "Oral e Cérebro",
     kaggle: "https://www.kaggle.com/datasets/obulisainaren/multi-cancer",
     citacoes: [
       {
@@ -53,7 +53,7 @@ export default function CreditosDatasets() {
           CC BY-NC-SA 4.0
         </a>{" "}
         (com crédito, sem uso comercial e com compartilhamento pela mesma licença). As imagens foram reduzidas para 128×128; no Multi
-        Cancer, usamos 1000 imagens por classe.
+        Cancer, usamos só uma parte das imagens de cada classe.
       </p>
     </>
   );
