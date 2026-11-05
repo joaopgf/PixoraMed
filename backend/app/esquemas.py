@@ -41,6 +41,7 @@ class ModeloOut(BaseModel):
     descricao: str
     metricas: dict
     limiar: float | None = None
+    limiar_inconclusivo: float | None = None
 
 
 class Probabilidade(BaseModel):
@@ -56,6 +57,7 @@ class PrevisaoOut(BaseModel):
     confianca: float
     probabilidades: list[Probabilidade]
     limiar: float | None = None
+    limiar_inconclusivo: float | None = None
     tempo_ms: float
     aviso: str
 

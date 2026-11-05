@@ -84,6 +84,12 @@ export default function Modelos() {
                       {modelo.tamanho}×{modelo.tamanho}, {nomeModo(modelo.modo)}, {modelo.normalizado ? "normalizado" : "sem normalizar"}
                     </strong>
                   </div>
+                  {modelo.limiar_inconclusivo !== null && (
+                    <div className="model-spec">
+                      <span>Inconclusivo abaixo de</span>
+                      <strong>{Math.round(modelo.limiar_inconclusivo * 100)}% de confiança</strong>
+                    </div>
+                  )}
                   {modelo.limiar !== null && (
                     <div className="model-spec">
                       <span>Limiar de decisão</span>

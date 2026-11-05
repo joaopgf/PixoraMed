@@ -42,6 +42,8 @@ O treino acontece em PyTorch na GPU. Para o app, cada modelo é exportado para *
 | Cérebro | CNN pequena (~24 mil parâmetros) | 128×128, cinza | `glioma`, `menin` ou `tumor`, a classe mais provável | ~110 KB |
 | Pele | Ensemble de 5 EfficientNet-B0 com calibração de Platt | 224×224, cor, normalização ImageNet | `benigno` ou `maligno` (mel + bcc), com limiar de 18% | ~80 MB |
 
+Em Oral e Cérebro, a API responde `inconclusivo` quando a confiança fica abaixo de 80% (variável `LIMIAR_INCONCLUSIVO`). A Pele não usa essa regra, porque já decide pelo limiar próprio.
+
 O modelo da Pele ainda não teve as métricas de teste registradas no app, e a queratose actínica (akiec) ficou fora do treino. No Windows, com os três modelos, o pico de memória medido foi de 250 MB, sem incluir o restante da API. O uso nos 512 MB do plano gratuito do Render ainda não foi testado.
 
 ## Estrutura

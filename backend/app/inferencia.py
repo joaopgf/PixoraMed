@@ -11,10 +11,13 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image, ImageOps
 
+from app.config import settings
+
 log = logging.getLogger(__name__)
 
 FORMATOS_PIL = {"JPEG", "PNG", "WEBP", "BMP", "TIFF"}
 LADO_MINIMO_PIL = 100
+CLASSE_INCONCLUSIVA = "inconclusivo"
 
 
 class ImagemInvalida(ValueError):
@@ -109,6 +112,11 @@ def indice_previsto(modelo: ModeloCarregado, probabilidades: np.ndarray) -> int:
     if modelo.limiar is not None:
         return 1 if probabilidades[1] >= modelo.limiar else 0
     return int(probabilidades.argmax())
+
+
+def limiar_inconclusivo_do_modelo(modelo: ModeloCarregado) -> float | None:
+    """Modelos com limiar próprio já decidem por ele; os demais ficam inconclusivos abaixo do limiar configurado."""
+    return None if modelo.limiar is not None else settings.limiar_inconclusivo
 
 
 class RegistroModelos:

@@ -43,6 +43,11 @@ export default function Resultado() {
   const limiar = atual?.limiar ?? modeloUsado?.limiar ?? null;
   const classePositiva = modeloUsado?.classes[1] ?? "maligno";
   const probPositiva = dados.classe_prevista === classePositiva ? dados.confianca : 1 - dados.confianca;
+  const inconclusivo = dados.classe_prevista === "inconclusivo";
+  const limiarInconclusivo = atual?.limiar_inconclusivo ?? modeloUsado?.limiar_inconclusivo ?? null;
+  const fraseInconclusivo = `Resultado inconclusivo: o modelo não atingiu a confiança mínima${
+    limiarInconclusivo !== null ? ` de ${Math.round(limiarInconclusivo * 100)}%` : ""
+  } para indicar uma classe nesta imagem.`;
 
   return (
     <>
@@ -68,12 +73,14 @@ export default function Resultado() {
 
       <div className="result-grid">
         <article className="result-metric">
-          <small>Classe prevista</small>
-          <strong>{dados.classe_prevista}</strong>
+          <small>{inconclusivo ? "Resultado" : "Classe prevista"}</small>
+          <strong>{inconclusivo ? "Inconclusivo" : dados.classe_prevista}</strong>
           <p>
-            {limiar !== null
-              ? `Vira "${classePositiva}" quando a probabilidade alcança o limiar de ${formatarPct(limiar * 100)}, mesmo abaixo de 50%.`
-              : "A classe mais provável entre as classes usadas no treino."}
+            {inconclusivo
+              ? "O sistema não indica uma classe quando a confiança fica abaixo do limiar."
+              : limiar !== null
+                ? `Vira "${classePositiva}" quando a probabilidade alcança o limiar de ${formatarPct(limiar * 100)}, mesmo abaixo de 50%.`
+                : "A classe mais provável entre as classes usadas no treino."}
           </p>
         </article>
         {limiar !== null ? (
@@ -97,6 +104,14 @@ export default function Resultado() {
           </p>
         </article>
       </div>
+
+      {inconclusivo && (
+        <div style={{ marginBottom: 15 }}>
+          <Alerta icone="warning">
+            <strong>{fraseInconclusivo}</strong>
+          </Alerta>
+        </div>
+      )}
 
       {vazamento && (
         <div style={{ marginBottom: 15 }}>

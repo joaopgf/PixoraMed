@@ -7,7 +7,13 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import get_db
 from app.esquemas import PrevisaoHistorico, PrevisaoOut, Probabilidade
-from app.inferencia import ImagemInvalida, indice_previsto, prever
+from app.inferencia import (
+    CLASSE_INCONCLUSIVA,
+    ImagemInvalida,
+    indice_previsto,
+    limiar_inconclusivo_do_modelo,
+    prever,
+)
 from app.tabelas import Previsao
 
 router = APIRouter(prefix="/api/previsoes", tags=["previsões"])
@@ -41,8 +47,10 @@ async def criar_previsao(
     tempo_ms = (time.perf_counter() - inicio) * 1000
 
     indice = indice_previsto(modelo, probabilidades)
-    classe = modelo.classes[indice]
     confianca = float(probabilidades[indice])
+    limiar_inconclusivo = limiar_inconclusivo_do_modelo(modelo)
+    inconclusivo = limiar_inconclusivo is not None and confianca < limiar_inconclusivo
+    classe = CLASSE_INCONCLUSIVA if inconclusivo else modelo.classes[indice]
 
     # Só o resultado vai para o banco; a imagem é descartada aqui
     registro = Previsao(modelo_id=modelo.id, classe_prevista=classe, confianca=confianca, tempo_ms=tempo_ms)
@@ -61,6 +69,7 @@ async def criar_previsao(
             reverse=True,
         ),
         limiar=modelo.limiar,
+        limiar_inconclusivo=limiar_inconclusivo,
         tempo_ms=tempo_ms,
         aviso=AVISO,
     )

@@ -18,6 +18,7 @@ export default function Limitacoes() {
           <ul className="notas bullets">
             <li>Os modelos foram treinados com datasets públicos do Kaggle e nunca foram validados clinicamente.</li>
             <li>Em Oral e Cérebro, a saída é a classe mais provável entre as classes do treino. Uma imagem de outro tipo de exame recebe uma classe do mesmo jeito.</li>
+            <li>Em Oral e Cérebro, o resultado é "inconclusivo" quando a confiança fica abaixo de 80%. Isso reduz erros de baixa confiança, mas não impede erros com confiança alta, comuns em imagens de outra origem.</li>
             <li>Em Oral e Cérebro, a "confiança" exibida é a saída softmax da rede, não uma probabilidade calibrada de doença.</li>
             <li>Em Pele, a classe é "maligno" quando a probabilidade calibrada alcança o limiar de 18%. Na lista de análises, a confiança mostra a probabilidade da classe prevista, que pode ser baixa em um resultado "maligno".</li>
           </ul>
@@ -78,7 +79,7 @@ export default function Limitacoes() {
           </div>
           <p className="texto">
             O protótipo não verifica se a imagem é compatível com o módulo escolhido. Ele foi pensado para uso por médicos, que escolhem o
-            módulo e o exame corretos. Por isso, uma imagem sem relação, como um fundo ou um exame de outro tipo, também recebe uma das
+            módulo e o exame corretos. Por isso, uma imagem sem relação, como um fundo ou um exame de outro tipo, também pode receber uma das
             classes do treino, e a confiança exibida não indica que o resultado seja válido.
           </p>
           <p className="texto" style={{ margin: 0 }}>

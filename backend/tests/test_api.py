@@ -83,6 +83,45 @@ def _png(altura, largura):
     return png.tobytes()
 
 
+class SessaoFalsa:
+    def __init__(self, saida):
+        self.saida = saida
+
+    def get_inputs(self):
+        return [type("Entrada", (), {"name": "imagem"})]
+
+    def run(self, _, __):
+        return [np.array(self.saida, dtype=np.float32)]
+
+
+@pytest.mark.parametrize(
+    "saida,limiar,classe,limiar_inconclusivo",
+    [
+        ([[3.0, 0.0]], None, "a", 0.8),  # softmax ~95%
+        ([[0.2, 0.0]], None, "inconclusivo", 0.8),  # softmax ~55%
+        ([0.2], 0.18, "b", None),  # limiar próprio: 20% já é a segunda classe, sem inconclusivo
+        ([0.1], 0.18, "a", None),
+    ],
+)
+def test_previsao_classe_e_inconclusivo(cliente, saida, limiar, classe, limiar_inconclusivo):
+    from app.inferencia import ModeloCarregado
+
+    registro = cliente.app.state.registro
+    registro.modelos["falso"] = ModeloCarregado(
+        id="falso", cancer="Teste", modo="cor", tamanho=128, escala=255, classes=["a", "b"], sessao=SessaoFalsa(saida), limiar=limiar
+    )
+    try:
+        resposta = cliente.post("/api/previsoes", data={"modelo_id": "falso"}, files={"arquivo": ("x.png", _png(150, 150), "image/png")})
+    finally:
+        del registro.modelos["falso"]
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["classe_prevista"] == classe
+    assert corpo["limiar_inconclusivo"] == limiar_inconclusivo
+    assert {item["classe"] for item in corpo["probabilidades"]} == {"a", "b"}
+
+
 def test_preprocessar_pil_formato_e_normalizacao():
     from app.inferencia import preprocessar_pil
 
