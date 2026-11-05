@@ -17,9 +17,9 @@ export default function Limitacoes() {
           </div>
           <ul className="notas bullets">
             <li>Os modelos foram treinados com datasets públicos do Kaggle e nunca foram validados clinicamente.</li>
-            <li>A saída é a classe mais provável entre as classes do treino. Uma imagem de outro tipo de exame recebe uma classe do mesmo jeito.</li>
-            <li>A "confiança" exibida é a saída softmax da rede, não uma probabilidade calibrada de doença.</li>
-            <li>O modelo do app usa a configuração avaliada em 5 folds, treinada com todas as imagens. Ele não tem nota própria, porque não sobrou imagem para testá-lo.</li>
+            <li>Em Oral e Cérebro, a saída é a classe mais provável entre as classes do treino. Uma imagem de outro tipo de exame recebe uma classe do mesmo jeito.</li>
+            <li>Em Oral e Cérebro, a "confiança" exibida é a saída softmax da rede, não uma probabilidade calibrada de doença.</li>
+            <li>Em Pele, a classe é "maligno" quando a probabilidade calibrada alcança o limiar de 18%. Na lista de análises, a confiança mostra a probabilidade da classe prevista, que pode ser baixa em um resultado "maligno".</li>
           </ul>
         </section>
 
@@ -39,9 +39,15 @@ export default function Limitacoes() {
             <h3>O número honesto: pele</h3>
           </div>
           <p className="texto">{NOTAS_DATASET.Pele}</p>
-          <p className="texto" style={{ margin: 0 }}>
+          <p className="texto">
             A divisão por lesão (StratifiedGroupKFold por <code>lesion_id</code>) impede que fotos da mesma lesão fiquem no treino e no
             teste. Redes pré-treinadas chegam a ~76% de acurácia balanceada no HAM10000; artigos com 95–98% costumam dividir por imagem.
+          </p>
+          <p className="texto" style={{ margin: 0 }}>
+            O modelo do app é outro: um ensemble de 5 EfficientNet-B0 que separa benigno (nevo, ceratose benigna, dermatofibroma e lesão
+            vascular) de maligno (melanoma e carcinoma basocelular). Os dados foram separados por lesão, mas não por paciente. A queratose
+            actínica (akiec) ficou fora do treino, então uma imagem dela recebe uma das duas classes. O limiar de 18% favorece encontrar
+            casos malignos e aumenta os alarmes falsos. O modelo só vale para imagens dermatoscópicas, não para fotos comuns de celular.
           </p>
         </section>
 

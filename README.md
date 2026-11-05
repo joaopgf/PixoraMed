@@ -1,6 +1,6 @@
 # PixoraMed
 
-Classificação de imagens médicas de câncer com uma CNN em PyTorch, e um painel web para fazer previsões e comparar os resultados dos treinos.
+Classificação de imagens médicas de câncer com redes neurais em PyTorch, e um painel web para fazer previsões e comparar os resultados dos treinos.
 
 O app cobre três tipos de câncer: Pele, Oral e Cérebro.
 
@@ -34,7 +34,15 @@ models/ ──► FastAPI (ONNX Runtime, CPU) ◄──┘
 | Banco | PostgreSQL (SQLite no desenvolvimento) | Neon |
 | Infra | Docker Compose (local), Terraform (nuvem) | `infra/terraform` |
 
-O treino acontece em PyTorch na GPU. Para o app, o modelo é exportado para **ONNX**: um arquivo de uns 110 KB que roda na CPU com o ONNX Runtime, sem precisar do PyTorch no servidor. Isso cabe nos 512 MB de RAM do plano gratuito do Render.
+O treino acontece em PyTorch na GPU. Para o app, cada modelo é exportado para **ONNX** e roda na CPU com o ONNX Runtime, sem precisar do PyTorch no servidor.
+
+| Módulo | Modelo | Entrada | Saída | Arquivo |
+|---|---|---|---|---|
+| Oral | CNN pequena (~24 mil parâmetros) | 128×128, cor | `normal` ou `scc`, a classe mais provável | ~110 KB |
+| Cérebro | CNN pequena (~24 mil parâmetros) | 128×128, cinza | `glioma`, `menin` ou `tumor`, a classe mais provável | ~110 KB |
+| Pele | Ensemble de 5 EfficientNet-B0 com calibração de Platt | 224×224, cor, normalização ImageNet | `benigno` ou `maligno` (mel + bcc), com limiar de 18% | ~80 MB |
+
+O modelo da Pele ainda não teve as métricas de teste registradas no app, e a queratose actínica (akiec) ficou fora do treino. No Windows, com os três modelos, o pico de memória medido foi de 250 MB, sem incluir o restante da API. O uso nos 512 MB do plano gratuito do Render ainda não foi testado.
 
 ## Estrutura
 
@@ -48,6 +56,7 @@ backend/
     routers/         treinos, modelos, previsoes
   scripts/
     exportar_onnx.py         .pt do notebook -> models/<id>.onnx + .json
+    exportar_ensemble_pele.py   5 .pt do pacote da Pele -> models/pele_cor.onnx + .json
     importar_resultados.py   importa um resultados.csv para o banco
   tests/
 frontend/            React (página pública, acesso simulado, painel, análise, histórico, resultados, modelos, limitações)
@@ -116,6 +125,14 @@ pytest
    python scripts/exportar_onnx.py "C:\caminho\para\Projeto-ML-Cancer\modelos_pt\oral_cor.pt"
    ```
 3. Reinicie a API. O modelo aparece em "Analisar imagem".
+
+O ensemble da Pele veio de um pacote à parte e usa outro script, que também precisa do `torchvision`:
+
+```bash
+cd backend
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+python scripts/exportar_ensemble_pele.py "C:\caminho\para\HAM10000_PACOTE_INFERENCIA"
+```
 
 ## Atualizando os resultados
 

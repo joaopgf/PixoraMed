@@ -34,7 +34,8 @@ export default function Modelos() {
         <Alerta tipo="info" icone="activity">
           <strong>Um modelo especializado por tipo de exame.</strong>
           <br />
-          CNN em PyTorch (3 blocos convolucionais, ~24 mil parâmetros), exportada para ONNX e executada na CPU pela API.
+          Oral e Cérebro: CNN em PyTorch (3 blocos convolucionais, ~24 mil parâmetros). Pele: ensemble de 5 EfficientNet-B0 (~20 milhões de
+          parâmetros no total). Todos exportados para ONNX e executados na CPU pela API.
         </Alerta>
       </div>
       {modelos.isError && (
@@ -83,6 +84,12 @@ export default function Modelos() {
                       {modelo.tamanho}×{modelo.tamanho}, {nomeModo(modelo.modo)}, {modelo.normalizado ? "normalizado" : "sem normalizar"}
                     </strong>
                   </div>
+                  {modelo.limiar !== null && (
+                    <div className="model-spec">
+                      <span>Limiar de decisão</span>
+                      <strong>{formatarPct(modelo.limiar * 100)}</strong>
+                    </div>
+                  )}
                   <div className="model-spec">
                     <span>Validação (5 folds)</span>
                     <strong>

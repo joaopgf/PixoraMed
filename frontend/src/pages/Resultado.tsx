@@ -36,8 +36,13 @@ export default function Resultado() {
 
   const { modulo, modo } = lerModeloId(dados.modelo_id);
   const nomeModulo = modulo?.nome ?? dados.modelo_id;
-  const metricas = modelos.data?.find((modelo) => modelo.id === dados.modelo_id)?.metricas;
+  const modeloUsado = modelos.data?.find((modelo) => modelo.id === dados.modelo_id);
+  const metricas = modeloUsado?.metricas;
   const vazamento = modulo && SUSPEITA_VAZAMENTO[modulo.nome];
+  // Com limiar, a confiança é a probabilidade da classe prevista; o que importa é a probabilidade da classe positiva
+  const limiar = atual?.limiar ?? modeloUsado?.limiar ?? null;
+  const classePositiva = modeloUsado?.classes[1] ?? "maligno";
+  const probPositiva = dados.classe_prevista === classePositiva ? dados.confianca : 1 - dados.confianca;
 
   return (
     <>
@@ -65,13 +70,25 @@ export default function Resultado() {
         <article className="result-metric">
           <small>Classe prevista</small>
           <strong>{dados.classe_prevista}</strong>
-          <p>A classe mais provável entre as classes usadas no treino.</p>
+          <p>
+            {limiar !== null
+              ? `Vira "${classePositiva}" quando a probabilidade alcança o limiar de ${formatarPct(limiar * 100)}, mesmo abaixo de 50%.`
+              : "A classe mais provável entre as classes usadas no treino."}
+          </p>
         </article>
-        <article className="result-metric">
-          <small>Confiança do modelo</small>
-          <strong className="mono">{formatarPct(dados.confianca * 100)}</strong>
-          <p>Saída softmax da rede, não uma probabilidade calibrada de doença.</p>
-        </article>
+        {limiar !== null ? (
+          <article className="result-metric">
+            <small>Probabilidade estimada de {classePositiva}</small>
+            <strong className="mono">{formatarPct(probPositiva * 100)}</strong>
+            <p>Média calibrada de 5 modelos no dataset de treino. Não é o risco clínico deste paciente.</p>
+          </article>
+        ) : (
+          <article className="result-metric">
+            <small>Confiança do modelo</small>
+            <strong className="mono">{formatarPct(dados.confianca * 100)}</strong>
+            <p>Saída softmax da rede, não uma probabilidade calibrada de doença.</p>
+          </article>
+        )}
         <article className="result-metric">
           <small>Modelo</small>
           <strong>{dados.modelo_id}</strong>

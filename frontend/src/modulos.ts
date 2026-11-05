@@ -14,7 +14,7 @@ export type Modulo = {
 
 // Os 3 tipos de câncer do projeto: HAM10000 (Pele) e Multi Cancer (Oral e Cérebro)
 export const MODULOS: Modulo[] = [
-  { id: "pele", slug: "pele", nome: "Pele", exame: "Dermatoscopia", area: "Dermatologia", descricao: "Lesões cutâneas (HAM10000).", icone: "skin" },
+  { id: "pele", slug: "pele", nome: "Pele", exame: "Dermatoscopia", area: "Dermatologia", descricao: "Lesões cutâneas: benigno ou maligno (melanoma e carcinoma basocelular).", icone: "skin" },
   { id: "oral", slug: "oral", nome: "Oral", exame: "Histopatologia", area: "Estomatologia", descricao: "Tecido oral: normal e carcinoma.", icone: "mouth" },
   { id: "cerebro", slug: "cerebro", nome: "Cérebro", exame: "Ressonância", area: "Neurologia", descricao: "Glioma, meningioma e tumor hipofisário.", icone: "brain" },
 ];

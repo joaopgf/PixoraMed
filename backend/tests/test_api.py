@@ -75,3 +75,42 @@ def test_preprocessar_imagem_invalida():
 
     with pytest.raises(ImagemInvalida):
         preprocessar(b"isso nao e uma imagem", "cor", 128, 255)
+
+
+def _png(altura, largura):
+    ok, png = cv2.imencode(".png", np.full((altura, largura, 3), 128, dtype=np.uint8))
+    assert ok
+    return png.tobytes()
+
+
+def test_preprocessar_pil_formato_e_normalizacao():
+    from app.inferencia import preprocessar_pil
+
+    entrada = preprocessar_pil(_png(300, 200), 224, [0.5, 0.5, 0.5], [0.25, 0.25, 0.25])
+    assert entrada.shape == (1, 3, 224, 224)
+    assert entrada.dtype == np.float32
+    assert np.allclose(entrada, (128 / 255 - 0.5) / 0.25, atol=1e-5)
+
+
+@pytest.mark.parametrize("conteudo", [b"isso nao e uma imagem", _png(50, 300)])
+def test_preprocessar_pil_recusa_imagem(conteudo):
+    from app.inferencia import ImagemInvalida, preprocessar_pil
+
+    with pytest.raises(ImagemInvalida):
+        preprocessar_pil(conteudo, 224, [0.5, 0.5, 0.5], [0.25, 0.25, 0.25])
+
+
+@pytest.mark.parametrize(
+    "limiar,probabilidades,esperado",
+    [
+        (None, [0.8, 0.2], 0),
+        (0.18, [0.8, 0.2], 1),  # abaixo de 50%, mas acima do limiar
+        (0.18, [0.9, 0.1], 0),
+    ],
+)
+def test_indice_previsto(limiar, probabilidades, esperado):
+    from types import SimpleNamespace
+
+    from app.inferencia import indice_previsto
+
+    assert indice_previsto(SimpleNamespace(limiar=limiar), np.array(probabilidades)) == esperado

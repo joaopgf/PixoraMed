@@ -17,6 +17,7 @@ def listar_modelos(request: Request):
             classes=modelo.classes,
             descricao=modelo.descricao,
             metricas=modelo.metricas,
+            limiar=modelo.limiar,
         )
         for modelo in request.app.state.registro.listar()
     ]

@@ -39,6 +39,7 @@ export type Modelo = {
   classes: string[];
   descricao: string;
   metricas: Partial<Record<"acc_media" | "acc_desvio" | "f1_media" | "f1_desvio", number>>;
+  limiar: number | null;
 };
 
 export type ResultadoPrevisao = {
@@ -48,6 +49,7 @@ export type ResultadoPrevisao = {
   classe_prevista: string;
   confianca: number;
   probabilidades: { classe: string; probabilidade: number }[];
+  limiar: number | null;
   tempo_ms: number;
   aviso: string;
 };

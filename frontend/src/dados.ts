@@ -9,7 +9,7 @@ export const SUSPEITA_VAZAMENTO: Record<string, string> = {
 };
 
 export const NOTAS_DATASET: Record<string, string> = {
-  Pele: "Único dataset dividido por lesão (sem vazamento). F1 ~50% é o número honesto da CNN pequena.",
+  Pele: "Único dataset dividido por lesão (sem vazamento de lesão). F1 ~50% é o número honesto da CNN pequena de 7 classes, que não é o modelo usado no app.",
   "Cérebro": "Normalizado não convergiu em 450 épocas (underfitting); sem normalizar chegou a 95%. O modelo só separa tipos de tumor: não há classe sem tumor.",
   Oral: "Cinza sem normalização teve overfitting claro: treino ~99%, teste ~75%.",
 };

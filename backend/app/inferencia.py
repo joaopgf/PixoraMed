@@ -1,5 +1,6 @@
 """Carrega os modelos ONNX da pasta models/ e faz a previsão de uma imagem."""
 
+import io
 import json
 import logging
 from dataclasses import dataclass, field
@@ -8,8 +9,12 @@ from pathlib import Path
 import cv2
 import numpy as np
 import onnxruntime as ort
+from PIL import Image, ImageOps
 
 log = logging.getLogger(__name__)
+
+FORMATOS_PIL = {"JPEG", "PNG", "WEBP", "BMP", "TIFF"}
+LADO_MINIMO_PIL = 100
 
 
 class ImagemInvalida(ValueError):
@@ -27,6 +32,11 @@ class ModeloCarregado:
     sessao: ort.InferenceSession
     descricao: str = ""
     metricas: dict = field(default_factory=dict)
+    # Só nos modelos com normalização própria (hoje, o ensemble da Pele)
+    media: list[float] | None = None
+    desvio: list[float] | None = None
+    # Com limiar, o ONNX devolve a probabilidade da segunda classe, já calibrada, em vez de logits
+    limiar: float | None = None
 
     @property
     def nome_entrada(self) -> str:
@@ -50,15 +60,55 @@ def preprocessar(conteudo: bytes, modo: str, tamanho: int, escala: float) -> np.
     return (imagem[np.newaxis].astype(np.float32)) / np.float32(escala)
 
 
+def preprocessar_pil(conteudo: bytes, tamanho: int, media: list[float], desvio: list[float]) -> np.ndarray:
+    """Repete o pacote da Pele: orientação EXIF, RGB sobre fundo branco, resize bicúbico do PIL e normalização."""
+    try:
+        with Image.open(io.BytesIO(conteudo)) as origem:
+            if origem.format not in FORMATOS_PIL:
+                raise ImagemInvalida("Formato de imagem não suportado. Envie um arquivo JPG ou PNG.")
+            imagem = ImageOps.exif_transpose(origem)
+            if imagem.mode in ("RGBA", "LA") or (imagem.mode == "P" and "transparency" in imagem.info):
+                rgba = imagem.convert("RGBA")
+                imagem = Image.alpha_composite(Image.new("RGBA", rgba.size, (255, 255, 255, 255)), rgba).convert("RGB")
+            else:
+                imagem = imagem.convert("RGB")
+    except ImagemInvalida:
+        raise
+    except (OSError, ValueError, Image.DecompressionBombError) as erro:
+        raise ImagemInvalida("Não foi possível ler a imagem. Envie um arquivo JPG ou PNG.") from erro
+
+    if min(imagem.size) < LADO_MINIMO_PIL:
+        raise ImagemInvalida(f"Imagem muito pequena. O mínimo é {LADO_MINIMO_PIL}x{LADO_MINIMO_PIL} pixels.")
+
+    imagem = imagem.resize((tamanho, tamanho), Image.Resampling.BICUBIC)
+    pixels = np.asarray(imagem, dtype=np.float32) / 255.0
+    pixels = (pixels - np.array(media, dtype=np.float32)) / np.array(desvio, dtype=np.float32)
+    return pixels.transpose(2, 0, 1)[np.newaxis]
+
+
 def softmax(logits: np.ndarray) -> np.ndarray:
     exp = np.exp(logits - logits.max())
     return exp / exp.sum()
 
 
 def prever(modelo: ModeloCarregado, conteudo: bytes) -> np.ndarray:
-    entrada = preprocessar(conteudo, modelo.modo, modelo.tamanho, modelo.escala)
-    logits = modelo.sessao.run(None, {modelo.nome_entrada: entrada})[0][0]
-    return softmax(logits)
+    """Devolve uma probabilidade para cada classe, na ordem de modelo.classes."""
+    if modelo.media is not None and modelo.desvio is not None:
+        entrada = preprocessar_pil(conteudo, modelo.tamanho, modelo.media, modelo.desvio)
+    else:
+        entrada = preprocessar(conteudo, modelo.modo, modelo.tamanho, modelo.escala)
+    saida = modelo.sessao.run(None, {modelo.nome_entrada: entrada})[0]
+    if modelo.limiar is not None:
+        positiva = float(saida.reshape(-1)[0])
+        return np.array([1.0 - positiva, positiva])
+    return softmax(saida[0])
+
+
+def indice_previsto(modelo: ModeloCarregado, probabilidades: np.ndarray) -> int:
+    """A classe mais provável ou, se o modelo tiver limiar, a segunda classe quando a probabilidade dela o alcança."""
+    if modelo.limiar is not None:
+        return 1 if probabilidades[1] >= modelo.limiar else 0
+    return int(probabilidades.argmax())
 
 
 class RegistroModelos:
@@ -89,6 +139,9 @@ class RegistroModelos:
                     sessao=sessao,
                     descricao=meta.get("descricao", ""),
                     metricas=meta.get("metricas", {}),
+                    media=meta.get("media"),
+                    desvio=meta.get("desvio"),
+                    limiar=meta.get("limiar"),
                 )
             except Exception:
                 log.exception("Modelo ignorado: %s", arquivo_meta.name)

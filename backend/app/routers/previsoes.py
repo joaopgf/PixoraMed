@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import get_db
 from app.esquemas import PrevisaoHistorico, PrevisaoOut, Probabilidade
-from app.inferencia import ImagemInvalida, prever
+from app.inferencia import ImagemInvalida, indice_previsto, prever
 from app.tabelas import Previsao
 
 router = APIRouter(prefix="/api/previsoes", tags=["previsões"])
@@ -40,7 +40,7 @@ async def criar_previsao(
         raise HTTPException(status_code=422, detail=str(erro)) from erro
     tempo_ms = (time.perf_counter() - inicio) * 1000
 
-    indice = int(probabilidades.argmax())
+    indice = indice_previsto(modelo, probabilidades)
     classe = modelo.classes[indice]
     confianca = float(probabilidades[indice])
 
@@ -60,6 +60,7 @@ async def criar_previsao(
             key=lambda item: item.probabilidade,
             reverse=True,
         ),
+        limiar=modelo.limiar,
         tempo_ms=tempo_ms,
         aviso=AVISO,
     )
