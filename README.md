@@ -8,6 +8,10 @@ Projeto integrador do Bootcamp de IA (TCS / SENAI Londrina, 2026). Os notebooks 
 
 > **Aviso:** ferramenta acadêmica. Não é um dispositivo médico e não faz diagnóstico.
 
+## Processo (BPMN 2.0)
+
+![Processo de classificação de imagem em BPMN 2.0](docs/processo_bpmn.png)
+
 ## Arquitetura
 
 ```
