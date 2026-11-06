@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { api } from "../api";
-import { formatarPct, SUSPEITA_VAZAMENTO } from "../dados";
+import { AVISO_ESCOPO, formatarPct, SUSPEITA_VAZAMENTO } from "../dados";
 import { Alerta, CabecalhoPagina, Etapas } from "../components/Estrutura";
 import Icone from "../components/Icone";
 import { useEstado } from "../estado";
@@ -109,6 +109,16 @@ export default function Resultado() {
         <div style={{ marginBottom: 15 }}>
           <Alerta icone="warning">
             <strong>{fraseInconclusivo}</strong>
+          </Alerta>
+        </div>
+      )}
+
+      {modulo && AVISO_ESCOPO[modulo.nome] && (
+        <div style={{ marginBottom: 15 }}>
+          <Alerta icone="warning">
+            <strong>O que este resultado não informa.</strong>
+            <br />
+            {AVISO_ESCOPO[modulo.nome]}
           </Alerta>
         </div>
       )}
