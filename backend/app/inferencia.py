@@ -119,6 +119,14 @@ def limiar_inconclusivo_do_modelo(modelo: ModeloCarregado) -> float | None:
     return None if modelo.limiar is not None else settings.limiar_inconclusivo
 
 
+def opcoes_sessao() -> ort.SessionOptions:
+    opcoes = ort.SessionOptions()
+    opcoes.intra_op_num_threads = settings.onnx_threads
+    opcoes.inter_op_num_threads = 1
+    opcoes.add_session_config_entry("session.intra_op.allow_spinning", "0")
+    return opcoes
+
+
 class RegistroModelos:
     """Cada modelo é um par <id>.onnx + <id>.json na pasta models/ (gerados por scripts/exportar_onnx.py)."""
 
@@ -136,7 +144,7 @@ class RegistroModelos:
             try:
                 meta = json.loads(arquivo_meta.read_text(encoding="utf-8"))
                 arquivo_onnx = self.pasta / meta.get("arquivo_onnx", f"{arquivo_meta.stem}.onnx")
-                sessao = ort.InferenceSession(str(arquivo_onnx), providers=["CPUExecutionProvider"])
+                sessao = ort.InferenceSession(str(arquivo_onnx), opcoes_sessao(), providers=["CPUExecutionProvider"])
                 modelo = ModeloCarregado(
                     id=meta["id"],
                     cancer=meta["cancer"],

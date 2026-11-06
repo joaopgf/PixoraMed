@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     # Abaixo desta confiança, o resultado é "inconclusivo" (não vale para modelos com limiar próprio, como o da Pele)
     limiar_inconclusivo: float = 0.8
 
+    # O padrão do ONNX Runtime cria uma thread por CPU visível, e elas disputam a pouca CPU do plano gratuito do Render
+    onnx_threads: int = 1
+
     @property
     def lista_cors(self) -> list[str]:
         return [origem.strip() for origem in self.cors_origins.split(",") if origem.strip()]

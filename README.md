@@ -44,6 +44,8 @@ O treino acontece em PyTorch na GPU. Para o app, cada modelo é exportado para *
 
 Em Oral e Cérebro, a API responde `inconclusivo` quando a confiança fica abaixo de 80% (variável `LIMIAR_INCONCLUSIVO`). A Pele não usa essa regra, porque já decide pelo limiar próprio.
 
+O ONNX Runtime usa 1 thread por padrão (variável `ONNX_THREADS`), porque criar uma thread por CPU visível deixa a API muito lenta em servidores com pouca CPU.
+
 O modelo da Pele ainda não teve as métricas de teste registradas no app, e a queratose actínica (akiec) ficou fora do treino. No Windows, com os três modelos, o pico de memória medido foi de 250 MB, sem incluir o restante da API. O uso nos 512 MB do plano gratuito do Render ainda não foi testado.
 
 ## Estrutura

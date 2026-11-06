@@ -49,4 +49,5 @@ resource "vercel_project_environment_variable" "api_url" {
   key        = "VITE_API_URL"
   value      = render_web_service.api.url
   target     = ["production", "preview"]
+  sensitive  = false # é a URL pública da API
 }
