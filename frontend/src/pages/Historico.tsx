@@ -8,6 +8,8 @@ import { CabecalhoPagina } from "../components/Estrutura";
 import Icone from "../components/Icone";
 import { codigoRegistro, formatarData, lerModeloId, MODULOS, nomeClasse, nomeModo } from "../modulos";
 
+const ITENS_POR_PAGINA = 10;
+
 function exportarCsv(registros: RegistroPrevisao[]) {
   const linhas = [
     ["Identificador", "Modulo", "Modelo", "Classe prevista", "Confianca (%)", "Data", "Tempo (ms)"],
@@ -36,6 +38,7 @@ export default function Historico() {
   const previsoes = useQuery({ queryKey: ["previsoes"], queryFn: api.previsoes });
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todos");
+  const [pagina, setPagina] = useState(1);
 
   const visiveis = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -45,6 +48,12 @@ export default function Historico() {
       return texto.includes(termo) && (filtro === "todos" || modulo?.id === filtro);
     });
   }, [previsoes.data, busca, filtro]);
+
+  const totalPaginas = Math.max(1, Math.ceil(visiveis.length / ITENS_POR_PAGINA));
+  // A lista pode encolher ao recarregar os dados, então a página nunca passa da última
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
+  const registrosDaPagina = visiveis.slice(inicio, inicio + ITENS_POR_PAGINA);
 
   return (
     <>
@@ -78,10 +87,21 @@ export default function Historico() {
               aria-label="Buscar no histórico"
               placeholder="Buscar por código, módulo ou classe..."
               value={busca}
-              onChange={(evento) => setBusca(evento.target.value)}
+              onChange={(evento) => {
+                setBusca(evento.target.value);
+                setPagina(1);
+              }}
             />
           </div>
-          <select className="select-inline" aria-label="Filtrar por módulo" value={filtro} onChange={(evento) => setFiltro(evento.target.value)}>
+          <select
+            className="select-inline"
+            aria-label="Filtrar por módulo"
+            value={filtro}
+            onChange={(evento) => {
+              setFiltro(evento.target.value);
+              setPagina(1);
+            }}
+          >
             <option value="todos">Todos os módulos</option>
             {MODULOS.map((modulo) => (
               <option key={modulo.id} value={modulo.id}>
@@ -103,7 +123,7 @@ export default function Historico() {
               </tr>
             </thead>
             <tbody>
-              {visiveis.map((registro) => {
+              {registrosDaPagina.map((registro) => {
                 const { modulo, modo } = lerModeloId(registro.modelo_id);
                 return (
                   <tr key={registro.id}>
@@ -146,6 +166,24 @@ export default function Historico() {
             </tbody>
           </table>
         </div>
+        {totalPaginas > 1 && (
+          <nav className="paginacao" aria-label="Paginação do histórico">
+            <span className="paginacao-resumo">
+              Mostrando {inicio + 1}–{inicio + registrosDaPagina.length} de {visiveis.length}
+            </span>
+            <div className="paginacao-controles">
+              <button type="button" className="btn secondary" disabled={paginaAtual === 1} onClick={() => setPagina(paginaAtual - 1)}>
+                ← Anterior
+              </button>
+              <span className="mono" aria-current="page">
+                Página {paginaAtual} de {totalPaginas}
+              </span>
+              <button type="button" className="btn secondary" disabled={paginaAtual === totalPaginas} onClick={() => setPagina(paginaAtual + 1)}>
+                Próxima →
+              </button>
+            </div>
+          </nav>
+        )}
       </section>
     </>
   );
