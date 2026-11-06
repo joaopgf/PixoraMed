@@ -6,7 +6,7 @@ import { api, type RegistroPrevisao } from "../api";
 import { formatarPct } from "../dados";
 import { CabecalhoPagina } from "../components/Estrutura";
 import Icone from "../components/Icone";
-import { codigoRegistro, formatarData, lerModeloId, MODULOS, nomeModo } from "../modulos";
+import { codigoRegistro, formatarData, lerModeloId, MODULOS, nomeClasse, nomeModo } from "../modulos";
 
 function exportarCsv(registros: RegistroPrevisao[]) {
   const linhas = [
@@ -15,7 +15,7 @@ function exportarCsv(registros: RegistroPrevisao[]) {
       codigoRegistro(registro.id),
       lerModeloId(registro.modelo_id).modulo?.nome ?? "",
       registro.modelo_id,
-      registro.classe_prevista,
+      nomeClasse(registro.classe_prevista),
       (registro.confianca * 100).toFixed(2).replace(".", ","),
       formatarData(registro.criado_em),
       registro.tempo_ms.toFixed(0),
@@ -41,7 +41,7 @@ export default function Historico() {
     const termo = busca.trim().toLowerCase();
     return (previsoes.data ?? []).filter((registro) => {
       const { modulo } = lerModeloId(registro.modelo_id);
-      const texto = `${codigoRegistro(registro.id)} ${modulo?.nome ?? ""} ${registro.modelo_id} ${registro.classe_prevista}`.toLowerCase();
+      const texto = `${codigoRegistro(registro.id)} ${modulo?.nome ?? ""} ${registro.modelo_id} ${nomeClasse(registro.classe_prevista)}`.toLowerCase();
       return texto.includes(termo) && (filtro === "todos" || modulo?.id === filtro);
     });
   }, [previsoes.data, busca, filtro]);
@@ -118,7 +118,7 @@ export default function Historico() {
                       <span className="tiny muted">{nomeModo(modo)}</span>
                     </td>
                     <td>
-                      <span className="table-status neutral">{registro.classe_prevista}</span>
+                      <span className="table-status neutral">{nomeClasse(registro.classe_prevista)}</span>
                     </td>
                     <td className="mono">{formatarPct(registro.confianca * 100)}</td>
                     <td>{formatarData(registro.criado_em)}</td>

@@ -31,7 +31,11 @@ export function lerModeloId(modeloId: string) {
   return { modulo: MODULOS.find((modulo) => modulo.slug === slug), modo: encontrado?.[2] };
 }
 
-export const nomeModo = (modo?: string) => (modo === "cor" ? "colorido" : modo === "cinza" ? "tons de cinza" : "");
+// A pasta brain_tumor do dataset é de tumor hipofisário; o id "tumor" continua no modelo, na API e no banco
+const NOMES_CLASSES: Record<string, string> = { tumor: "hipofisário" };
+export const nomeClasse = (classe: string) => NOMES_CLASSES[classe] ?? classe;
+
+export const nomeModo =(modo?: string) => (modo === "cor" ? "colorido" : modo === "cinza" ? "tons de cinza" : "");
 
 export const codigoRegistro = (id: number) => `PXM-${String(id).padStart(6, "0")}`;
 

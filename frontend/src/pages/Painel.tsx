@@ -5,7 +5,7 @@ import { api } from "../api";
 import { formatarPct } from "../dados";
 import { CabecalhoPagina, LinkTexto } from "../components/Estrutura";
 import Icone from "../components/Icone";
-import { codigoRegistro, formatarData, lerModeloId, MODULOS } from "../modulos";
+import { codigoRegistro, formatarData, lerModeloId, MODULOS, nomeClasse } from "../modulos";
 
 const FLUXO = [
   { titulo: "Selecionar módulo", texto: "Escolher o módulo compatível com a imagem." },
@@ -143,7 +143,7 @@ export default function Painel() {
                   </div>
                 </div>
                 <div className="activity-state">
-                  <strong>{registro.classe_prevista}</strong>
+                  <strong>{nomeClasse(registro.classe_prevista)}</strong>
                   <small>Confiança {formatarPct(registro.confianca * 100)}</small>
                 </div>
               </div>

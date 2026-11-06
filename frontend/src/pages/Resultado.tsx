@@ -6,7 +6,7 @@ import { formatarPct, SUSPEITA_VAZAMENTO } from "../dados";
 import { Alerta, CabecalhoPagina, Etapas } from "../components/Estrutura";
 import Icone from "../components/Icone";
 import { useEstado } from "../estado";
-import { codigoRegistro, formatarData, lerModeloId, nomeModo } from "../modulos";
+import { codigoRegistro, formatarData, lerModeloId, nomeClasse, nomeModo } from "../modulos";
 
 const AVISO_PADRAO =
   "Resultado de um modelo experimental, feito para fins acadêmicos. Não é um diagnóstico e não substitui a avaliação de um profissional de saúde.";
@@ -74,7 +74,7 @@ export default function Resultado() {
       <div className="result-grid">
         <article className="result-metric">
           <small>{inconclusivo ? "Resultado" : "Classe prevista"}</small>
-          <strong>{inconclusivo ? "Inconclusivo" : dados.classe_prevista}</strong>
+          <strong>{inconclusivo ? "Inconclusivo" : nomeClasse(dados.classe_prevista)}</strong>
           <p>
             {inconclusivo
               ? "O sistema não indica uma classe quando a confiança fica abaixo do limiar."
@@ -132,7 +132,7 @@ export default function Resultado() {
                 {atual.probabilidades.map((item) => (
                   <div key={item.classe}>
                     <div className="prob-top">
-                      <span>{item.classe}</span>
+                      <span>{nomeClasse(item.classe)}</span>
                       <span>{formatarPct(item.probabilidade * 100)}</span>
                     </div>
                     <div className="prob-bar">

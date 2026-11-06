@@ -6,7 +6,7 @@ import { api } from "../api";
 import { Alerta, CabecalhoPagina, Etapas } from "../components/Estrutura";
 import Icone from "../components/Icone";
 import { useEstado } from "../estado";
-import { formatarTamanho, modelosDoModulo, nomeModo, obterModulo } from "../modulos";
+import { formatarTamanho, modelosDoModulo, nomeClasse, nomeModo, obterModulo } from "../modulos";
 
 const TIPOS = ["image/png", "image/jpeg", "image/webp"];
 const LIMITE_MB = 10;
@@ -114,7 +114,7 @@ export default function Preparar() {
                   </option>
                 ))}
               </select>
-              {modelo && <span className="hint">Classes: {modelo.classes.join(", ")}</span>}
+              {modelo && <span className="hint">Classes: {modelo.classes.map(nomeClasse).join(", ")}</span>}
             </div>
           </div>
 
