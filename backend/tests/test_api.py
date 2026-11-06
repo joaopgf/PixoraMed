@@ -70,11 +70,13 @@ def test_preprocessar_formato(modo, canais):
     assert 0.0 <= entrada.min() and entrada.max() <= 1.0
 
 
-def test_preprocessar_imagem_invalida():
+@pytest.mark.parametrize("conteudo", [b"isso nao e uma imagem", b""])
+@pytest.mark.parametrize("modo", ["cor", "cinza"])
+def test_preprocessar_imagem_invalida(modo, conteudo):
     from app.inferencia import ImagemInvalida, preprocessar
 
     with pytest.raises(ImagemInvalida):
-        preprocessar(b"isso nao e uma imagem", "cor", 128, 255)
+        preprocessar(conteudo, modo, 128, 255)
 
 
 def _png(altura, largura):
@@ -132,7 +134,7 @@ def test_preprocessar_pil_formato_e_normalizacao():
     assert np.allclose(entrada, (128 / 255 - 0.5) / 0.25, atol=1e-5)
 
 
-@pytest.mark.parametrize("conteudo", [b"isso nao e uma imagem", _png(50, 300)])
+@pytest.mark.parametrize("conteudo", [b"isso nao e uma imagem", b"", _png(50, 300)])
 def test_preprocessar_pil_recusa_imagem(conteudo):
     from app.inferencia import ImagemInvalida, preprocessar_pil
 

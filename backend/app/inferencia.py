@@ -49,6 +49,9 @@ class ModeloCarregado:
 def preprocessar(conteudo: bytes, modo: str, tamanho: int, escala: float) -> np.ndarray:
     """Repete o load_data dos notebooks: lê com OpenCV, BGR -> RGB, resize, (C, H, W) e divide pela escala."""
     buffer = np.frombuffer(conteudo, dtype=np.uint8)
+    # Com o buffer vazio, o cv2.imdecode lança erro em vez de devolver None
+    if buffer.size == 0:
+        raise ImagemInvalida("Não foi possível ler a imagem. Envie um arquivo JPG ou PNG.")
     flag = cv2.IMREAD_COLOR if modo == "cor" else cv2.IMREAD_GRAYSCALE
     imagem = cv2.imdecode(buffer, flag)
     if imagem is None:
