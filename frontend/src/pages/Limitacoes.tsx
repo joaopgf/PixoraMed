@@ -51,6 +51,10 @@ export default function Limitacoes() {
             actínica (akiec) ficou fora do treino, então uma imagem dela recebe uma das duas classes. O limiar de 18% favorece encontrar
             casos malignos e aumenta os alarmes falsos. O modelo só vale para imagens dermatoscópicas, não para fotos comuns de celular.
           </p>
+          <p className="texto" style={{ margin: "12px 0 0" }}>
+            O código original desse modelo foi perdido. Os resultados exibidos na página de treinos (AUC de 0,939, sensibilidade de 89,0% e
+            especificidade de 83,7%) são de uma reprodução do treino, não do modelo usado nas análises.
+          </p>
         </section>
 
         <section className="panel">

@@ -4,6 +4,7 @@ import { Bar, BarChart, CartesianGrid, ErrorBar, Legend, ResponsiveContainer, To
 
 import { api, type Treino } from "../api";
 import { CabecalhoPagina } from "../components/Estrutura";
+import ReproducaoPele from "../components/ReproducaoPele";
 import { formatarPct, NOTAS_DATASET, SUSPEITA_VAZAMENTO } from "../dados";
 
 type Metrica = "acc" | "f1";
@@ -58,7 +59,7 @@ export default function Resultados() {
       <CabecalhoPagina
         rotulo="EXPERIMENTOS"
         titulo="Resultados dos treinos"
-        descricao="Média ± desvio padrão no teste, em 5 folds. Diferenças menores que ~2 pontos são ruído."
+        descricao="Nas CNNs pequenas: média ± desvio padrão no teste, em 5 folds. Diferenças menores que ~2 pontos são ruído."
         acoes={
           <Alternador
             opcoes={[
@@ -70,6 +71,8 @@ export default function Resultados() {
           />
         }
       />
+
+      <ReproducaoPele />
 
       {treinos.isLoading && <div className="panel empty">Carregando...</div>}
       {treinos.isError && <div className="panel empty">Não foi possível carregar os treinos: {treinos.error.message}</div>}
