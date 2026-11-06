@@ -42,7 +42,7 @@ O treino acontece em PyTorch na GPU. Para o app, cada modelo é exportado para *
 | Cérebro | CNN pequena (~24 mil parâmetros) | 128×128, cinza | `glioma`, `menin` ou `tumor`, a classe mais provável | ~110 KB |
 | Pele | Ensemble de 5 EfficientNet-B0 com calibração de Platt | 224×224, cor, normalização ImageNet | `benigno` ou `maligno` (mel + bcc), com limiar de 18% | ~80 MB |
 
-Em Oral e Cérebro, a API responde `inconclusivo` quando a confiança fica abaixo de 80% (variável `LIMIAR_INCONCLUSIVO`). A Pele não usa essa regra, porque já decide pelo limiar próprio.
+Em Oral e Cérebro, a API responde `inconclusivo` quando a confiança fica abaixo de 80% (variável `LIMIAR_INCONCLUSIVO`). A Pele mantém a classe do limiar próprio e, quando nenhuma classe chega a esse valor, a tela mostra um aviso de baixa certeza.
 
 O ONNX Runtime usa 1 thread por padrão (variável `ONNX_THREADS`), porque criar uma thread por CPU visível deixa a API muito lenta em servidores com pouca CPU.
 

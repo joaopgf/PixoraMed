@@ -11,6 +11,7 @@ from app.inferencia import (
     CLASSE_INCONCLUSIVA,
     ImagemInvalida,
     indice_previsto,
+    limiar_baixa_certeza_do_modelo,
     limiar_inconclusivo_do_modelo,
     prever,
 )
@@ -70,6 +71,7 @@ async def criar_previsao(
         ),
         limiar=modelo.limiar,
         limiar_inconclusivo=limiar_inconclusivo,
+        limiar_baixa_certeza=limiar_baixa_certeza_do_modelo(modelo),
         tempo_ms=tempo_ms,
         aviso=AVISO,
     )

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 
 from app.esquemas import ModeloOut
-from app.inferencia import limiar_inconclusivo_do_modelo
+from app.inferencia import limiar_baixa_certeza_do_modelo, limiar_inconclusivo_do_modelo
 
 router = APIRouter(prefix="/api/modelos", tags=["modelos"])
 
@@ -20,6 +20,7 @@ def listar_modelos(request: Request):
             metricas=modelo.metricas,
             limiar=modelo.limiar,
             limiar_inconclusivo=limiar_inconclusivo_do_modelo(modelo),
+            limiar_baixa_certeza=limiar_baixa_certeza_do_modelo(modelo),
         )
         for modelo in request.app.state.registro.listar()
     ]

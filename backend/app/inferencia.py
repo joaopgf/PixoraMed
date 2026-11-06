@@ -119,6 +119,11 @@ def limiar_inconclusivo_do_modelo(modelo: ModeloCarregado) -> float | None:
     return None if modelo.limiar is not None else settings.limiar_inconclusivo
 
 
+def limiar_baixa_certeza_do_modelo(modelo: ModeloCarregado) -> float | None:
+    """Modelos com limiar próprio mantêm a classe, mas a tela avisa quando nenhuma classe alcança este valor."""
+    return settings.limiar_inconclusivo if modelo.limiar is not None else None
+
+
 def opcoes_sessao() -> ort.SessionOptions:
     opcoes = ort.SessionOptions()
     opcoes.intra_op_num_threads = settings.onnx_threads

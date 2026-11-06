@@ -43,6 +43,9 @@ export default function Resultado() {
   const limiar = atual?.limiar ?? modeloUsado?.limiar ?? null;
   const classePositiva = modeloUsado?.classes[1] ?? "maligno";
   const probPositiva = dados.classe_prevista === classePositiva ? dados.confianca : 1 - dados.confianca;
+  // Só em modelos com limiar próprio: a classe é mantida, e a tela avisa se nenhuma classe alcançar o valor mínimo
+  const limiarCerteza = atual?.limiar_baixa_certeza ?? modeloUsado?.limiar_baixa_certeza ?? null;
+  const baixaCerteza = limiar !== null && limiarCerteza !== null && Math.max(probPositiva, 1 - probPositiva) < limiarCerteza;
   const inconclusivo = dados.classe_prevista === "inconclusivo";
   const limiarInconclusivo = atual?.limiar_inconclusivo ?? modeloUsado?.limiar_inconclusivo ?? null;
   const fraseInconclusivo = `Resultado inconclusivo: o modelo não atingiu a confiança mínima${
@@ -109,6 +112,15 @@ export default function Resultado() {
         <div style={{ marginBottom: 15 }}>
           <Alerta icone="warning">
             <strong>{fraseInconclusivo}</strong>
+          </Alerta>
+        </div>
+      )}
+
+      {baixaCerteza && (
+        <div style={{ marginBottom: 15 }}>
+          <Alerta icone="warning">
+            <strong>Baixa certeza: nenhuma classe atingiu {Math.round(limiarCerteza! * 100)}% de probabilidade.</strong>
+            <br />O resultado "{dados.classe_prevista}" indica um caso suspeito pelo limiar de {Math.round(limiar! * 100)}%, não uma confirmação.
           </Alerta>
         </div>
       )}

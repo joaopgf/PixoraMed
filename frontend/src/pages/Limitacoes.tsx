@@ -21,7 +21,7 @@ export default function Limitacoes() {
             <li>{AVISO_ESCOPO["Cérebro"]}</li>
             <li>Em Oral e Cérebro, o resultado é "inconclusivo" quando a confiança fica abaixo de 80%. Isso reduz erros de baixa confiança, mas não impede erros com confiança alta, comuns em imagens de outra origem.</li>
             <li>Em Oral e Cérebro, a "confiança" exibida é a saída softmax da rede, não uma probabilidade calibrada de doença.</li>
-            <li>Em Pele, a classe é "maligno" quando a probabilidade calibrada alcança o limiar de 18%. Na lista de análises, a confiança mostra a probabilidade da classe prevista, que pode ser baixa em um resultado "maligno".</li>
+            <li>Em Pele, a classe é "maligno" quando a probabilidade calibrada alcança o limiar de 18%. Na lista de análises, a confiança mostra a probabilidade da classe prevista, que pode ser baixa em um resultado "maligno". Quando nenhuma classe chega a 80%, a tela mantém a classe e mostra um aviso de baixa certeza.</li>
           </ul>
         </section>
 

@@ -119,6 +119,7 @@ def test_previsao_classe_e_inconclusivo(cliente, saida, limiar, classe, limiar_i
     corpo = resposta.json()
     assert corpo["classe_prevista"] == classe
     assert corpo["limiar_inconclusivo"] == limiar_inconclusivo
+    assert corpo["limiar_baixa_certeza"] == (0.8 if limiar is not None else None)
     assert {item["classe"] for item in corpo["probabilidades"]} == {"a", "b"}
 
 
