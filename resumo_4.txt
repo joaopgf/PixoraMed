@@ -1,0 +1,250 @@
+================================================================================
+HANDOFF -- PixoraMed -- MODELOS, TESTES, DECK E SKILLS
+================================================================================
+
+Documento de continuidade, data de referência 06/11/2026. Continua de resumo_3.txt,
+que segue válido para o histórico anterior. Feito para outra instância do Claude,
+sem acesso a esta conversa.
+
+ENDEREÇO DO PROJETO
+  Local:  C:\Users\joaop\OneDrive\Desktop\Projetos\PixoraMed
+  GitHub: https://github.com/joaopgf/PixoraMed (privado, branch main)
+Repositório de treino:
+  Local:  C:\Users\joaop\OneDrive\Desktop\Projetos\Projeto-ML-Cancer
+  GitHub: https://github.com/joaopgf/Projeto-ML-Cancer (branch main)
+
+Marcação: NÃO CONFERIDO = não verifiquei diretamente.
+
+ÍNDICE
+ 1. Estado atual
+ 2. O que mudou nesta sessão
+ 3. Modelos e como cada módulo decide
+ 4. Resultados medidos
+ 5. Decisões do grupo
+ 6. Lista do que melhorar
+ 7. Banca e entregáveis
+ 8. Arquivos fora do repositório
+ 9. Como rodar
+10. Armadilhas encontradas
+11. Convenções de trabalho
+12. Commits desta sessão
+
+
+1. ESTADO ATUAL
+---------------
+PixoraMed: main igual ao GitHub, commit ea06896. Sem commit: resumo_3.txt,
+           resumo_4.txt e PixoraMed_skills.zip (cópia da pasta skills/).
+Projeto-ML-Cancer: commit 526c051. Pendências locais antigas: teste_externo.ipynb
+           alterado e resultados/Cérebro/Cérebro_cinza/2026-11-04/ sem commit.
+           A pasta data/ foi esvaziada pelo João.
+Deploy: NÃO feito.
+Docker: testado com 512 MB e 0,1 de CPU. Render real: NÃO testado.
+Terraform: configuração válida, mas a pasta Desktop\terraform_1.17.1_windows_amd64
+           não está mais lá, embora siga no PATH. É preciso extrair de novo.
+Testes do backend: 21 passando. Frontend compila.
+
+
+2. O QUE MUDOU NESTA SESSÃO
+---------------------------
+- Modelos do Oral e da Pele adicionados ao app. Os 3 módulos estão conectados.
+- Tela de inconclusivo em Oral e Cérebro, sem mandar procurar médico.
+- Aviso de baixa certeza na Pele, mantendo a classe.
+- Aviso do que o resultado do Cérebro não informa.
+- Classe "tumor" aparece como "hipofisário" nas telas. O id segue "tumor".
+- ONNX limitado a 1 thread (ONNX_THREADS). Pele caiu de ~20 s para 1,7 s.
+- Seção "Pele: reprodução do treino" na página de Resultados.
+- Treino do Cérebro colorido sem normalizar adicionado ao resultados.csv.
+- Arquivo vazio agora devolve 422 nos 3 módulos. Antes dava 500 em Oral e Cérebro.
+- Terraform: incluído "sensitive = false" exigido pela versão atual do provedor.
+- BPMN em docs/processo_bpmn.png, deck em docs/PixoraMed_apresentacao_banca.pptx.
+- 11 skills em skills/, com README de uso.
+- Notebook rna_cor/rna_Pele_EfficientNet.ipynb no repositório de treino.
+
+
+3. MODELOS E COMO CADA MÓDULO DECIDE
+------------------------------------
+Pele (pele_cor): ensemble de 5 EfficientNet-B0 calibradas, em um único ONNX de
+  ~80 MB. RGB, 224x224, resize bicúbico do PIL, /255 e normalização ImageNet.
+  Classes benigno e maligno (mel + bcc); akiec ficou fora do treino.
+  Limiar de 18%: vira maligno mesmo abaixo de 50%. Sem inconclusivo.
+  Se nenhuma classe chega a 80%, a classe é mantida e aparece o aviso.
+Oral (oral_cor): CNN pequena, RGB, 128x128, /255. Classes normal e scc.
+Cérebro (cerebro_cinza): CNN pequena, cinza, 128x128, sem divisão.
+  Classes glioma, menin e tumor (hipofisário). Não detecta ausência de tumor.
+Oral e Cérebro: inconclusivo abaixo de 80% (LIMIAR_INCONCLUSIVO).
+
+Testado: BGR ou tirar a divisão por 255 derruba o Oral de 96,5% para cerca de 52%.
+OpenCV lê em BGR e o sistema converte para RGB. João pensou em usar BGR e sem
+divisão; o teste mostrou que não funciona, e ficou como está.
+
+
+4. RESULTADOS MEDIDOS
+---------------------
+Oral, 200 imagens separadas: 96,5% (193/200). normal 95/100, scc 98/100.
+  Limiar de 80%: 188 conclusivas, 98,4% de acerto, 3 erros passam.
+Cérebro, 300 imagens separadas: 98,3% (295/300). Limiar: 297 conclusivas, 99,0%.
+  Reconfirmado nesta sessão. NÃO CONFERIDO se _4901 a _5000 ficaram fora do treino.
+Cérebro, 5 folds, 1.000 por classe:
+  Cinza sem normalizar 95,17 ± 0,55 | Cor sem normalizar 94,37 ± 1,81 (novo)
+  Cinza normalizado 88,90 ± 0,83    | Cor normalizado 90,13 ± 0,97
+  Cor e cinza empatam. O que fez diferença foi não normalizar.
+Pele, modelo do app (pele_cor), 21 imagens de Desktop\teste_interno\pele:
+  8 de 8 malignos, 7 de 13 benignos. Os 6 falsos alarmes receberam o aviso.
+  Amostra pequena. Rótulos da pasta do grupo: NÃO CONFERIDOS contra o metadata.
+Pele, REPRODUÇÃO do treino no Colab T4, 1.915 imagens separadas por lesão:
+  AUC 0,939 (IC 95% 0,922-0,954), sensibilidade 89,0%, especificidade 83,7%,
+  valor preditivo positivo 51,2%, acurácia 84,5% (chutar benigno daria 83,9%).
+  Limiar 19%. NÃO é o modelo do app; serve só para ilustrar o método.
+Capacidade, Docker com 512 MB e 0,1 de CPU: API responde em ~39 s; previsão de
+  0,1 s no Cérebro, 0,2 s no Oral e 1,7 s na Pele; pico de 393 MB. Um segundo
+  processo com a Pele derrubou o contêiner por falta de memória.
+
+
+5. DECISÕES DO GRUPO
+--------------------
+- Banca em 23/11/2026; entrega até 48 h antes (21/11).
+- Integrantes: João Pedro Gonçalves Ferreira, Samuel Rosa Costa, Ramon Camilo
+  Figueiredo, Henrique Pereira da Silva. Professor: André Maurício dos Santos.
+- O login continua simulado.
+- O pele_cor do colega fica no app, sem trocar pelo modelo do Colab.
+- Código original da Pele indisponível (PC do colega desligou; recuperação incerta).
+- Dados de ganho de tempo são hipotéticos por enquanto.
+- Divisão da fala, ajustável: Henrique abre e encerra; Ramon faz BPMN, arquitetura
+  e governança; João faz a demo; Samuel faz a parte técnica.
+- Hospedagem planejada: Vercel + Render + Neon, com Docker Compose como reserva.
+
+
+6. LISTA DO QUE MELHORAR
+------------------------
+João disse que há coisas a melhorar, mas ainda não listou quais. PERGUNTE PRIMEIRO.
+Pendências conhecidas:
+
+App
+ a. Catálogo: o aviso diz que o modelo "sempre responde com uma das classes", o
+    que não vale mais com o inconclusivo.
+ b. Etiqueta "vazamento" deveria ser "possível vazamento". As páginas do Kaggle não
+    falam em vazamento: é conclusão nossa.
+ c. Gráficos de Resultados tiram a média de variantes diferentes. Corrigir antes de
+    importar variantes da Pele.
+ d. Histórico e Painel mostram a confiança da classe prevista, sem o aviso de
+    baixa certeza. Um maligno pode aparecer com 18%.
+ e. Animação inicial ainda mostra rins e pulmões, fora do escopo.
+ f. Fontes de 8 a 11 px herdadas do protótipo; aumentar para o projetor.
+ g. docs/salvar_modelo.md ainda usa Mama como exemplo.
+
+Deploy
+ h. Reextrair o Terraform, criar contas (Neon, Render, Vercel), liberar o repositório
+    e preencher terraform.tfvars. Depois: plan, revisão do usuário e só então apply.
+ i. Testar no Render real.
+
+Modelos e testes
+ j. Teste de Oral e Cérebro com imagens de outra fonte: o de maior valor para a banca.
+ k. Confirmar com o colega a separação do Cérebro e os rótulos das 21 imagens da Pele.
+ l. Mais imagens separadas para medir o pele_cor.
+
+Workflow e deck
+ m. BPMN: falta nota na Pele junto ao losango de 80%. A nota "Métricas igual ao treino."
+    parece ser sobre pré-processamento. A raia "IA (modelo CNN)" e "softmax" não valem
+    para a Pele. O diagrama fica pequeno no projetor.
+ n. Deck: revisar slide 3 (hipotético), slide 5 (fala sobre deploy) e slide 9 (código
+    original). Incluir o empate cor x cinza, se quiserem. Ensaiar os 20 minutos.
+
+Skills
+ o. As lacunas do teste foram corrigidas, mas a versão corrigida não passou por nova
+    reconstrução. Sem teste: scripts de exportação, treinos e Postgres fora do Docker.
+
+
+7. BANCA E ENTREGÁVEIS
+----------------------
+Pesos: inovação e negócio 20%; técnica e arquitetura 30%; protótipo e usabilidade 20%;
+governança e ética 15%; comunicação 15%.
+Tempo: contexto 3 min; BPMN e arquitetura 3; demo 6; técnica 4; governança 2; conclusão 2.
+Entrega até 21/11:
+  [ok]    Repositório com README e infraestrutura. Falta dar acesso à banca.
+  [falta] PDF com BPMN, justificativa técnica e análise de ética e segurança.
+  [ok]    Deck em docs/. Falta a revisão do grupo.
+  [falta] Vídeo de backup da demo.
+
+
+8. ARQUIVOS FORA DO REPOSITÓRIO
+-------------------------------
+ATENÇÃO: em 06/11, ao fim da sessão, NÃO ENCONTREI no Desktop, em Downloads, em Documentos
+nem na Lixeira: HAM10000_PACOTE_INFERENCIA (5 .pt originais da Pele), o zip
+Pele_EfficientNet-20261106T122202Z-1-001.zip, rna_CerebrCor.ipynb e a pasta do Terraform.
+Podem ter sido movidos. João precisa confirmar onde estão. O pele_cor.onnx está no GitHub,
+então o app continua funcionando, mas os .pt originais podem não ter outra cópia.
+Dados brutos da reprodução: cópia só em pasta temporária da sessão e, possivelmente, no Drive
+(Pele_EfficientNet, NÃO CONFERIDO). Os 5 gráficos estão em frontend/public/resultados/pele.
+Desktop\drive-download-20261106T213121Z-1-001.zip: gráficos do Cérebro colorido.
+Desktop\teste_interno: imagens de teste de cérebro (300), oral (195) e pele (21).
+  Faltam oral_normal 4901, 4902, 4903, 4906 e 4907. Os 96,5% vêm das 200 originais;
+  sem a 4902 e a 4907, que eram erros, o resultado sobe artificialmente.
+Datasets apagados do PC; baixar de novo no Kaggle se precisar.
+O gerador do deck ficou em pasta temporária: edite o .pptx direto no PowerPoint.
+
+
+9. COMO RODAR
+-------------
+Docker, da raiz do projeto (app em localhost:8080; API em localhost:8000/docs):
+  docker compose up --build
+Sem Docker, em backend:
+  .venv\Scripts\activate
+  uvicorn app.main:app --reload
+E em frontend (localhost:5173):
+  npm run dev
+Testes, em backend:
+  pytest
+Converter um modelo, em backend (com PYTHONUTF8=1 no Windows):
+  python scripts/exportar_onnx.py "caminho\modelo.pt"
+  python scripts/exportar_ensemble_pele.py "caminho\HAM10000_PACOTE_INFERENCIA"
+Imagens para a demo: Pele isic_0034202 (maligno, 85,08%), Pele isic_0034186 (benigno na
+pasta; o app dá maligno, 34,64%, com aviso), Oral oral_normal_4963 (inconclusivo, 57,89%).
+
+
+10. ARMADILHAS ENCONTRADAS
+--------------------------
+- Porta 8000: o Docker do João pode estar ativo. Um teste meu gravou 3 registros no banco
+  dele por isso (já apagados, com autorização). Antes de escrever, confira a porta e use
+  um projeto Docker separado: -p <nome>, portas próprias e ports: !override.
+- Não rode "docker compose down -v" no projeto principal: apaga o banco.
+- data/resultados.csv fica em LF no git. Regravar com CRLF marca o arquivo inteiro.
+- O CSV vai dentro da imagem Docker: depois de atualizar, use --build.
+- UnicodeEncodeError ao exportar ONNX: defina PYTHONUTF8=1.
+- npm ci falha se o lockfile não acompanhar o package.json; o build local não mostra isso.
+- O validador da skill de PPTX falha com caminho longo: copie para um caminho mais curto.
+- Sem LibreOffice no PC: exporte slides com o PowerPoint via COM.
+- pele_cor.onnx tem ~80 MB (aviso do GitHub acima de 50 MB; limite de 100 MB).
+- Os notebooks antigos não retomam treino: se o Colab cair, recomeçam do zero.
+
+
+11. CONVENÇÕES DE TRABALHO
+--------------------------
+- Português do Brasil, com explicações objetivas.
+- Commit e push só quando João pedir; cada pedido vale para aquele trabalho.
+- Mensagens de commit no PixoraMed em frase no imperativo; no Projeto-ML-Cancer, curtas e
+  em minúsculas. Assinatura: Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+- João roda notebooks na GPU; teste código de células fora do Jupyter, na CPU.
+- Honestidade dos resultados é prioridade: não invente números e não chame teste da mesma
+  fonte de externo. A reprodução da Pele não é o modelo do app.
+
+
+12. COMMITS DESTA SESSÃO
+------------------------
+PixoraMed:
+  7b9c1b9 modelo do Oral
+  4949156 workflow BPMN
+  5bd65a2 modelo da Pele
+  80e853a inconclusivo e BPMN atualizado
+  78d55a4 threads do ONNX e Terraform
+  48daec3 nome hipofisário
+  9332504 aviso do Cérebro
+  d9b66c2 resultados da reprodução da Pele
+  616bdd9 workflow novo
+  d30d1d0 aviso de baixa certeza
+  0ba5923 deck
+  448d8eb slide da Pele simplificado
+  314edf5 Cérebro colorido sem normalizar
+  0b17414 correção do arquivo vazio
+  ea06896 skills (atual)
+Projeto-ML-Cancer:
+  526c051 notebook de reprodução da Pele (atual)

@@ -12,7 +12,8 @@ type Modo = "entrar" | "cadastro";
 
 export default function Login() {
   const navegar = useNavigate();
-  const { logado, entrar, avisoLogin, moduloPendente, setModuloPendente } = useEstado();
+  const { logado, entrar, avisoLogin, moduloPendente, setModuloPendente } =
+    useEstado();
   const [modo, setModo] = useState<Modo>("entrar");
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -33,11 +34,15 @@ export default function Login() {
 
   async function enviar(evento: FormEvent) {
     evento.preventDefault();
-    if (modo === "cadastro" && senha !== confirmacao) return setErro("As senhas não conferem.");
+    if (modo === "cadastro" && senha !== confirmacao)
+      return setErro("As senhas não conferem.");
     setErro("");
     setEnviando(true);
     try {
-      const sessao = modo === "cadastro" ? await api.cadastrar(nome, email, senha) : await api.entrar(email, senha);
+      const sessao =
+        modo === "cadastro"
+          ? await api.cadastrar(nome, email, senha)
+          : await api.entrar(email, senha);
       entrar(sessao, manter);
       if (moduloPendente) {
         setModuloPendente(null);
@@ -46,7 +51,9 @@ export default function Login() {
         navegar("/painel", { replace: true });
       }
     } catch (falha) {
-      setErro(falha instanceof Error ? falha.message : "Não foi possível entrar.");
+      setErro(
+        falha instanceof Error ? falha.message : "Não foi possível entrar.",
+      );
       setEnviando(false);
     }
   }
@@ -61,23 +68,47 @@ export default function Login() {
           PROJETO ACADÊMICO
         </div>
         <h1>Uma experiência integrada para análise de imagens.</h1>
-        <p>Selecione o módulo, carregue uma imagem, revise os dados e veja a resposta do modelo treinado pelo grupo.</p>
+        <p>
+          Selecione o módulo, carregue uma imagem, revise os dados e veja a
+          resposta do modelo treinado pelo grupo.
+        </p>
         <div className="auth-mini-visual">
           <VisualOrgaos />
         </div>
       </section>
 
       <section className="auth-card">
-        <div className="seg" role="tablist" aria-label="Entrar ou criar conta" style={{ marginBottom: 18 }}>
-          <button type="button" role="tab" aria-selected={!cadastro} className={cadastro ? "" : "active"} onClick={() => trocarModo("entrar")}>
+        <div
+          className="seg"
+          role="tablist"
+          aria-label="Entrar ou criar conta"
+          style={{ marginBottom: 18 }}
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={!cadastro}
+            className={cadastro ? "" : "active"}
+            onClick={() => trocarModo("entrar")}
+          >
             Entrar
           </button>
-          <button type="button" role="tab" aria-selected={cadastro} className={cadastro ? "active" : ""} onClick={() => trocarModo("cadastro")}>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={cadastro}
+            className={cadastro ? "active" : ""}
+            onClick={() => trocarModo("cadastro")}
+          >
             Criar conta
           </button>
         </div>
         <h2>{cadastro ? "Criar conta na PixoraMed" : "Acessar a PixoraMed"}</h2>
-        <p>{cadastro ? "Cadastre-se para fazer análises e manter o seu histórico." : "Entre com o e-mail e a senha da sua conta."}</p>
+        <p>
+          {cadastro
+            ? "Cadastre-se para fazer análises e manter o seu histórico."
+            : "Entre com o e-mail e a senha da sua conta."}
+        </p>
 
         {avisoLogin && !cadastro && (
           <div style={{ marginBottom: 15 }}>
@@ -155,21 +186,32 @@ export default function Login() {
             </div>
           )}
           <label className="checkline">
-            <input type="checkbox" checked={manter} onChange={(evento) => setManter(evento.target.checked)} /> Manter conectado neste navegador
+            <input
+              type="checkbox"
+              checked={manter}
+              onChange={(evento) => setManter(evento.target.checked)}
+            />{" "}
+            Manter conectado neste navegador
           </label>
           <div className="form-error" role="alert">
             {erro}
           </div>
           <button type="submit" className="btn primary" disabled={enviando}>
-            {enviando ? "Aguarde..." : cadastro ? "Criar conta" : "Entrar"} <Icone nome="arrow" />
+            {enviando ? "Aguarde..." : cadastro ? "Criar conta" : "Entrar"}{" "}
+            <Icone nome="arrow" />
           </button>
         </form>
         <div className="auth-divider">OU</div>
-        <button type="button" className="btn secondary" onClick={() => navegar("/")}>
+        <button
+          type="button"
+          className="btn secondary"
+          onClick={() => navegar("/")}
+        >
           Voltar à página inicial
         </button>
         <p className="auth-foot">
-          Projeto acadêmico: não use a mesma senha de outros serviços. A senha é guardada só como hash (scrypt) e a sessão vale por 8 horas.
+          Projeto acadêmico: não use a mesma senha de outros serviços. A senha é
+          guardada só como hash (scrypt) e a sessão vale por 8 horas.
         </p>
       </section>
     </main>

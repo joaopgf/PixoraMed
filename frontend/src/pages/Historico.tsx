@@ -6,13 +6,28 @@ import { api, type RegistroPrevisao } from "../api";
 import { formatarPct } from "../dados";
 import { CabecalhoPagina } from "../components/Estrutura";
 import Icone from "../components/Icone";
-import { codigoRegistro, formatarData, lerModeloId, MODULOS, nomeClasse, nomeModo } from "../modulos";
+import {
+  codigoRegistro,
+  formatarData,
+  lerModeloId,
+  MODULOS,
+  nomeClasse,
+  nomeModo,
+} from "../modulos";
 
 const ITENS_POR_PAGINA = 10;
 
 function exportarCsv(registros: RegistroPrevisao[]) {
   const linhas = [
-    ["Identificador", "Modulo", "Modelo", "Classe prevista", "Confianca (%)", "Data", "Tempo (ms)"],
+    [
+      "Identificador",
+      "Modulo",
+      "Modelo",
+      "Classe prevista",
+      "Confianca (%)",
+      "Data",
+      "Tempo (ms)",
+    ],
     ...registros.map((registro) => [
       codigoRegistro(registro.id),
       lerModeloId(registro.modelo_id).modulo?.nome ?? "",
@@ -24,8 +39,18 @@ function exportarCsv(registros: RegistroPrevisao[]) {
     ]),
   ];
   // BOM e ";" para abrir direto no Excel em português
-  const csv = "﻿" + linhas.map((linha) => linha.map((valor) => `"${String(valor).replace(/"/g, '""')}"`).join(";")).join("\r\n");
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const csv =
+    "﻿" +
+    linhas
+      .map((linha) =>
+        linha
+          .map((valor) => `"${String(valor).replace(/"/g, '""')}"`)
+          .join(";"),
+      )
+      .join("\r\n");
+  const url = URL.createObjectURL(
+    new Blob([csv], { type: "text/csv;charset=utf-8" }),
+  );
   const link = document.createElement("a");
   link.href = url;
   link.download = "pixoramed-historico.csv";
@@ -35,7 +60,10 @@ function exportarCsv(registros: RegistroPrevisao[]) {
 
 export default function Historico() {
   const navegar = useNavigate();
-  const previsoes = useQuery({ queryKey: ["previsoes"], queryFn: api.previsoes });
+  const previsoes = useQuery({
+    queryKey: ["previsoes"],
+    queryFn: api.previsoes,
+  });
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todos");
   const [pagina, setPagina] = useState(1);
@@ -44,12 +72,18 @@ export default function Historico() {
     const termo = busca.trim().toLowerCase();
     return (previsoes.data ?? []).filter((registro) => {
       const { modulo } = lerModeloId(registro.modelo_id);
-      const texto = `${codigoRegistro(registro.id)} ${modulo?.nome ?? ""} ${registro.modelo_id} ${nomeClasse(registro.classe_prevista)}`.toLowerCase();
-      return texto.includes(termo) && (filtro === "todos" || modulo?.id === filtro);
+      const texto =
+        `${codigoRegistro(registro.id)} ${modulo?.nome ?? ""} ${registro.modelo_id} ${nomeClasse(registro.classe_prevista)}`.toLowerCase();
+      return (
+        texto.includes(termo) && (filtro === "todos" || modulo?.id === filtro)
+      );
     });
   }, [previsoes.data, busca, filtro]);
 
-  const totalPaginas = Math.max(1, Math.ceil(visiveis.length / ITENS_POR_PAGINA));
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(visiveis.length / ITENS_POR_PAGINA),
+  );
   // A lista pode encolher ao recarregar os dados, então a página nunca passa da última
   const paginaAtual = Math.min(pagina, totalPaginas);
   const inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
@@ -63,10 +97,19 @@ export default function Historico() {
         descricao="Previsões registradas no banco. A imagem nunca é guardada: só o modelo, a classe, a confiança e o horário."
         acoes={
           <>
-            <button type="button" className="btn secondary" disabled={!visiveis.length} onClick={() => exportarCsv(visiveis)}>
+            <button
+              type="button"
+              className="btn secondary"
+              disabled={!visiveis.length}
+              onClick={() => exportarCsv(visiveis)}
+            >
               <Icone nome="file" /> Exportar CSV
             </button>
-            <button type="button" className="btn primary" onClick={() => navegar("/nova")}>
+            <button
+              type="button"
+              className="btn primary"
+              onClick={() => navegar("/nova")}
+            >
               <Icone nome="plusfile" /> Nova análise
             </button>
           </>
@@ -138,12 +181,20 @@ export default function Historico() {
                       <span className="tiny muted">{nomeModo(modo)}</span>
                     </td>
                     <td>
-                      <span className="table-status neutral">{nomeClasse(registro.classe_prevista)}</span>
+                      <span className="table-status neutral">
+                        {nomeClasse(registro.classe_prevista)}
+                      </span>
                     </td>
-                    <td className="mono">{formatarPct(registro.confianca * 100)}</td>
+                    <td className="mono">
+                      {formatarPct(registro.confianca * 100)}
+                    </td>
                     <td>{formatarData(registro.criado_em)}</td>
                     <td>
-                      <button type="button" className="table-action" onClick={() => navegar(`/resultado/${registro.id}`)}>
+                      <button
+                        type="button"
+                        className="table-action"
+                        onClick={() => navegar(`/resultado/${registro.id}`)}
+                      >
                         Abrir →
                       </button>
                     </td>
@@ -169,16 +220,27 @@ export default function Historico() {
         {totalPaginas > 1 && (
           <nav className="paginacao" aria-label="Paginação do histórico">
             <span className="paginacao-resumo">
-              Mostrando {inicio + 1}–{inicio + registrosDaPagina.length} de {visiveis.length}
+              Mostrando {inicio + 1}–{inicio + registrosDaPagina.length} de{" "}
+              {visiveis.length}
             </span>
             <div className="paginacao-controles">
-              <button type="button" className="btn secondary" disabled={paginaAtual === 1} onClick={() => setPagina(paginaAtual - 1)}>
+              <button
+                type="button"
+                className="btn secondary"
+                disabled={paginaAtual === 1}
+                onClick={() => setPagina(paginaAtual - 1)}
+              >
                 ← Anterior
               </button>
               <span className="mono" aria-current="page">
                 Página {paginaAtual} de {totalPaginas}
               </span>
-              <button type="button" className="btn secondary" disabled={paginaAtual === totalPaginas} onClick={() => setPagina(paginaAtual + 1)}>
+              <button
+                type="button"
+                className="btn secondary"
+                disabled={paginaAtual === totalPaginas}
+                onClick={() => setPagina(paginaAtual + 1)}
+              >
                 Próxima →
               </button>
             </div>

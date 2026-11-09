@@ -6,7 +6,8 @@ const DATASETS = [
     kaggle: "https://www.kaggle.com/datasets/obulisainaren/multi-cancer",
     citacoes: [
       {
-        texto: "Obuli Sai Naren. (2022). Multi Cancer Dataset [Data set]. Kaggle.",
+        texto:
+          "Obuli Sai Naren. (2022). Multi Cancer Dataset [Data set]. Kaggle.",
         doi: "https://doi.org/10.34740/KAGGLE/DSV/3415848",
       },
     ],
@@ -32,14 +33,25 @@ export default function CreditosDatasets() {
       <ul className="notas">
         {DATASETS.map((dataset) => (
           <li key={dataset.nome}>
-            <strong>{dataset.nome}</strong> ({dataset.autor}). Usado em: {dataset.uso}.{" "}
-            <a className="text-link" href={dataset.kaggle} target="_blank" rel="noreferrer">
+            <strong>{dataset.nome}</strong> ({dataset.autor}). Usado em:{" "}
+            {dataset.uso}.{" "}
+            <a
+              className="text-link"
+              href={dataset.kaggle}
+              target="_blank"
+              rel="noreferrer"
+            >
               Ver no Kaggle
             </a>
             {dataset.citacoes.map((citacao) => (
               <div key={citacao.doi} className="citacao">
                 {citacao.texto}{" "}
-                <a className="text-link" href={citacao.doi} target="_blank" rel="noreferrer">
+                <a
+                  className="text-link"
+                  href={citacao.doi}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   {citacao.doi}
                 </a>
               </div>
@@ -49,11 +61,17 @@ export default function CreditosDatasets() {
       </ul>
       <p className="texto" style={{ margin: "12px 0 0" }}>
         Os dois datasets têm licença{" "}
-        <a className="text-link" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noreferrer">
+        <a
+          className="text-link"
+          href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
+          target="_blank"
+          rel="noreferrer"
+        >
           CC BY-NC-SA 4.0
         </a>{" "}
-        (com crédito, sem uso comercial e com compartilhamento pela mesma licença). As imagens foram reduzidas para 128×128; no Multi
-        Cancer, usamos só uma parte das imagens de cada classe.
+        (com crédito, sem uso comercial e com compartilhamento pela mesma
+        licença). As imagens foram reduzidas para 128×128; no Multi Cancer,
+        usamos só uma parte das imagens de cada classe.
       </p>
     </>
   );

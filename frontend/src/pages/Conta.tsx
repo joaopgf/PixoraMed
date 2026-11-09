@@ -11,7 +11,11 @@ export default function Conta() {
 
   return (
     <>
-      <CabecalhoPagina rotulo="PREFERÊNCIAS" titulo="Conta e segurança" descricao="Dados da sua conta na PixoraMed." />
+      <CabecalhoPagina
+        rotulo="PREFERÊNCIAS"
+        titulo="Conta e segurança"
+        descricao="Dados da sua conta na PixoraMed."
+      />
       <section className="profile-card" style={{ maxWidth: 560 }}>
         <div className="profile-hero">
           <span className="avatar large">{iniciais(usuario?.nome ?? "")}</span>

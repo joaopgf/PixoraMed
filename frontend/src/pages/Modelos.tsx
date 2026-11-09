@@ -8,10 +8,26 @@ import Icone from "../components/Icone";
 import { MODULOS, modelosDoModulo, nomeModo } from "../modulos";
 
 const CHECKLIST = [
-  { titulo: "Contrato da API", texto: "Formato de entrada, validação do arquivo e erros (feito em /api/previsoes)." },
-  { titulo: "Pré-processamento", texto: "Tamanho, cor e escala iguais aos do treino (lidos do .json de cada modelo)." },
-  { titulo: "Modelo versionado", texto: "Pesos em ONNX, com classes e métricas no .json. Falta registrar o dataset e a versão." },
-  { titulo: "Validação e monitoramento", texto: "Validação clínica, desempenho por subgrupo e monitoramento: fora do escopo do projeto." },
+  {
+    titulo: "Contrato da API",
+    texto:
+      "Formato de entrada, validação do arquivo e erros (feito em /api/previsoes).",
+  },
+  {
+    titulo: "Pré-processamento",
+    texto:
+      "Tamanho, cor e escala iguais aos do treino (lidos do .json de cada modelo).",
+  },
+  {
+    titulo: "Modelo versionado",
+    texto:
+      "Pesos em ONNX, com classes e métricas no .json. Falta registrar o dataset e a versão.",
+  },
+  {
+    titulo: "Validação e monitoramento",
+    texto:
+      "Validação clínica, desempenho por subgrupo e monitoramento: fora do escopo do projeto.",
+  },
 ];
 
 export default function Modelos() {
@@ -25,7 +41,11 @@ export default function Modelos() {
         titulo="Módulos e modelos"
         descricao="Situação de cada módulo: quais modelos a API carregou e como foram avaliados."
         acoes={
-          <button type="button" className="btn secondary" onClick={() => navegar("/nova")}>
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={() => navegar("/nova")}
+          >
             Abrir catálogo
           </button>
         }
@@ -34,13 +54,17 @@ export default function Modelos() {
         <Alerta tipo="info" icone="activity">
           <strong>Um modelo especializado por tipo de exame.</strong>
           <br />
-          Oral e Cérebro: CNN em PyTorch (3 blocos convolucionais, ~24 mil parâmetros). Pele: ensemble de 5 EfficientNet-B0 (~20 milhões de
-          parâmetros no total). Todos exportados para ONNX e executados na CPU pelo microsserviço de IA.
+          Oral e Cérebro: CNN em PyTorch (3 blocos convolucionais, ~24 mil
+          parâmetros). Pele: ensemble de 5 EfficientNet-B0 (~20 milhões de
+          parâmetros no total). Todos exportados para ONNX e executados na CPU
+          pelo microsserviço de IA.
         </Alerta>
       </div>
       {modelos.isError && (
         <div style={{ marginBottom: 16 }}>
-          <Alerta>Não foi possível falar com a API: {modelos.error.message}</Alerta>
+          <Alerta>
+            Não foi possível falar com a API: {modelos.error.message}
+          </Alerta>
         </div>
       )}
 
@@ -53,12 +77,17 @@ export default function Modelos() {
                 <span className="module-icon">
                   <Icone nome={modulo.icone} />
                 </span>
-                <span className={`model-status${lista.length ? " on" : ""}`}>{lista.length ? "Conectado" : "Não conectado"}</span>
+                <span className={`model-status${lista.length ? " on" : ""}`}>
+                  {lista.length ? "Conectado" : "Não conectado"}
+                </span>
               </div>
               <h3>
                 {modulo.nome}
                 {SUSPEITA_VAZAMENTO[modulo.nome] && (
-                  <span className="tag-warn" title={SUSPEITA_VAZAMENTO[modulo.nome]}>
+                  <span
+                    className="tag-warn"
+                    title={SUSPEITA_VAZAMENTO[modulo.nome]}
+                  >
                     vazamento
                   </span>
                 )}
@@ -81,13 +110,17 @@ export default function Modelos() {
                   <div className="model-spec">
                     <span>Pré-processamento</span>
                     <strong>
-                      {modelo.tamanho}×{modelo.tamanho}, {nomeModo(modelo.modo)}, {modelo.normalizado ? "normalizado" : "sem normalizar"}
+                      {modelo.tamanho}×{modelo.tamanho}, {nomeModo(modelo.modo)}
+                      , {modelo.normalizado ? "normalizado" : "sem normalizar"}
                     </strong>
                   </div>
                   {modelo.limiar_inconclusivo !== null && (
                     <div className="model-spec">
                       <span>Inconclusivo abaixo de</span>
-                      <strong>{Math.round(modelo.limiar_inconclusivo * 100)}% de confiança</strong>
+                      <strong>
+                        {Math.round(modelo.limiar_inconclusivo * 100)}% de
+                        confiança
+                      </strong>
                     </div>
                   )}
                   {modelo.limiar !== null && (
@@ -118,7 +151,10 @@ export default function Modelos() {
             <p>Itens técnicos para cada modelo.</p>
           </div>
         </div>
-        <div className="workflow" style={{ gridTemplateColumns: "repeat(2,minmax(0,1fr))" }}>
+        <div
+          className="workflow"
+          style={{ gridTemplateColumns: "repeat(2,minmax(0,1fr))" }}
+        >
           {CHECKLIST.map((item, i) => (
             <div key={item.titulo} className="workflow-step">
               <span className="step-num">{i + 1}</span>

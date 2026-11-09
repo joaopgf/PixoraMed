@@ -1,5 +1,11 @@
 import type { ReactNode } from "react";
-import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
 import { useEstado } from "../estado";
 import Icone from "./Icone";
@@ -9,10 +15,20 @@ const NAVEGACAO = [
   { para: "/painel", nome: "Visão geral", icone: "home", grupo: "WORKSPACE" },
   { para: "/nova", nome: "Nova análise", icone: "plusfile" },
   { para: "/historico", nome: "Histórico de análises", icone: "clock" },
-  { para: "/resultados", nome: "Resultados dos treinos", icone: "chart", grupo: "PROJETO" },
+  {
+    para: "/resultados",
+    nome: "Resultados dos treinos",
+    icone: "chart",
+    grupo: "PROJETO",
+  },
   { para: "/modelos", nome: "Módulos e modelos", icone: "layers" },
   { para: "/limitacoes", nome: "Limitações e ética", icone: "warning" },
-  { para: "/conta", nome: "Conta e segurança", icone: "shield", grupo: "CONTA" },
+  {
+    para: "/conta",
+    nome: "Conta e segurança",
+    icone: "shield",
+    grupo: "CONTA",
+  },
 ];
 
 const TITULOS: [string, string][] = [
@@ -31,7 +47,12 @@ const TITULOS: [string, string][] = [
 // Duas iniciais do nome, para o avatar
 export function iniciais(nome: string) {
   const partes = nome.trim().split(/\s+/);
-  return ((partes[0]?.[0] ?? "") + (partes.length > 1 ? partes[partes.length - 1][0] : "")).toUpperCase() || "?";
+  return (
+    (
+      (partes[0]?.[0] ?? "") +
+      (partes.length > 1 ? partes[partes.length - 1][0] : "")
+    ).toUpperCase() || "?"
+  );
 }
 
 export function Estrutura() {
@@ -40,14 +61,37 @@ export function Estrutura() {
   const { usuario } = useEstado();
   const nome = usuario?.nome ?? "";
   const email = usuario?.email ?? "";
-  const titulo = TITULOS.find(([caminho]) => pathname.startsWith(caminho))?.[1] ?? "";
-  const emAnalise = ["/nova", "/analise", "/revisao", "/resultado/"].some((caminho) => pathname.startsWith(caminho));
+  const titulo =
+    TITULOS.find(([caminho]) => pathname.startsWith(caminho))?.[1] ?? "";
+  const emAnalise = ["/nova", "/analise", "/revisao", "/resultado/"].some(
+    (caminho) => pathname.startsWith(caminho),
+  );
 
   const itensMoveis = [
-    { para: "/painel", nome: "Início", icone: "home", ativo: pathname === "/painel" },
-    { para: "/nova", nome: "Nova análise", icone: "plusfile", ativo: emAnalise },
-    { para: "/historico", nome: "Histórico", icone: "clock", ativo: pathname === "/historico" },
-    { para: "/resultados", nome: "Resultados", icone: "chart", ativo: pathname === "/resultados" },
+    {
+      para: "/painel",
+      nome: "Início",
+      icone: "home",
+      ativo: pathname === "/painel",
+    },
+    {
+      para: "/nova",
+      nome: "Nova análise",
+      icone: "plusfile",
+      ativo: emAnalise,
+    },
+    {
+      para: "/historico",
+      nome: "Histórico",
+      icone: "clock",
+      ativo: pathname === "/historico",
+    },
+    {
+      para: "/resultados",
+      nome: "Resultados",
+      icone: "chart",
+      ativo: pathname === "/resultados",
+    },
   ];
 
   return (
@@ -60,7 +104,12 @@ export function Estrutura() {
           {NAVEGACAO.map((item) => (
             <div key={item.para} style={{ display: "contents" }}>
               {item.grupo && <div className="side-label">{item.grupo}</div>}
-              <NavLink to={item.para} className={({ isActive }) => `nav-item${isActive ? " active" : ""}`}>
+              <NavLink
+                to={item.para}
+                className={({ isActive }) =>
+                  `nav-item${isActive ? " active" : ""}`
+                }
+              >
                 <Icone nome={item.icone} />
                 <span>{item.nome}</span>
               </NavLink>
@@ -70,7 +119,10 @@ export function Estrutura() {
         <div className="sidebar-spacer" />
         <div className="sidebar-demo">
           <strong>Projeto acadêmico</strong>
-          <p>Os modelos são experimentais e não foram validados clinicamente. O resultado não é um diagnóstico.</p>
+          <p>
+            Os modelos são experimentais e não foram validados clinicamente. O
+            resultado não é um diagnóstico.
+          </p>
         </div>
         <div className="user-mini">
           <span className="avatar">{iniciais(nome)}</span>
@@ -91,7 +143,12 @@ export function Estrutura() {
             <span className="pill demo">
               <span className="pulse" /> PROJETO ACADÊMICO
             </span>
-            <button type="button" className="topbar-action" aria-label="Conta e segurança" onClick={() => navegar("/conta")}>
+            <button
+              type="button"
+              className="topbar-action"
+              aria-label="Conta e segurança"
+              onClick={() => navegar("/conta")}
+            >
               <Icone nome="user" />
             </button>
             <div className="topbar-user">
@@ -110,7 +167,12 @@ export function Estrutura() {
 
       <nav className="mobile-nav">
         {itensMoveis.map((item) => (
-          <button key={item.para} type="button" className={item.ativo ? "active" : ""} onClick={() => navegar(item.para)}>
+          <button
+            key={item.para}
+            type="button"
+            className={item.ativo ? "active" : ""}
+            onClick={() => navegar(item.para)}
+          >
             <Icone nome={item.icone} />
             <span>{item.nome}</span>
           </button>
@@ -143,7 +205,15 @@ export function CabecalhoPagina({
   );
 }
 
-export function Alerta({ tipo, icone = "info", children }: { tipo?: "info"; icone?: string; children: ReactNode }) {
+export function Alerta({
+  tipo,
+  icone = "info",
+  children,
+}: {
+  tipo?: "info";
+  icone?: string;
+  children: ReactNode;
+}) {
   return (
     <div className={`alert ${tipo ?? ""}`}>
       <Icone nome={icone} />
@@ -168,7 +238,13 @@ export function Etapas({ atual }: { atual: 1 | 2 | 3 }) {
   );
 }
 
-export function LinkTexto({ para, children }: { para: string; children: ReactNode }) {
+export function LinkTexto({
+  para,
+  children,
+}: {
+  para: string;
+  children: ReactNode;
+}) {
   return (
     <Link className="text-link" to={para}>
       {children}

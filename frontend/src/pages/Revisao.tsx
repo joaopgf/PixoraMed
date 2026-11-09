@@ -40,7 +40,11 @@ export default function Revisao() {
         titulo="Revisar caso"
         descricao="Confirme o modelo e a imagem antes de executar a análise."
         acoes={
-          <button type="button" className="btn secondary" onClick={() => navegar(`/analise/${modulo.id}`)}>
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={() => navegar(`/analise/${modulo.id}`)}
+          >
             Voltar e editar
           </button>
         }
@@ -55,7 +59,11 @@ export default function Revisao() {
             </div>
             <span className="pill neutral">Ainda não enviada</span>
           </div>
-          <div className="review-image">{analise.arquivoUrl && <img src={analise.arquivoUrl} alt="Imagem selecionada" />}</div>
+          <div className="review-image">
+            {analise.arquivoUrl && (
+              <img src={analise.arquivoUrl} alt="Imagem selecionada" />
+            )}
+          </div>
         </section>
 
         <section className="panel">
@@ -75,7 +83,11 @@ export default function Revisao() {
           </div>
           <div className="info-pair">
             <span>Modelo</span>
-            <strong>{modelo ? `${modelo.id} (${nomeModo(modelo.modo)})` : analise.modeloId}</strong>
+            <strong>
+              {modelo
+                ? `${modelo.id} (${nomeModo(modelo.modo)})`
+                : analise.modeloId}
+            </strong>
           </div>
           <div className="info-pair">
             <span>Código do caso</span>
@@ -99,7 +111,8 @@ export default function Revisao() {
             ) : (
               <Alerta>
                 <strong>Ao executar</strong>
-                <br />A imagem é enviada à API, passa pelo modelo e é descartada. O resultado fica registrado no histórico.
+                <br />A imagem é enviada à API, passa pelo modelo e é
+                descartada. O resultado fica registrado no histórico.
               </Alerta>
             )}
           </div>
@@ -110,7 +123,8 @@ export default function Revisao() {
             disabled={previsao.isPending}
             onClick={() => previsao.mutate()}
           >
-            {previsao.isPending ? "Analisando..." : "Executar análise"} <Icone nome="arrow" />
+            {previsao.isPending ? "Analisando..." : "Executar análise"}{" "}
+            <Icone nome="arrow" />
           </button>
         </section>
       </div>

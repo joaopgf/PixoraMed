@@ -38,7 +38,9 @@ export type Modelo = {
   normalizado: boolean;
   classes: string[];
   descricao: string;
-  metricas: Partial<Record<"acc_media" | "acc_desvio" | "f1_media" | "f1_desvio", number>>;
+  metricas: Partial<
+    Record<"acc_media" | "acc_desvio" | "f1_media" | "f1_desvio", number>
+  >;
   limiar: number | null;
   limiar_inconclusivo: number | null;
   limiar_baixa_certeza: number | null;
@@ -84,7 +86,10 @@ export type SessaoLogin = {
 let tokenAtual: string | null = null;
 let aoPerderSessao: (() => void) | null = null;
 
-export function configurarSessao(token: string | null, quandoExpirar: (() => void) | null) {
+export function configurarSessao(
+  token: string | null,
+  quandoExpirar: (() => void) | null,
+) {
   tokenAtual = token;
   aoPerderSessao = quandoExpirar;
 }
@@ -109,7 +114,10 @@ const MENSAGENS_CAMPO: Record<string, string> = {
 async function pedir<T>(caminho: string, init: RequestInit = {}): Promise<T> {
   const cabecalhos = new Headers(init.headers);
   if (tokenAtual) cabecalhos.set("Authorization", `Bearer ${tokenAtual}`);
-  const resposta = await fetch(`${BASE}${caminho}`, { ...init, headers: cabecalhos });
+  const resposta = await fetch(`${BASE}${caminho}`, {
+    ...init,
+    headers: cabecalhos,
+  });
   if (!resposta.ok) {
     const corpo = await resposta.json().catch(() => null);
     // Sessão vencida ou apagada no servidor: volta para o login
@@ -128,16 +136,24 @@ const json = (corpo: unknown): RequestInit => ({
 
 export const api = {
   // O resultados.csv tem todos os treinos do projeto; o app mostra só os módulos do catálogo
-  treinos: async () => (await pedir<Treino[]>("/api/treinos")).filter((treino) => NOMES_MODULOS.has(treino.cancer)),
+  treinos: async () =>
+    (await pedir<Treino[]>("/api/treinos")).filter((treino) =>
+      NOMES_MODULOS.has(treino.cancer),
+    ),
   modelos: () => pedir<Modelo[]>("/api/modelos"),
   previsoes: () => pedir<RegistroPrevisao[]>("/api/previsoes?limite=100"),
   prever: (modeloId: string, arquivo: File) => {
     const form = new FormData();
     form.append("modelo_id", modeloId);
     form.append("arquivo", arquivo);
-    return pedir<ResultadoPrevisao>("/api/previsoes", { method: "POST", body: form });
+    return pedir<ResultadoPrevisao>("/api/previsoes", {
+      method: "POST",
+      body: form,
+    });
   },
-  cadastrar: (nome: string, email: string, senha: string) => pedir<SessaoLogin>("/api/auth/cadastro", json({ nome, email, senha })),
-  entrar: (email: string, senha: string) => pedir<SessaoLogin>("/api/auth/login", json({ email, senha })),
+  cadastrar: (nome: string, email: string, senha: string) =>
+    pedir<SessaoLogin>("/api/auth/cadastro", json({ nome, email, senha })),
+  entrar: (email: string, senha: string) =>
+    pedir<SessaoLogin>("/api/auth/login", json({ email, senha })),
   sair: () => pedir<void>("/api/auth/sair", { method: "POST" }),
 };

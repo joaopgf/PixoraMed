@@ -5,27 +5,66 @@ import { api } from "../api";
 import { formatarPct } from "../dados";
 import { CabecalhoPagina, LinkTexto } from "../components/Estrutura";
 import Icone from "../components/Icone";
-import { codigoRegistro, formatarData, lerModeloId, MODULOS, nomeClasse } from "../modulos";
+import {
+  codigoRegistro,
+  formatarData,
+  lerModeloId,
+  MODULOS,
+  nomeClasse,
+} from "../modulos";
 
 const FLUXO = [
-  { titulo: "Selecionar módulo", texto: "Escolher o módulo compatível com a imagem." },
-  { titulo: "Preparar o caso", texto: "Anexar a imagem e conferir o modelo que será usado." },
-  { titulo: "Revisar o retorno", texto: "Consultar a classe prevista, as probabilidades e as limitações." },
+  {
+    titulo: "Selecionar módulo",
+    texto: "Escolher o módulo compatível com a imagem.",
+  },
+  {
+    titulo: "Preparar o caso",
+    texto: "Anexar a imagem e conferir o modelo que será usado.",
+  },
+  {
+    titulo: "Revisar o retorno",
+    texto: "Consultar a classe prevista, as probabilidades e as limitações.",
+  },
 ];
 
-const doisDigitos = (valor?: number) => (valor === undefined ? "–" : String(valor).padStart(2, "0"));
+const doisDigitos = (valor?: number) =>
+  valor === undefined ? "–" : String(valor).padStart(2, "0");
 
 export default function Painel() {
   const navegar = useNavigate();
   const modelos = useQuery({ queryKey: ["modelos"], queryFn: api.modelos });
   const treinos = useQuery({ queryKey: ["treinos"], queryFn: api.treinos });
-  const previsoes = useQuery({ queryKey: ["previsoes"], queryFn: api.previsoes });
+  const previsoes = useQuery({
+    queryKey: ["previsoes"],
+    queryFn: api.previsoes,
+  });
 
   const metricas = [
-    { rotulo: "MÓDULOS NO CATÁLOGO", valor: doisDigitos(MODULOS.length), nota: "Tipos de câncer na plataforma", icone: "layers" },
-    { rotulo: "MODELOS CONECTADOS", valor: doisDigitos(modelos.data?.length), nota: "Modelos ONNX no serviço de IA", icone: "activity" },
-    { rotulo: "TREINOS REGISTRADOS", valor: doisDigitos(treinos.data?.length), nota: "Execuções de 5 folds no banco", icone: "chart" },
-    { rotulo: "ANÁLISES RECENTES", valor: doisDigitos(previsoes.data?.length), nota: "Previsões no histórico (até 100)", icone: "file" },
+    {
+      rotulo: "MÓDULOS NO CATÁLOGO",
+      valor: doisDigitos(MODULOS.length),
+      nota: "Tipos de câncer na plataforma",
+      icone: "layers",
+    },
+    {
+      rotulo: "MODELOS CONECTADOS",
+      valor: doisDigitos(modelos.data?.length),
+      nota: "Modelos ONNX no serviço de IA",
+      icone: "activity",
+    },
+    {
+      rotulo: "TREINOS REGISTRADOS",
+      valor: doisDigitos(treinos.data?.length),
+      nota: "Execuções de 5 folds no banco",
+      icone: "chart",
+    },
+    {
+      rotulo: "ANÁLISES RECENTES",
+      valor: doisDigitos(previsoes.data?.length),
+      nota: "Previsões no histórico (até 100)",
+      icone: "file",
+    },
   ];
 
   return (
@@ -35,7 +74,11 @@ export default function Painel() {
         titulo="Painel de trabalho"
         descricao="Acompanhe o ambiente, acesse módulos e inicie uma nova análise."
         acoes={
-          <button type="button" className="btn primary" onClick={() => navegar("/nova")}>
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => navegar("/nova")}
+          >
             <Icone nome="plusfile" /> Nova análise
           </button>
         }
@@ -45,13 +88,23 @@ export default function Painel() {
         <div className="welcome-copy">
           <div className="eyebrow">ESPAÇO DE TRABALHO</div>
           <h2>Bem-vindo à PixoraMed.</h2>
-          <p>Analise imagens com os modelos treinados pelo grupo, acompanhe o histórico e compare os resultados dos treinos em um único ambiente.</p>
-          <button type="button" className="btn primary" onClick={() => navegar("/nova")}>
+          <p>
+            Analise imagens com os modelos treinados pelo grupo, acompanhe o
+            histórico e compare os resultados dos treinos em um único ambiente.
+          </p>
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => navegar("/nova")}
+          >
             Começar uma análise <Icone nome="arrow" />
           </button>
         </div>
         <div className="welcome-art">
-          <img src="/organs/cerebro.webp" alt="Visualização ilustrativa de cérebro holográfico" />
+          <img
+            src="/organs/cerebro.webp"
+            alt="Visualização ilustrativa de cérebro holográfico"
+          />
         </div>
       </section>
 
@@ -81,7 +134,12 @@ export default function Painel() {
           </div>
           <div className="quick-grid">
             {MODULOS.slice(0, 6).map((modulo) => (
-              <button key={modulo.id} type="button" className="quick-card" onClick={() => navegar(`/analise/${modulo.id}`)}>
+              <button
+                key={modulo.id}
+                type="button"
+                className="quick-card"
+                onClick={() => navegar(`/analise/${modulo.id}`)}
+              >
                 <span className="module-icon">
                   <Icone nome={modulo.icone} />
                 </span>
@@ -124,8 +182,14 @@ export default function Painel() {
           </div>
           <LinkTexto para="/historico">Abrir histórico →</LinkTexto>
         </div>
-        {previsoes.isError && <div className="empty">Não foi possível carregar: {previsoes.error.message}</div>}
-        {previsoes.data?.length === 0 && <div className="empty">Nenhuma análise feita ainda.</div>}
+        {previsoes.isError && (
+          <div className="empty">
+            Não foi possível carregar: {previsoes.error.message}
+          </div>
+        )}
+        {previsoes.data?.length === 0 && (
+          <div className="empty">Nenhuma análise feita ainda.</div>
+        )}
         <div className="activity-list">
           {previsoes.data?.slice(0, 3).map((registro) => {
             const { modulo } = lerModeloId(registro.modelo_id);
@@ -137,14 +201,17 @@ export default function Painel() {
                   </span>
                   <div>
                     <strong>
-                      {modulo?.nome ?? registro.modelo_id} · {codigoRegistro(registro.id)}
+                      {modulo?.nome ?? registro.modelo_id} ·{" "}
+                      {codigoRegistro(registro.id)}
                     </strong>
                     <small>{formatarData(registro.criado_em)}</small>
                   </div>
                 </div>
                 <div className="activity-state">
                   <strong>{nomeClasse(registro.classe_prevista)}</strong>
-                  <small>Confiança {formatarPct(registro.confianca * 100)}</small>
+                  <small>
+                    Confiança {formatarPct(registro.confianca * 100)}
+                  </small>
                 </div>
               </div>
             );

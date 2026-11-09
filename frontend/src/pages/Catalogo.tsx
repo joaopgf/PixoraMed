@@ -17,7 +17,11 @@ export default function Catalogo() {
         titulo="Módulos de análise"
         descricao="Cada módulo envia a imagem para o modelo treinado só para aquele tipo de exame."
         acoes={
-          <button type="button" className="btn secondary" onClick={() => navegar("/modelos")}>
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={() => navegar("/modelos")}
+          >
             <Icone nome="layers" /> Ver status técnico
           </button>
         }
@@ -25,20 +29,27 @@ export default function Catalogo() {
       <div style={{ marginBottom: 16 }}>
         <Alerta tipo="info">
           <strong>Use o módulo certo para cada imagem.</strong>
-          <br />
-          O modelo sempre responde com uma das classes do treino, mesmo se receber uma imagem de outro tipo de exame.
+          <br />O modelo sempre responde com uma das classes do treino, mesmo se
+          receber uma imagem de outro tipo de exame.
         </Alerta>
       </div>
       {modelos.isError && (
         <div style={{ marginBottom: 16 }}>
-          <Alerta>Não foi possível falar com a API: {modelos.error.message}</Alerta>
+          <Alerta>
+            Não foi possível falar com a API: {modelos.error.message}
+          </Alerta>
         </div>
       )}
       <div className="module-list-grid">
         {MODULOS.map((modulo) => {
           const conectado = modelosDoModulo(modulo, modelos.data).length > 0;
           return (
-            <button key={modulo.id} type="button" className="module-tile" onClick={() => navegar(`/analise/${modulo.id}`)}>
+            <button
+              key={modulo.id}
+              type="button"
+              className="module-tile"
+              onClick={() => navegar(`/analise/${modulo.id}`)}
+            >
               <span className="module-icon">
                 <Icone nome={modulo.icone} />
               </span>
@@ -47,7 +58,9 @@ export default function Catalogo() {
                 <small>
                   {modulo.exame} · {modulo.area}
                 </small>
-                <span className={`status-mini${conectado ? " on" : ""}`}>{conectado ? "MODELO CONECTADO" : "MODELO NÃO CONECTADO"}</span>
+                <span className={`status-mini${conectado ? " on" : ""}`}>
+                  {conectado ? "MODELO CONECTADO" : "MODELO NÃO CONECTADO"}
+                </span>
               </span>
               <Icone nome="chevron" />
             </button>

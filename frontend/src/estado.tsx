@@ -1,7 +1,21 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
-import { api, configurarSessao, type ResultadoPrevisao, type SessaoLogin, type Usuario } from "./api";
+import {
+  api,
+  configurarSessao,
+  type ResultadoPrevisao,
+  type SessaoLogin,
+  type Usuario,
+} from "./api";
 
 export type Analise = {
   moduloId: string;
@@ -20,7 +34,14 @@ export type UltimoResultado = ResultadoPrevisao & {
   arquivoUrl: string | null;
 };
 
-const ANALISE_VAZIA: Analise = { moduloId: "", modeloId: "", codigoCaso: "", consentimento: false, arquivo: null, arquivoUrl: null };
+const ANALISE_VAZIA: Analise = {
+  moduloId: "",
+  modeloId: "",
+  codigoCaso: "",
+  consentimento: false,
+  arquivo: null,
+  arquivoUrl: null,
+};
 const CHAVE_SESSAO = "pixoramed_sessao";
 
 // "Manter conectado" guarda no localStorage; sem a opção, a sessão some ao fechar a aba (sessionStorage)
@@ -37,9 +58,17 @@ function armazenamentos(): Storage[] {
 function lerSessao(): SessaoLogin | null {
   for (const armazenamento of armazenamentos()) {
     try {
-      const sessao = JSON.parse(armazenamento.getItem(CHAVE_SESSAO) ?? "null") as SessaoLogin | null;
+      const sessao = JSON.parse(
+        armazenamento.getItem(CHAVE_SESSAO) ?? "null",
+      ) as SessaoLogin | null;
       // A API grava em UTC sem fuso
-      const expira = sessao && Date.parse(sessao.expira_em.endsWith("Z") ? sessao.expira_em : `${sessao.expira_em}Z`);
+      const expira =
+        sessao &&
+        Date.parse(
+          sessao.expira_em.endsWith("Z")
+            ? sessao.expira_em
+            : `${sessao.expira_em}Z`,
+        );
       if (sessao?.token && expira && expira > Date.now()) return sessao;
       armazenamento.removeItem(CHAVE_SESSAO);
     } catch {
@@ -62,7 +91,10 @@ function apagarSessao() {
 function gravarSessao(sessao: SessaoLogin, manter: boolean) {
   apagarSessao();
   try {
-    (manter ? localStorage : sessionStorage).setItem(CHAVE_SESSAO, JSON.stringify(sessao));
+    (manter ? localStorage : sessionStorage).setItem(
+      CHAVE_SESSAO,
+      JSON.stringify(sessao),
+    );
   } catch {
     // Sem armazenamento: a sessão dura só até recarregar a página
   }
@@ -96,7 +128,8 @@ export function EstadoProvider({ children }: { children: ReactNode }) {
   const [avisoLogin, setAvisoLogin] = useState("");
   const [moduloPendente, setModuloPendente] = useState<string | null>(null);
   const [analise, setAnalise] = useState<Analise>(ANALISE_VAZIA);
-  const [ultimoResultado, setUltimoResultado] = useState<UltimoResultado | null>(null);
+  const [ultimoResultado, setUltimoResultado] =
+    useState<UltimoResultado | null>(null);
 
   const liberarImagem = useCallback((url: string | null) => {
     if (url) URL.revokeObjectURL(url);
@@ -106,7 +139,11 @@ export function EstadoProvider({ children }: { children: ReactNode }) {
     (arquivo: File | null) => {
       setAnalise((atual) => {
         liberarImagem(atual.arquivoUrl);
-        return { ...atual, arquivo, arquivoUrl: arquivo ? URL.createObjectURL(arquivo) : null };
+        return {
+          ...atual,
+          arquivo,
+          arquivoUrl: arquivo ? URL.createObjectURL(arquivo) : null,
+        };
       });
     },
     [liberarImagem],
@@ -138,7 +175,10 @@ export function EstadoProvider({ children }: { children: ReactNode }) {
 
   // Se a API recusar o token (sessão vencida ou apagada), volta para o login com um aviso
   useEffect(() => {
-    if (sessao) configurarSessao(sessao.token, () => encerrar("Sua sessão expirou. Entre novamente."));
+    if (sessao)
+      configurarSessao(sessao.token, () =>
+        encerrar("Sua sessão expirou. Entre novamente."),
+      );
   }, [sessao, encerrar]);
 
   const valor = useMemo<Estado>(
@@ -162,12 +202,23 @@ export function EstadoProvider({ children }: { children: ReactNode }) {
       setModuloPendente,
       analise,
       iniciarAnalise,
-      atualizarAnalise: (dados) => setAnalise((atual) => ({ ...atual, ...dados })),
+      atualizarAnalise: (dados) =>
+        setAnalise((atual) => ({ ...atual, ...dados })),
       definirArquivo,
       ultimoResultado,
       setUltimoResultado,
     }),
-    [sessao, avisoLogin, encerrar, queryClient, moduloPendente, analise, iniciarAnalise, definirArquivo, ultimoResultado],
+    [
+      sessao,
+      avisoLogin,
+      encerrar,
+      queryClient,
+      moduloPendente,
+      analise,
+      iniciarAnalise,
+      definirArquivo,
+      ultimoResultado,
+    ],
   );
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
@@ -175,6 +226,7 @@ export function EstadoProvider({ children }: { children: ReactNode }) {
 
 export function useEstado() {
   const estado = useContext(Contexto);
-  if (!estado) throw new Error("useEstado precisa estar dentro de EstadoProvider");
+  if (!estado)
+    throw new Error("useEstado precisa estar dentro de EstadoProvider");
   return estado;
 }
