@@ -154,8 +154,8 @@ d = Diagrama("uso", "PixoraMed: análise de uma imagem", [
     ("sistema", "Sistema (site e API principal)", 4),
     ("ia", "Microsserviço de IA", 2),
 ])
-d.no("inicio", "startEvent", "Início", "usuario", 0)
-d.no("entrar", "userTask", "Entrar na conta", "usuario", 1)
+# O login fica no workflow 1: este processo começa com o usuário já logado
+d.no("inicio", "startEvent", "Usuário logado", "usuario", 1)
 d.no("tipo", "userTask", "Escolher o tipo de câncer", "usuario", 2)
 d.no("enviar", "userTask", "Enviar a imagem", "usuario", 3)
 d.no("valida_nav", "serviceTask", "Validar formato e tamanho", "sistema", 3, linha=1)
@@ -179,11 +179,10 @@ d.no("exibir", "serviceTask", "Exibir o resultado e os avisos", "sistema", 17, l
 d.no("ver", "userTask", "Visualizar o resultado", "usuario", 17)
 d.no("fim", "endEvent", "Fim", "usuario", 18)
 
-u0 = d.nos["entrar"]["cy"]
+u0 = d.nos["tipo"]["cy"]
 sB = d.nos["valida_nav"]["cy"]
 
-d.fluxo("inicio", "entrar")
-d.fluxo("entrar", "tipo")
+d.fluxo("inicio", "tipo")
 d.fluxo("tipo", "enviar")
 d.fluxo("enviar", "valida_nav")
 d.fluxo("valida_nav", "g_arquivo")
@@ -210,7 +209,7 @@ d.fluxo("registrar", "exibir")
 d.fluxo("exibir", "ver")
 d.fluxo("ver", "fim")
 
-d.nota("n_entrar", "Detalhado no workflow 1 (login). Análise e histórico exigem login.", "entrar", -105, 70, 300, 52)
+d.nota("n_inicio", "O login está no workflow 1. Análise e histórico só ficam disponíveis para o usuário logado.", "inicio", -370, -26, 300, 52, lado="esq")
 d.nota("n_valida_nav", "No navegador: PNG, JPG ou WEBP, até 10 MB.", "valida_nav", -105, 70, 260, 45)
 d.nota("n_consent", "Material autorizado e desidentificado. Sem marcar, a análise não é liberada.", "consent", 25, 70, 290, 60)
 d.nota("n_enviar_ia", "Detalhado no workflow 2 (microsserviço de IA).", "enviar_ia", -105, 70, 260, 45)

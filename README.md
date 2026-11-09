@@ -30,7 +30,7 @@ Arquivo: [`docs/bpmn/2_microsservico_ia.bpmn`](docs/bpmn/2_microsservico_ia.bpmn
 
 ### 3. Uso do sistema: análise de uma imagem
 
-O usuário entra, escolhe o tipo de câncer, envia a imagem, confirma o consentimento e revisa o caso. A IA devolve as probabilidades, e o sistema decide: em Oral e Cérebro, "inconclusivo" abaixo de 80%; na Pele, maligno a partir de 18%, com aviso de baixa certeza. O resultado é gravado sem a imagem e exibido com os avisos.
+O processo começa com o usuário já logado (o login é o workflow 1). Ele escolhe o tipo de câncer, envia a imagem, confirma o consentimento e revisa o caso. A IA devolve as probabilidades, e o sistema decide: em Oral e Cérebro, "inconclusivo" abaixo de 80%; na Pele, maligno a partir de 18%, com aviso de baixa certeza. O resultado é gravado sem a imagem e exibido com os avisos.
 
 ![Workflow de uso do sistema](docs/bpmn/3_uso_do_sistema.png)
 
