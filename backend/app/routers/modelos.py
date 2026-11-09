@@ -1,26 +1,24 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 
+from app.cliente_ia import INDISPONIVEL, ServicoIAIndisponivel
+from app.decisao import limiar_baixa_certeza, limiar_inconclusivo
 from app.esquemas import ModeloOut
-from app.inferencia import limiar_baixa_certeza_do_modelo, limiar_inconclusivo_do_modelo
 
 router = APIRouter(prefix="/api/modelos", tags=["modelos"])
 
 
 @router.get("", response_model=list[ModeloOut])
-def listar_modelos(request: Request):
+async def listar_modelos(request: Request):
+    try:
+        modelos = await request.app.state.ia.listar_modelos()
+    except ServicoIAIndisponivel:
+        raise HTTPException(status_code=503, detail=INDISPONIVEL) from None
+    # Os limiares de decisão são da API principal; a IA só informa o limiar próprio do modelo
     return [
         ModeloOut(
-            id=modelo.id,
-            cancer=modelo.cancer,
-            modo=modelo.modo,
-            tamanho=modelo.tamanho,
-            normalizado=modelo.escala != 1,
-            classes=modelo.classes,
-            descricao=modelo.descricao,
-            metricas=modelo.metricas,
-            limiar=modelo.limiar,
-            limiar_inconclusivo=limiar_inconclusivo_do_modelo(modelo),
-            limiar_baixa_certeza=limiar_baixa_certeza_do_modelo(modelo),
+            **modelo,
+            limiar_inconclusivo=limiar_inconclusivo(modelo.get("limiar")),
+            limiar_baixa_certeza=limiar_baixa_certeza(modelo.get("limiar")),
         )
-        for modelo in request.app.state.registro.listar()
+        for modelo in sorted(modelos, key=lambda modelo: (modelo["cancer"], modelo["modo"]))
     ]

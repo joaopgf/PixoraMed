@@ -39,13 +39,13 @@ O script gera `models/mama_cor.onnx` e `models/mama_cor.json`, confere se o ONNX
 
 ## 3. Carregar no app
 
-Reinicie a API para ela carregar o modelo novo:
+Os modelos ficam no microsserviço de IA (pasta `ia/`). Reinicie-o para ele carregar o modelo novo:
 
-- **Terminal**: Ctrl+C e rode o `uvicorn` de novo.
-- **Docker**: `docker compose restart backend`.
+- **Terminal**: Ctrl+C no `uvicorn` da pasta `ia` e rode de novo.
+- **Docker**: `docker compose restart ia`.
 
-O modelo aparece em "Analisar imagem". Façam commit dos arquivos da pasta `models/`, porque o deploy no Render só enxerga o que está no GitHub.
+O modelo aparece em "Analisar imagem" em até 5 minutos, quando a API principal renova a lista de modelos. Façam commit dos arquivos da pasta `models/`, porque o deploy no Render só enxerga o que está no GitHub.
 
 ## Cuidado
 
-**O pré-processamento do app é o mesmo dos notebooks**: OpenCV, BGR → RGB na cor, `IMREAD_GRAYSCALE` no cinza, resize para 128×128, divisão pela `escala`. Se mudarem isso nos notebooks, mudem também em `backend/app/inferencia.py`.
+**O pré-processamento do app é o mesmo dos notebooks**: OpenCV, BGR → RGB na cor, `IMREAD_GRAYSCALE` no cinza, resize para 128×128, divisão pela `escala`. Se mudarem isso nos notebooks, mudem também em `ia/app/inferencia.py`.

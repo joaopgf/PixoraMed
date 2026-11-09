@@ -35,7 +35,7 @@ export default function Modelos() {
           <strong>Um modelo especializado por tipo de exame.</strong>
           <br />
           Oral e Cérebro: CNN em PyTorch (3 blocos convolucionais, ~24 mil parâmetros). Pele: ensemble de 5 EfficientNet-B0 (~20 milhões de
-          parâmetros no total). Todos exportados para ONNX e executados na CPU pela API.
+          parâmetros no total). Todos exportados para ONNX e executados na CPU pelo microsserviço de IA.
         </Alerta>
       </div>
       {modelos.isError && (

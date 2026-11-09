@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.db import Base, SessionLocal, atualizar_esquema, engine
 from app.importacao import importar_resultados
-from app.inferencia import RegistroModelos
+from app.cliente_ia import ClienteIA
 from app.routers import auth, modelos, previsoes, treinos
 from app.site import registrar_site
 
@@ -25,15 +25,16 @@ async def lifespan(app: FastAPI):
             inseridos = importar_resultados(db, settings.resultados_csv)
         log.info("resultados.csv: %d treinos novos importados", inseridos)
 
-    app.state.registro = RegistroModelos(settings.models_dir)
-    app.state.registro.carregar()
-    log.info("%d modelos carregados de %s", len(app.state.registro.modelos), settings.models_dir)
+    # Os modelos ficam no microsserviço de IA; aqui só o cliente HTTP
+    app.state.ia = ClienteIA(settings.ia_url, settings.ia_token, settings.ia_timeout)
+    log.info("Serviço de IA em %s", settings.ia_url)
     yield
+    await app.state.ia.fechar()
 
 
 app = FastAPI(
     title="PixoraMed API",
-    description="Classificação de imagens médicas de câncer com CNN e painel de resultados dos treinos.",
+    description="Login, histórico e decisão das análises de imagens médicas. Os modelos rodam no microsserviço de IA.",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -51,9 +52,10 @@ app.include_router(modelos.router)
 app.include_router(previsoes.router)
 
 
+# Não consulta a IA: o Render usa esta rota para saber se a API subiu, e a IA pode estar dormindo
 @app.get("/api/saude", tags=["saúde"])
 def saude():
-    return {"status": "ok", "modelos": len(app.state.registro.modelos)}
+    return {"status": "ok"}
 
 
 # Por último, depois de todas as rotas da API

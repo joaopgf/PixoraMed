@@ -10,6 +10,10 @@ terraform {
       source  = "render-oss/render"
       version = ">= 1.3"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.6"
+    }
   }
 }
 

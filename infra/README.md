@@ -1,13 +1,14 @@
 # Deploy do PixoraMed
 
-Um único container no Render serve o site e a API, e o banco fica no Neon. Tudo no plano gratuito:
+Dois serviços no Render, a API principal (com o site) e o microsserviço de IA, e o banco no Neon. Tudo no plano gratuito:
 
 | Serviço | O que roda | Observação |
 |---|---|---|
-| **Render** | Site React + API FastAPI, num só container (`backend/Dockerfile`) | Região `virginia`. "Dorme" após 15 min sem uso; a primeira chamada leva ~1 min |
+| **Render** | API principal: site React + FastAPI (`backend/Dockerfile`) | Região `virginia`. "Dorme" após 15 min sem uso; a primeira chamada leva ~1 min |
+| **Render** | Microsserviço de IA: modelos ONNX (`ia/Dockerfile`) | Região `virginia`. Endereço público, protegido pelo token `IA_TOKEN` |
 | **Neon** | PostgreSQL | Região `aws-us-east-1` (Virginia), a mesma do Render |
 
-O Terraform cria o banco no Neon, cria o serviço no Render apontando para o GitHub e passa o endereço do banco para a API (`DATABASE_URL`). Depois disso, cada `git push` na `main` faz o Render gerar e publicar a imagem de novo.
+O Terraform cria o banco no Neon e os dois serviços no Render, apontando para o GitHub. Ele também gera um token aleatório e passa à API principal o endereço do banco (`DATABASE_URL`), o endereço da IA (`IA_URL`) e o token (`IA_TOKEN`), que vai também para a IA. Depois disso, cada `git push` na `main` faz o Render gerar e publicar as duas imagens de novo.
 
 ## Com Terraform
 
@@ -33,6 +34,6 @@ Para remover tudo da nuvem depois da apresentação: `terraform destroy`.
 
 ## No dia da apresentação
 
-- Abra o app e faça uma previsão **uns 5 minutos antes**, para acordar o Render.
+- Abra o app e faça uma previsão **uns 5 minutos antes**, para acordar os dois serviços do Render. A primeira análise depois de um tempo parado pode passar de 1 minuto.
 - Tenha o vídeo gravado da demo como backup, como o guia recomenda.
 - Se a internet falhar, `docker compose up` roda tudo no notebook.

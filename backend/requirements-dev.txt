@@ -8,3 +8,5 @@ httpx>=0.28
 #   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 onnx>=1.17
 onnxscript>=0.1
+onnxruntime>=1.20
+numpy>=2.0

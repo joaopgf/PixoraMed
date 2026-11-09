@@ -1,5 +1,5 @@
 # Sobe o PixoraMed inteiro: docker compose up --build
-# App em http://localhost:8080 · API em http://localhost:8000/docs
+# App em http://localhost:8080 · API em http://localhost:8000/docs · IA em http://localhost:8001/docs
 services:
   db:
     image: postgres:17-alpine
@@ -24,14 +24,29 @@ services:
     environment:
       DATABASE_URL: postgresql://pixoramed:pixoramed@db:5432/pixoramed
       CORS_ORIGINS: http://localhost:8080,http://localhost:5173
-    volumes:
-      # Modelos novos aparecem sem rebuild (reinicie o backend)
-      - ./models:/app/models:ro
+      IA_URL: http://ia:8001
+      IA_TOKEN: token-local-ia
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+      ia:
+        condition: service_started
+
+  # Microsserviço de IA: carrega os modelos ONNX e devolve probabilidades. Não acessa o banco.
+  ia:
+    build:
+      context: .
+      dockerfile: ia/Dockerfile
+    environment:
+      # Só para uso local. Na nuvem, o Terraform gera um token aleatório
+      IA_TOKEN: token-local-ia
+    volumes:
+      # Modelos novos aparecem sem rebuild (reinicie o serviço ia)
+      - ./models:/app/models:ro
+    ports:
+      - "8001:8001"
 
   frontend:
     build: ./frontend

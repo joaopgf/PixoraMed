@@ -1,5 +1,3 @@
-import time
-
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -8,14 +6,8 @@ from app.autenticacao import usuario_atual
 from app.config import settings
 from app.db import get_db
 from app.esquemas import PrevisaoHistorico, PrevisaoOut, Probabilidade
-from app.inferencia import (
-    CLASSE_INCONCLUSIVA,
-    ImagemInvalida,
-    indice_previsto,
-    limiar_baixa_certeza_do_modelo,
-    limiar_inconclusivo_do_modelo,
-    prever,
-)
+from app.cliente_ia import INDISPONIVEL, RecusaDaIA, ServicoIAIndisponivel
+from app.decisao import decidir, limiar_baixa_certeza, limiar_inconclusivo
 from app.tabelas import Previsao, Usuario
 
 router = APIRouter(prefix="/api/previsoes", tags=["previsões"])
@@ -34,47 +26,43 @@ async def criar_previsao(
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(usuario_atual),
 ):
-    modelo = request.app.state.registro.obter(modelo_id)
-    if modelo is None:
-        raise HTTPException(status_code=404, detail=f"Modelo '{modelo_id}' não encontrado.")
-
     conteudo = await arquivo.read()
     if len(conteudo) > settings.max_upload_mb * 1024 * 1024:
         raise HTTPException(status_code=413, detail=f"Imagem maior que {settings.max_upload_mb} MB.")
 
-    inicio = time.perf_counter()
+    # A IA pré-processa, roda o modelo e devolve as probabilidades; a imagem não fica guardada em lugar nenhum
     try:
-        probabilidades = prever(modelo, conteudo)
-    except ImagemInvalida as erro:
-        raise HTTPException(status_code=422, detail=str(erro)) from erro
-    tempo_ms = (time.perf_counter() - inicio) * 1000
+        saida = await request.app.state.ia.prever(modelo_id, arquivo.filename, conteudo, arquivo.content_type)
+    except RecusaDaIA as erro:
+        raise HTTPException(status_code=erro.status, detail=erro.detalhe) from None
+    except ServicoIAIndisponivel:
+        raise HTTPException(status_code=503, detail=INDISPONIVEL) from None
 
-    indice = indice_previsto(modelo, probabilidades)
-    confianca = float(probabilidades[indice])
-    limiar_inconclusivo = limiar_inconclusivo_do_modelo(modelo)
-    inconclusivo = limiar_inconclusivo is not None and confianca < limiar_inconclusivo
-    classe = CLASSE_INCONCLUSIVA if inconclusivo else modelo.classes[indice]
+    classes, probabilidades, limiar = saida["classes"], saida["probabilidades"], saida.get("limiar")
+    classe, confianca = decidir(probabilidades, classes, limiar)
 
-    # Só o resultado vai para o banco; a imagem é descartada aqui
-    registro = Previsao(usuario_id=usuario.id, modelo_id=modelo.id, classe_prevista=classe, confianca=confianca, tempo_ms=tempo_ms)
+    # Só o resultado vai para o banco
+    registro = Previsao(
+        usuario_id=usuario.id, modelo_id=saida["modelo_id"], classe_prevista=classe, confianca=confianca, tempo_ms=saida["tempo_ms"]
+    )
     db.add(registro)
     db.commit()
 
     return PrevisaoOut(
         id=registro.id,
-        modelo_id=modelo.id,
-        cancer=modelo.cancer,
+        modelo_id=saida["modelo_id"],
+        cancer=saida["cancer"],
         classe_prevista=classe,
         confianca=confianca,
         probabilidades=sorted(
-            (Probabilidade(classe=nome, probabilidade=float(p)) for nome, p in zip(modelo.classes, probabilidades)),
+            (Probabilidade(classe=nome, probabilidade=float(p)) for nome, p in zip(classes, probabilidades)),
             key=lambda item: item.probabilidade,
             reverse=True,
         ),
-        limiar=modelo.limiar,
-        limiar_inconclusivo=limiar_inconclusivo,
-        limiar_baixa_certeza=limiar_baixa_certeza_do_modelo(modelo),
-        tempo_ms=tempo_ms,
+        limiar=limiar,
+        limiar_inconclusivo=limiar_inconclusivo(limiar),
+        limiar_baixa_certeza=limiar_baixa_certeza(limiar),
+        tempo_ms=saida["tempo_ms"],
         aviso=AVISO,
     )
 

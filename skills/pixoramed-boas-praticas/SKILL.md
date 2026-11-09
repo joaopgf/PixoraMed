@@ -9,9 +9,13 @@ description: Aplique a estrutura de pastas, as convenções de código, o uso do
 
 ```
 backend/
-  app/            config.py, db.py, tabelas.py, esquemas.py, importacao.py, inferencia.py, main.py, routers/
+  app/            config.py, db.py, tabelas.py, esquemas.py, autenticacao.py, cliente_ia.py, decisao.py, importacao.py, main.py, site.py, routers/
   scripts/        exportar_onnx.py, exportar_ensemble_pele.py, importar_resultados.py
-  tests/          test_api.py
+  tests/          conftest.py, test_api.py, test_auth.py, test_site.py
+  Dockerfile, pytest.ini, requirements.txt, requirements-dev.txt
+ia/
+  app/            config.py, inferencia.py, main.py
+  tests/          test_ia.py
   Dockerfile, pytest.ini, requirements.txt, requirements-dev.txt
 frontend/
   public/         icone.svg, imagens

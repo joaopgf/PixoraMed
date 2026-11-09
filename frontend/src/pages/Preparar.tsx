@@ -205,13 +205,13 @@ export default function Preparar() {
           </div>
           <div className="side-info">
             <h3>O que acontece depois?</h3>
-            <p>A API repete o pré-processamento do treino (tamanho, cor e escala), executa o modelo ONNX e devolve a classe prevista e as probabilidades.</p>
+            <p>O serviço de IA repete o pré-processamento do treino (tamanho, cor e escala) e executa o modelo ONNX. A API usa as probabilidades para decidir a classe prevista.</p>
           </div>
           {!disponiveis.length && !modelos.isLoading && (
             <Alerta>
               <strong>Sem modelo neste módulo</strong>
               <br />
-              Salve o modelo no notebook e converta para ONNX (veja <code>docs/salvar_modelo.md</code>). Depois, reinicie a API.
+              Salve o modelo no notebook e converta para ONNX (veja <code>docs/salvar_modelo.md</code>). Depois, reinicie o serviço de IA.
             </Alerta>
           )}
         </aside>

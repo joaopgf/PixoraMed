@@ -23,7 +23,7 @@ export default function Painel() {
 
   const metricas = [
     { rotulo: "MÓDULOS NO CATÁLOGO", valor: doisDigitos(MODULOS.length), nota: "Tipos de câncer na plataforma", icone: "layers" },
-    { rotulo: "MODELOS CONECTADOS", valor: doisDigitos(modelos.data?.length), nota: "Modelos ONNX carregados na API", icone: "activity" },
+    { rotulo: "MODELOS CONECTADOS", valor: doisDigitos(modelos.data?.length), nota: "Modelos ONNX no serviço de IA", icone: "activity" },
     { rotulo: "TREINOS REGISTRADOS", valor: doisDigitos(treinos.data?.length), nota: "Execuções de 5 folds no banco", icone: "chart" },
     { rotulo: "ANÁLISES RECENTES", valor: doisDigitos(previsoes.data?.length), nota: "Previsões no histórico (até 100)", icone: "file" },
   ];

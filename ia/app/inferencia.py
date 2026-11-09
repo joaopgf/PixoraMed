@@ -1,4 +1,7 @@
-"""Carrega os modelos ONNX da pasta models/ e faz a previsão de uma imagem."""
+"""Carrega os modelos ONNX da pasta models/ e devolve as probabilidades de uma imagem.
+
+A decisão (classe final, inconclusivo, baixa certeza) não fica aqui: é da API principal.
+"""
 
 import io
 import json
@@ -17,7 +20,6 @@ log = logging.getLogger(__name__)
 
 FORMATOS_PIL = {"JPEG", "PNG", "WEBP", "BMP", "TIFF"}
 LADO_MINIMO_PIL = 100
-CLASSE_INCONCLUSIVA = "inconclusivo"
 
 
 class ImagemInvalida(ValueError):
@@ -108,23 +110,6 @@ def prever(modelo: ModeloCarregado, conteudo: bytes) -> np.ndarray:
         positiva = float(saida.reshape(-1)[0])
         return np.array([1.0 - positiva, positiva])
     return softmax(saida[0])
-
-
-def indice_previsto(modelo: ModeloCarregado, probabilidades: np.ndarray) -> int:
-    """A classe mais provável ou, se o modelo tiver limiar, a segunda classe quando a probabilidade dela o alcança."""
-    if modelo.limiar is not None:
-        return 1 if probabilidades[1] >= modelo.limiar else 0
-    return int(probabilidades.argmax())
-
-
-def limiar_inconclusivo_do_modelo(modelo: ModeloCarregado) -> float | None:
-    """Modelos com limiar próprio já decidem por ele; os demais ficam inconclusivos abaixo do limiar configurado."""
-    return None if modelo.limiar is not None else settings.limiar_inconclusivo
-
-
-def limiar_baixa_certeza_do_modelo(modelo: ModeloCarregado) -> float | None:
-    """Modelos com limiar próprio mantêm a classe, mas a tela avisa quando nenhuma classe alcança este valor."""
-    return settings.limiar_inconclusivo if modelo.limiar is not None else None
 
 
 def opcoes_sessao() -> ort.SessionOptions:

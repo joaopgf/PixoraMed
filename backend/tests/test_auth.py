@@ -77,8 +77,8 @@ def test_rotas_protegidas_exigem_login(app):
     assert cliente.post("/api/previsoes", data={"modelo_id": "x"}).status_code == 401
     assert cliente.get("/api/auth/eu").status_code == 401
     assert _com_token(app, "token-inventado").get("/api/auth/eu").status_code == 401
-    # O catálogo continua público
-    assert cliente.get("/api/modelos").status_code == 200
+    # Os resultados dos treinos continuam públicos
+    assert cliente.get("/api/treinos").status_code == 200
 
 
 def test_eu_e_sair(app):

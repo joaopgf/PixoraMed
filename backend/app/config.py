@@ -11,7 +11,6 @@ class Settings(BaseSettings):
 
     # Sem DATABASE_URL usa SQLite local; no Docker e na nuvem aponta para o Postgres
     database_url: str = f"sqlite:///{RAIZ / 'data' / 'pixoramed.db'}"
-    models_dir: Path = RAIZ / "models"
     resultados_csv: Path = RAIZ / "data" / "resultados.csv"
 
     # Build do React (frontend/dist). Se a pasta existir, a API também serve o site
@@ -31,8 +30,11 @@ class Settings(BaseSettings):
     # Abaixo desta confiança, o resultado é "inconclusivo" (não vale para modelos com limiar próprio, como o da Pele)
     limiar_inconclusivo: float = 0.8
 
-    # O padrão do ONNX Runtime cria uma thread por CPU visível, e elas disputam a pouca CPU do plano gratuito do Render
-    onnx_threads: int = 1
+    # Microsserviço de IA (pasta ia/). O token precisa ser o mesmo IA_TOKEN configurado lá
+    ia_url: str = "http://localhost:8001"
+    ia_token: str = ""
+    # No Render gratuito a IA pode estar dormindo: acordar leva perto de 1 minuto
+    ia_timeout: float = 120.0
 
     @property
     def lista_cors(self) -> list[str]:
