@@ -131,7 +131,7 @@ const inconclusivo = dados.classe_prevista === "inconclusivo";
 
 **Painel:** métricas de módulos, modelos conectados, treinos registrados (do catálogo) e análises recentes, sempre dos dados reais da API, mais o bloco de fluxo com "Selecionar módulo", "Preparar o caso" e "Revisar o retorno" e as 3 análises mais recentes.
 
-**Conta:** nome, e-mail, data de criação e permissão ("Análises e histórico próprio"), botão "Sair da conta". Itens ativos: login com senha em hash, sessão com validade e histórico por usuário. Pendentes: MFA, recuperação de senha, limite de tentativas, controle de acesso por função, trilha de auditoria e criptografia e retenção.
+**Conta:** só o cartão do perfil, com nome, e-mail, data de criação e permissão ("Análises e histórico próprio") e o botão "Sair da conta". Os avisos de governança ficam na página Limitações.
 
 **Status de conexão:** "Modelo conectado" e "Modelo não conectado".
 
