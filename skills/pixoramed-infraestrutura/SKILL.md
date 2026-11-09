@@ -1,6 +1,6 @@
 ---
 name: pixoramed-infraestrutura
-description: Crie os contêineres e o provisionamento do PixoraMed com Docker Compose e Terraform para Neon, Render e Vercel. Use ao criar ou alterar Dockerfiles, compose, nginx, variáveis de ambiente ou o deploy. Não aplique mudanças na nuvem sem autorização.
+description: Crie os contêineres e o provisionamento do PixoraMed com Docker Compose e Terraform para Neon e Render. Use ao criar ou alterar Dockerfiles, compose, nginx, variáveis de ambiente ou o deploy. Não aplique mudanças na nuvem sem autorização.
 ---
 
 # Infraestrutura
@@ -18,11 +18,15 @@ Comandos: `docker compose up --build` (app em `http://localhost:8080`, API em `h
 ## `backend/Dockerfile`
 
 ```dockerfile
+FROM node:22-alpine AS frontend
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
 FROM python:3.12-slim
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    MODELS_DIR=/app/models \
-    RESULTADOS_CSV=/app/data/resultados.csv
+ENV PYTHONDONTWRITEBYTECODE=1     PYTHONUNBUFFERED=1     MODELS_DIR=/app/models     RESULTADOS_CSV=/app/data/resultados.csv     FRONTEND_DIR=/app/frontend
 WORKDIR /app
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -30,6 +34,7 @@ COPY backend/app ./app
 COPY backend/scripts ./scripts
 COPY models ./models
 COPY data/resultados.csv ./data/resultados.csv
+COPY --from=frontend /frontend/dist ./frontend
 EXPOSE 8000
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
 ```
@@ -71,13 +76,14 @@ server {
 
 `.dockerignore`: `**/.venv`, `**/__pycache__`, `**/.pytest_cache`, `**/node_modules`, `frontend/dist`, `data/*.db`, `.git`, `infra`.
 
-## Nuvem: Vercel, Render e Neon
+## Nuvem: Render e Neon
 
 | Serviço | Papel |
 |---|---|
-| Vercel | React, pasta `frontend/`, com `VITE_API_URL` apontando para a API |
-| Render | API em Docker (`backend/Dockerfile`), plano gratuito, região `oregon` |
+| Render | Um único container (`backend/Dockerfile`) com o site React e a API, plano gratuito, região `oregon` |
 | Neon | PostgreSQL, região `aws-us-west-2` |
+
+O `backend/Dockerfile` tem duas etapas: `node:22-alpine` roda `npm ci` e `npm run build` em `frontend/`, e a imagem `python:3.12-slim` recebe o `dist/` em `/app/frontend` (`FRONTEND_DIR`). Em `app/site.py`, `registrar_site` cria uma rota `GET /{caminho:path}`, registrada depois de todas as rotas da API: devolve o arquivo pedido dentro da pasta, ou o `index.html` com `Cache-Control: no-cache` para as rotas do React Router, e responde 404 para caminhos em `api/`. O `main.py` só a registra se `FRONTEND_DIR/index.html` existir. Como o site e a API ficam na mesma origem, não há CORS a configurar. No Docker Compose, o nginx continua servindo o frontend em `localhost:8080`.
 
 `infra/terraform/versions.tf`:
 
@@ -87,7 +93,6 @@ terraform {
   required_providers {
     neon   = { source = "kislerdm/neon", version = ">= 0.6" }
     render = { source = "render-oss/render", version = ">= 1.3" }
-    vercel = { source = "vercel/vercel", version = ">= 2.0" }
   }
 }
 
@@ -99,13 +104,9 @@ provider "render" {
   api_key  = var.render_api_key
   owner_id = var.render_owner_id
 }
-
-provider "vercel" {
-  api_token = var.vercel_api_token
-}
 ```
 
-`variables.tf`: `neon_api_key`, `render_api_key` e `vercel_api_token` (todas `sensitive`), `render_owner_id`, `github_repo`, `branch` (padrão `main`) e `nome` (padrão `pixoramed`).
+`variables.tf`: `neon_api_key` e `render_api_key` (ambas `sensitive`), `render_owner_id`, `github_repo`, `branch` (padrão `main`) e `nome` (padrão `pixoramed`).
 
 `main.tf`:
 
@@ -117,7 +118,7 @@ resource "neon_project" "banco" {
 }
 
 resource "render_web_service" "api" {
-  name              = "${var.nome}-api"
+  name              = var.nome
   plan              = "free"
   region            = "oregon"
   health_check_path = "/api/saude"
@@ -132,38 +133,18 @@ resource "render_web_service" "api" {
   }
   env_vars = {
     DATABASE_URL = { value = neon_project.banco.connection_uri }
-    CORS_ORIGINS = { value = "https://${var.nome}.vercel.app" }
   }
-}
-
-resource "vercel_project" "web" {
-  name           = var.nome
-  framework      = "vite"
-  root_directory = "frontend"
-  git_repository = {
-    type              = "github"
-    repo              = var.github_repo
-    production_branch = var.branch
-  }
-}
-
-resource "vercel_project_environment_variable" "api_url" {
-  project_id = vercel_project.web.id
-  key        = "VITE_API_URL"
-  value      = render_web_service.api.url
-  target     = ["production", "preview"]
-  sensitive  = false
 }
 ```
 
-`outputs.tf`: `url_api` (`render_web_service.api.url`), `url_app` (`https://${vercel_project.web.name}.vercel.app`) e `database_url` (`neon_project.banco.connection_uri`, `sensitive`). Crie `terraform.tfvars.example` sem valores reais.
+`outputs.tf`: `url_app` (`render_web_service.api.url`, que serve o site e a API) e `database_url` (`neon_project.banco.connection_uri`, `sensitive`). Crie `terraform.tfvars.example` sem valores reais.
 
 ## Cuidados com o deploy
 
 - **Autorização:** `init`, `validate` e `plan` não criam nada. **Só rode `terraform apply` depois que o usuário vir o plano e autorizar.**
 - **Segredos:** peça ao usuário que preencha o `terraform.tfvars`. Nunca peça tokens no chat nem os grave em arquivos versionados. O `terraform.tfstate` também guarda segredos.
-- **Pré-requisitos:** repositório no GitHub, com acesso liberado ao Render e à Vercel. O Render faz o build a partir do GitHub, então os commits precisam estar lá antes.
-- **CORS:** o padrão assume `pixoramed.vercel.app`. Se a Vercel der outro endereço, ajuste `CORS_ORIGINS`. Os ambientes de preview da Vercel também ficam bloqueados, a menos que sejam incluídos.
+- **Pré-requisitos:** repositório no GitHub, com acesso liberado ao Render. O Render faz o build a partir do GitHub, então os commits precisam estar lá antes.
+- **Endereço:** o nome do serviço vira `<nome>.onrender.com`. Se o nome já estiver em uso, o Render acrescenta um sufixo; use sempre `terraform output url_app`.
 - **Treinos no Docker:** o `resultados.csv` vai dentro da imagem. Depois de atualizar o arquivo, rode `docker compose up --build`.
 - **Recursos:** o plano gratuito tem 512 MB e 0,1 de CPU. A API deve usar um único processo: o pico medido foi de 393 MB, e um segundo processo com a Pele derrubou o contêiner.
 - **Dia da apresentação:** o Render gratuito dorme. Abra o app alguns minutos antes, faça uma previsão por módulo e mantenha o Docker local e o vídeo como reserva.

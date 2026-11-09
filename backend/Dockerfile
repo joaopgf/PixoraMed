@@ -1,9 +1,21 @@
+# Imagem única do PixoraMed: o FastAPI serve a API em /api e o site React no resto
+
+# 1. Build do React (só o dist/ segue para a imagem final)
+FROM node:22-alpine AS frontend
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
+# 2. API com os modelos e o site já compilado
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     MODELS_DIR=/app/models \
-    RESULTADOS_CSV=/app/data/resultados.csv
+    RESULTADOS_CSV=/app/data/resultados.csv \
+    FRONTEND_DIR=/app/frontend
 
 WORKDIR /app
 
@@ -14,6 +26,7 @@ COPY backend/app ./app
 COPY backend/scripts ./scripts
 COPY models ./models
 COPY data/resultados.csv ./data/resultados.csv
+COPY --from=frontend /frontend/dist ./frontend
 
 # O Render define a variável PORT; localmente usa 8000
 EXPOSE 8000

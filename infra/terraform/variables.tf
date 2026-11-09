@@ -15,12 +15,6 @@ variable "render_owner_id" {
   type        = string
 }
 
-variable "vercel_api_token" {
-  description = "Token da Vercel (vercel.com/account/tokens)"
-  type        = string
-  sensitive   = true
-}
-
 variable "github_repo" {
   description = "Repositório no formato dono/nome, ex.: grupo/PixoraMed"
   type        = string

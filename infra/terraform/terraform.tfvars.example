@@ -2,6 +2,5 @@
 neon_api_key     = ""
 render_api_key   = ""
 render_owner_id  = ""
-vercel_api_token = ""
-github_repo      = "grupo/PixoraMed"
+github_repo      = "joaopgf/PixoraMed"
 branch           = "main"

@@ -16,7 +16,7 @@ backend/
 frontend/
   public/         icone.svg, imagens
   src/            api.ts, dados.ts, estado.tsx, modulos.ts, main.tsx, App.tsx, components/, pages/, styles/
-  Dockerfile, nginx.conf, vercel.json
+  Dockerfile, nginx.conf
 models/           <id>.onnx + <id>.json, README.md
 data/             resultados.csv
 docs/             processo_bpmn.png, salvar_modelo.md

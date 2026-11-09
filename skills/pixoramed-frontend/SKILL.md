@@ -150,7 +150,7 @@ const inconclusivo = dados.classe_prevista === "inconclusivo";
 - Mostre só os módulos do escopo. Não use imagens de órgãos fora de Pele, Oral e Cérebro.
 - Prefira fontes legíveis no projetor. Evite textos de 8 a 11 px em conteúdo importante.
 
-`frontend/vercel.json`: `{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }`.
+Na nuvem, o build do React vai dentro da imagem do backend e o FastAPI serve o site (veja `pixoramed-infraestrutura`). `VITE_API_URL` fica vazio, porque o site e a API estão no mesmo endereço.
 
 ## Verificação
 

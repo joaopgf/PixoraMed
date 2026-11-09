@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     models_dir: Path = RAIZ / "models"
     resultados_csv: Path = RAIZ / "data" / "resultados.csv"
 
+    # Build do React (frontend/dist). Se a pasta existir, a API também serve o site
+    frontend_dir: Path = RAIZ / "frontend" / "dist"
+
     # Importa o resultados.csv ao iniciar a API (só acrescenta linhas novas)
     importar_csv_no_inicio: bool = True
 

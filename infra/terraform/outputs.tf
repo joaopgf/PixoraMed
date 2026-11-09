@@ -1,11 +1,6 @@
-output "url_api" {
-  description = "Endereço da API (a documentação fica em /docs)"
-  value       = render_web_service.api.url
-}
-
 output "url_app" {
-  description = "Endereço do app"
-  value       = "https://${vercel_project.web.name}.vercel.app"
+  description = "Endereço do app. A API fica no mesmo endereço, em /api, e a documentação em /docs"
+  value       = render_web_service.api.url
 }
 
 output "database_url" {

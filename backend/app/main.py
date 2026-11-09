@@ -9,6 +9,7 @@ from app.db import Base, SessionLocal, engine
 from app.importacao import importar_resultados
 from app.inferencia import RegistroModelos
 from app.routers import modelos, previsoes, treinos
+from app.site import registrar_site
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("pixoramed")
@@ -51,3 +52,9 @@ app.include_router(previsoes.router)
 @app.get("/api/saude", tags=["saúde"])
 def saude():
     return {"status": "ok", "modelos": len(app.state.registro.modelos)}
+
+
+# Por último, depois de todas as rotas da API
+if (settings.frontend_dir / "index.html").is_file():
+    registrar_site(app, settings.frontend_dir)
+    log.info("Site servido de %s", settings.frontend_dir)

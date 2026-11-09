@@ -1,6 +1,6 @@
 import { MODULOS } from "./modulos";
 
-// Em desenvolvimento fica vazio e o Vite repassa /api ao backend; na Vercel aponta para a API no Render
+// Fica vazio: em desenvolvimento o Vite repassa /api ao backend e, na nuvem, o site e a API estão no mesmo endereço
 const BASE = import.meta.env.VITE_API_URL ?? "";
 const NOMES_MODULOS = new Set(MODULOS.map((modulo) => modulo.nome));
 

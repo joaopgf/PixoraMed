@@ -29,7 +29,7 @@ models/ ──► FastAPI (ONNX Runtime, CPU) ◄──┘
 
 | Camada | Tecnologia | Onde roda |
 |---|---|---|
-| Frontend | React 19, Vite, TypeScript, Recharts, TanStack Query (CSS próprio, em `frontend/src/styles`) | Vercel |
+| Frontend | React 19, Vite, TypeScript, Recharts, TanStack Query (CSS próprio, em `frontend/src/styles`) | Render, servido pela própria API |
 | API | FastAPI, ONNX Runtime, OpenCV, SQLAlchemy 2 | Render (Docker) |
 | Banco | PostgreSQL (SQLite no desenvolvimento) | Neon |
 | Infra | Docker Compose (local), Terraform (nuvem) | `infra/terraform` |
@@ -67,7 +67,7 @@ frontend/            React (página pública, acesso simulado, painel, análise,
 models/              modelos ONNX carregados pela API
 data/resultados.csv  resultados dos treinos (cópia do Projeto-ML-Cancer)
 docs/                como salvar o modelo nos notebooks
-infra/terraform/     Neon + Render + Vercel
+infra/terraform/     Neon + Render
 docker-compose.yml
 ```
 
