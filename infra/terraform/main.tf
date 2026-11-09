@@ -1,10 +1,10 @@
 # Arquitetura na nuvem (tudo no plano gratuito):
 #   Render (um container: site React + FastAPI + ONNX)  --SQL-->  Neon (PostgreSQL)
 
-# Banco PostgreSQL. Mesma região da API (Oregon) para as consultas serem rápidas.
+# Banco PostgreSQL. Mesma região da API (Virginia, a mais próxima do Brasil no Render) para as consultas serem rápidas.
 resource "neon_project" "banco" {
-  name                      = var.nome
-  region_id                 = "aws-us-west-2"
+  name                      = var.nome_banco
+  region_id                 = "aws-us-east-1"
   history_retention_seconds = 21600 # limite do plano gratuito
 }
 
@@ -13,7 +13,7 @@ resource "neon_project" "banco" {
 resource "render_web_service" "api" {
   name              = var.nome # vira o endereço: <nome>.onrender.com
   plan              = "free"
-  region            = "oregon"
+  region            = "virginia"
   health_check_path = "/api/saude"
 
   runtime_source = {

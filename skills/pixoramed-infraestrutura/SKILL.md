@@ -80,8 +80,8 @@ server {
 
 | Serviço | Papel |
 |---|---|
-| Render | Um único container (`backend/Dockerfile`) com o site React e a API, plano gratuito, região `oregon` |
-| Neon | PostgreSQL, região `aws-us-west-2` |
+| Render | Um único container (`backend/Dockerfile`) com o site React e a API, plano gratuito, região `virginia` |
+| Neon | PostgreSQL, região `aws-us-east-1` (Virginia, a mesma do Render; não há região do Render no Brasil) |
 
 O `backend/Dockerfile` tem duas etapas: `node:22-alpine` roda `npm ci` e `npm run build` em `frontend/`, e a imagem `python:3.12-slim` recebe o `dist/` em `/app/frontend` (`FRONTEND_DIR`). Em `app/site.py`, `registrar_site` cria uma rota `GET /{caminho:path}`, registrada depois de todas as rotas da API: devolve o arquivo pedido dentro da pasta, ou o `index.html` com `Cache-Control: no-cache` para as rotas do React Router, e responde 404 para caminhos em `api/`. O `main.py` só a registra se `FRONTEND_DIR/index.html` existir. Como o site e a API ficam na mesma origem, não há CORS a configurar. No Docker Compose, o nginx continua servindo o frontend em `localhost:8080`.
 
@@ -106,21 +106,21 @@ provider "render" {
 }
 ```
 
-`variables.tf`: `neon_api_key` e `render_api_key` (ambas `sensitive`), `render_owner_id`, `github_repo`, `branch` (padrão `main`) e `nome` (padrão `pixoramed`).
+`variables.tf`: `neon_api_key` e `render_api_key` (ambas `sensitive`), `render_owner_id`, `github_repo`, `branch` (padrão `main`), `nome_banco` (padrão `PixoraMedDB`) e `nome` (padrão `pixoramed`).
 
 `main.tf`:
 
 ```hcl
 resource "neon_project" "banco" {
-  name                      = var.nome
-  region_id                 = "aws-us-west-2"
+  name                      = var.nome_banco
+  region_id                 = "aws-us-east-1"
   history_retention_seconds = 21600
 }
 
 resource "render_web_service" "api" {
   name              = var.nome
   plan              = "free"
-  region            = "oregon"
+  region            = "virginia"
   health_check_path = "/api/saude"
   runtime_source = {
     docker = {

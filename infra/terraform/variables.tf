@@ -26,6 +26,12 @@ variable "branch" {
   default     = "main"
 }
 
+variable "nome_banco" {
+  description = "Nome do projeto no Neon"
+  type        = string
+  default     = "PixoraMedDB"
+}
+
 variable "nome" {
   description = "Prefixo dos recursos"
   type        = string

@@ -4,8 +4,8 @@ Um único container no Render serve o site e a API, e o banco fica no Neon. Tudo
 
 | Serviço | O que roda | Observação |
 |---|---|---|
-| **Render** | Site React + API FastAPI, num só container (`backend/Dockerfile`) | "Dorme" após 15 min sem uso; a primeira chamada leva ~1 min |
-| **Neon** | PostgreSQL | Região `aws-us-west-2` (Oregon), a mesma do Render |
+| **Render** | Site React + API FastAPI, num só container (`backend/Dockerfile`) | Região `virginia`. "Dorme" após 15 min sem uso; a primeira chamada leva ~1 min |
+| **Neon** | PostgreSQL | Região `aws-us-east-1` (Virginia), a mesma do Render |
 
 O Terraform cria o banco no Neon, cria o serviço no Render apontando para o GitHub e passa o endereço do banco para a API (`DATABASE_URL`). Depois disso, cada `git push` na `main` faz o Render gerar e publicar a imagem de novo.
 

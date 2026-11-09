@@ -23,4 +23,6 @@ modelos_pt/
 .terraform/
 *.tfstate
 *.tfstate.*
+# O plano salvo guarda segredos (endereço do banco com senha)
+*.tfplan
 .terraform.lock.hcl
