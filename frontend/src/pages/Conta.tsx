@@ -1,11 +1,20 @@
 import { useNavigate } from "react-router-dom";
 
-import { Alerta, CabecalhoPagina } from "../components/Estrutura";
+import { Alerta, CabecalhoPagina, iniciais } from "../components/Estrutura";
 import Icone from "../components/Icone";
 import { useEstado } from "../estado";
+import { formatarData } from "../modulos";
+
+const ATIVOS = [
+  { titulo: "Login com e-mail e senha", nota: "Senha guardada só como hash scrypt com salt" },
+  { titulo: "Sessão com validade", nota: "Expira em 8 horas; ao sair, o token é apagado no servidor" },
+  { titulo: "Histórico por usuário", nota: "Cada conta vê só as próprias análises" },
+];
 
 const CONTROLES = [
   { titulo: "Autenticação multifator (MFA)", nota: "Não implementada neste projeto" },
+  { titulo: "Recuperação e troca de senha", nota: "E-mail de redefinição e confirmação de conta" },
+  { titulo: "Proteção contra tentativas repetidas", nota: "Limite de tentativas e bloqueio temporário" },
   { titulo: "Controle de acesso por função", nota: "Perfis, permissões e escopo institucional" },
   { titulo: "Trilha de auditoria", nota: "Registro de acesso, envio, execução e revisão" },
   { titulo: "Criptografia e retenção", nota: "Política de armazenamento e descarte" },
@@ -13,39 +22,35 @@ const CONTROLES = [
 
 export default function Conta() {
   const navegar = useNavigate();
-  const { sair } = useEstado();
+  const { sair, usuario } = useEstado();
 
   return (
     <>
       <CabecalhoPagina
         rotulo="PREFERÊNCIAS"
         titulo="Conta e segurança"
-        descricao="Configurações ilustrativas do ambiente e pontos previstos para uma implantação real."
+        descricao="Dados da sua conta, o que já protege o acesso e o que ainda falta para uma implantação real."
       />
       <div className="account-grid">
         <section className="profile-card">
           <div className="profile-hero">
-            <span className="avatar large">PD</span>
+            <span className="avatar large">{iniciais(usuario?.nome ?? "")}</span>
             <div>
-              <h3>Profissional demonstrativo</h3>
-              <p>Perfil ilustrativo · Médico / pesquisador</p>
+              <h3>{usuario?.nome}</h3>
+              <p>Conta da PixoraMed</p>
             </div>
           </div>
           <div className="info-pair">
             <span>E-mail</span>
-            <strong>demo@pixoramed.local</strong>
+            <strong>{usuario?.email}</strong>
           </div>
           <div className="info-pair">
-            <span>Instituição</span>
-            <strong>Ambiente de apresentação</strong>
+            <span>Conta criada em</span>
+            <strong>{usuario ? formatarData(usuario.criado_em) : ""}</strong>
           </div>
           <div className="info-pair">
             <span>Permissão</span>
-            <strong>Navegação e análises de demonstração</strong>
-          </div>
-          <div className="info-pair">
-            <span>Sessão</span>
-            <strong>Local no navegador</strong>
+            <strong>Análises e histórico próprio</strong>
           </div>
           <button
             type="button"
@@ -56,15 +61,24 @@ export default function Conta() {
               navegar("/");
             }}
           >
-            Encerrar demonstração <Icone nome="logout" />
+            Sair da conta <Icone nome="logout" />
           </button>
         </section>
 
         <section className="profile-card">
           <h3 style={{ margin: "0 0 7px", fontSize: 15 }}>Segurança e privacidade</h3>
           <p className="muted small" style={{ margin: "0 0 14px", lineHeight: 1.6 }}>
-            Os itens abaixo precisariam ser implementados antes de qualquer uso com dados reais.
+            O que já está ativo e o que precisaria ser implementado antes de qualquer uso com dados reais.
           </p>
+          {ATIVOS.map((controle) => (
+            <div key={controle.titulo} className="setting-row">
+              <div>
+                <strong>{controle.titulo}</strong>
+                <small>{controle.nota}</small>
+              </div>
+              <span className="pill success">Ativo</span>
+            </div>
+          ))}
           {CONTROLES.map((controle) => (
             <div key={controle.titulo} className="setting-row">
               <div>
@@ -87,7 +101,7 @@ export default function Conta() {
         <Alerta tipo="info" icone="shield">
           <strong>Antes de usar com pacientes.</strong>
           <br />
-          Seria necessário implementar autenticação real, autorização, proteção de dados pessoais sensíveis, gestão de consentimento
+          Seria necessário reforçar a autenticação (MFA, recuperação de senha), autorização por perfil, proteção de dados pessoais sensíveis, gestão de consentimento
           e base legal adequada (LGPD), auditoria e validação clínica e regulatória.
         </Alerta>
       </div>

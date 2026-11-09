@@ -57,7 +57,7 @@ export default function Publica() {
             </p>
             <div className="public-cta">
               <button type="button" className="btn primary" onClick={acessar}>
-                Acessar ambiente demonstrativo <Icone nome="arrow" />
+                Entrar ou criar conta <Icone nome="arrow" />
               </button>
               <a className="btn secondary" href="#public-modules">
                 Conhecer os módulos

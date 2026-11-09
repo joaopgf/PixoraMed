@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, Integer, String, UniqueConstraint
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -38,12 +38,43 @@ class Treino(Base):
     pasta_graficos: Mapped[str] = mapped_column(String(300), default="")
 
 
+def agora() -> datetime:
+    # UTC sem fuso: o SQLite não guarda fuso, e assim a comparação funciona igual no SQLite e no Postgres
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+class Usuario(Base):
+    """Conta de acesso. A senha nunca é guardada: só o hash scrypt com salt."""
+
+    __tablename__ = "usuarios"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    nome: Mapped[str] = mapped_column(String(80))
+    email: Mapped[str] = mapped_column(String(254), unique=True, index=True)  # sempre em minúsculas
+    senha_hash: Mapped[str] = mapped_column(String(200))
+    criado_em: Mapped[datetime] = mapped_column(DateTime, default=agora)
+
+
+class Sessao(Base):
+    """Sessão de login. O navegador guarda o token; o banco guarda só o SHA-256 dele."""
+
+    __tablename__ = "sessoes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    criado_em: Mapped[datetime] = mapped_column(DateTime, default=agora)
+    expira_em: Mapped[datetime] = mapped_column(DateTime)
+
+
 class Previsao(Base):
     """Histórico das previsões feitas pelo app. A imagem enviada nunca é guardada."""
 
     __tablename__ = "previsoes"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # Previsões de antes do login ficam sem dono e não aparecem para ninguém
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id", ondelete="CASCADE"), index=True, nullable=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     modelo_id: Mapped[str] = mapped_column(String(60), index=True)
     classe_prevista: Mapped[str] = mapped_column(String(60))

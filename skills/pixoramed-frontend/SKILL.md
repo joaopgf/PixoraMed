@@ -41,7 +41,7 @@ Consulte `pixoramed-backend` para o contrato da API, `pixoramed-regras-do-produt
 
 ## Integração
 
-- `src/api.ts`: tipos do contrato e `pedir()`, que lança `detail` da API como erro. A base é `import.meta.env.VITE_API_URL ?? ""`.
+- `src/api.ts`: tipos do contrato e `pedir()`, que lança `detail` da API como erro (no 422, uma mensagem por campo). A base é `import.meta.env.VITE_API_URL ?? ""`. `configurarSessao(token, aoExpirar)` guarda o token, que `pedir()` envia em `Authorization: Bearer`; um 401 com token chama `aoExpirar`. Inclui `api.cadastrar`, `api.entrar` e `api.sair`.
 - `vite.config.ts`: repassa `/api` para `http://localhost:8000`.
 - `api.treinos` filtra pelos nomes do catálogo. `api.previsoes` usa `?limite=100`; o Painel e o Histórico falam em "análises recentes". Use chaves de cache `modelos`, `treinos` e `previsoes`, e invalide `previsoes` depois de uma análise.
 
@@ -71,7 +71,7 @@ Use `nomeClasse` em todas as telas, inclusive na busca e no CSV do histórico. O
 
 ## Estado: `src/estado.tsx`
 
-`moduloPendente` guarda o módulo clicado na página pública antes do login, usado como destino depois de entrar. `codigoCaso` é opcional e digitado na tela Preparar, com `maxLength` 32 e o exemplo `CASO-001`. Contexto com `logado`, `entrar`, `sair`, `moduloPendente`, `analise` (`moduloId`, `modeloId`, `codigoCaso`, `consentimento`, `arquivo`, `arquivoUrl`) e `ultimoResultado`. A sessão fica em `sessionStorage`, na chave `pixoramed_demo_session`. Libere as URLs de pré-visualização com `URL.revokeObjectURL`. Imagem, probabilidades e código do caso **ficam só na sessão**.
+`moduloPendente` guarda o módulo clicado na página pública antes do login, usado como destino depois de entrar. `codigoCaso` é opcional e digitado na tela Preparar, com `maxLength` 32 e o exemplo `CASO-001`. Contexto com `logado`, `usuario`, `entrar(sessao, manter)`, `sair`, `avisoLogin`, `moduloPendente`, `analise` (`moduloId`, `modeloId`, `codigoCaso`, `consentimento`, `arquivo`, `arquivoUrl`) e `ultimoResultado`. A sessão (`token`, `expira_em`, `usuario`) fica na chave `pixoramed_sessao`: no `localStorage` com "Manter conectado", senão no `sessionStorage`. Leia e configure o token **ao carregar o módulo**, antes da primeira consulta. Ao entrar e ao sair, limpe o cache do TanStack Query, para o histórico de uma conta não aparecer em outra. Se a API recusar o token, encerre a sessão e mostre "Sua sessão expirou. Entre novamente." no login. Libere as URLs de pré-visualização com `URL.revokeObjectURL`. Imagem, probabilidades e código do caso **ficam só na sessão**.
 
 ## Rotas: `src/App.tsx`
 
@@ -92,13 +92,13 @@ Públicas: `/` (`Publica`) e `/login` (`Login`). Dentro de `ExigeAcesso` e do la
 
 Qualquer outra rota redireciona para `/`. Volte ao topo a cada navegação.
 
-**Barra lateral:** WORKSPACE (Visão geral, Nova análise, Histórico de análises), PROJETO (Resultados dos treinos, Módulos e modelos, Limitações e ética) e CONTA (Conta e segurança), com o cartão "Projeto acadêmico". No topo, a etiqueta "MODO DEMONSTRAÇÃO" e "Profissional demo". No celular, navegação inferior com Início, Nova análise, Histórico e Resultados.
+**Barra lateral:** WORKSPACE (Visão geral, Nova análise, Histórico de análises), PROJETO (Resultados dos treinos, Módulos e modelos, Limitações e ética) e CONTA (Conta e segurança), com o cartão "Projeto acadêmico". No topo, a etiqueta "PROJETO ACADÊMICO" e o nome e o e-mail do usuário, com as iniciais no avatar (`iniciais()` em `Estrutura.tsx`). No celular, navegação inferior com Início, Nova análise, Histórico e Resultados.
 
 ## Telas principais
 
 **Página pública:** cabeçalho com a marca e o botão de acesso; título "Análise inteligente de imagens médicas"; texto sobre módulos por tipo de exame e análise honesta dos números; botões "Acessar ambiente demonstrativo" e "Conhecer os módulos"; cartões dos três módulos; três passos (Escolha o exame, Envie a imagem, Revise a saída); créditos dos datasets e a frase "Projeto acadêmico de pesquisa aplicada (Bootcamp de IA TCS / SENAI).".
 
-**Login:** "ACESSO SIMULADO". Campos de e-mail e senha opcionais, com o texto "Não é necessário no modo demonstração", e o botão "Entrar na demonstração". O envio do formulário não valida nada e chama `entrar()`. Depois de entrar, vá para `moduloPendente` ou `/painel`. Avise: "Este acesso não verifica credenciais e não cria uma conta. Não digite uma senha de verdade."
+**Login:** abas "Entrar" e "Criar conta". Entrar: e-mail e senha. Criar conta: nome, e-mail, senha (mínimo 8) e confirmação, conferida no navegador ("As senhas não conferem."). Caixa "Manter conectado neste navegador". Mostre o erro da API e bloqueie o botão durante o envio. Depois de entrar, vá para `moduloPendente` ou `/painel`; quem já está logado é levado ao painel. Rodapé: não usar a mesma senha de outros serviços.
 
 **Catálogo:** avise que a imagem precisa ser do módulo certo: "O modelo não verifica o tipo de exame: uma imagem de outro tipo também recebe um resultado."
 
@@ -131,7 +131,7 @@ const inconclusivo = dados.classe_prevista === "inconclusivo";
 
 **Painel:** métricas de módulos, modelos conectados, treinos registrados (do catálogo) e análises recentes, sempre dos dados reais da API, mais o bloco de fluxo com "Selecionar módulo", "Preparar o caso" e "Revisar o retorno" e as 3 análises mais recentes.
 
-**Conta:** perfil ilustrativo ("Profissional demonstrativo", `demo@pixoramed.local`), botão de sair e controles previstos para uma implantação real, como autenticação multifator, controle de acesso, trilha de auditoria e criptografia, marcados como não implementados.
+**Conta:** nome, e-mail, data de criação e permissão ("Análises e histórico próprio"), botão "Sair da conta". Itens ativos: login com senha em hash, sessão com validade e histórico por usuário. Pendentes: MFA, recuperação de senha, limite de tentativas, controle de acesso por função, trilha de auditoria e criptografia e retenção.
 
 **Status de conexão:** "Modelo conectado" e "Modelo não conectado".
 

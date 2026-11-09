@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
+import { useEstado } from "../estado";
 import Icone from "./Icone";
 import Marca from "./Marca";
 
@@ -27,9 +28,18 @@ const TITULOS: [string, string][] = [
   ["/conta", "Conta e segurança"],
 ];
 
+// Duas iniciais do nome, para o avatar
+export function iniciais(nome: string) {
+  const partes = nome.trim().split(/\s+/);
+  return ((partes[0]?.[0] ?? "") + (partes.length > 1 ? partes[partes.length - 1][0] : "")).toUpperCase() || "?";
+}
+
 export function Estrutura() {
   const { pathname } = useLocation();
   const navegar = useNavigate();
+  const { usuario } = useEstado();
+  const nome = usuario?.nome ?? "";
+  const email = usuario?.email ?? "";
   const titulo = TITULOS.find(([caminho]) => pathname.startsWith(caminho))?.[1] ?? "";
   const emAnalise = ["/nova", "/analise", "/revisao", "/resultado/"].some((caminho) => pathname.startsWith(caminho));
 
@@ -63,10 +73,10 @@ export function Estrutura() {
           <p>Os modelos são experimentais e não foram validados clinicamente. O resultado não é um diagnóstico.</p>
         </div>
         <div className="user-mini">
-          <span className="avatar">PD</span>
+          <span className="avatar">{iniciais(nome)}</span>
           <div>
-            <strong>Profissional demo</strong>
-            <small>Perfil de apresentação</small>
+            <strong>{nome}</strong>
+            <small>{email}</small>
           </div>
         </div>
       </aside>
@@ -79,16 +89,16 @@ export function Estrutura() {
           </div>
           <div className="topbar-right">
             <span className="pill demo">
-              <span className="pulse" /> MODO DEMONSTRAÇÃO
+              <span className="pulse" /> PROJETO ACADÊMICO
             </span>
             <button type="button" className="topbar-action" aria-label="Conta e segurança" onClick={() => navegar("/conta")}>
               <Icone nome="user" />
             </button>
             <div className="topbar-user">
-              <span className="avatar">PD</span>
+              <span className="avatar">{iniciais(nome)}</span>
               <div className="user-label">
-                <strong>Profissional demo</strong>
-                <small>Conta ilustrativa</small>
+                <strong>{nome}</strong>
+                <small>{email}</small>
               </div>
             </div>
           </div>

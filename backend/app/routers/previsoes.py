@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.autenticacao import usuario_atual
 from app.config import settings
 from app.db import get_db
 from app.esquemas import PrevisaoHistorico, PrevisaoOut, Probabilidade
@@ -15,7 +16,7 @@ from app.inferencia import (
     limiar_inconclusivo_do_modelo,
     prever,
 )
-from app.tabelas import Previsao
+from app.tabelas import Previsao, Usuario
 
 router = APIRouter(prefix="/api/previsoes", tags=["previsões"])
 
@@ -31,6 +32,7 @@ async def criar_previsao(
     modelo_id: str = Form(...),
     arquivo: UploadFile = File(...),
     db: Session = Depends(get_db),
+    usuario: Usuario = Depends(usuario_atual),
 ):
     modelo = request.app.state.registro.obter(modelo_id)
     if modelo is None:
@@ -54,7 +56,7 @@ async def criar_previsao(
     classe = CLASSE_INCONCLUSIVA if inconclusivo else modelo.classes[indice]
 
     # Só o resultado vai para o banco; a imagem é descartada aqui
-    registro = Previsao(modelo_id=modelo.id, classe_prevista=classe, confianca=confianca, tempo_ms=tempo_ms)
+    registro = Previsao(usuario_id=usuario.id, modelo_id=modelo.id, classe_prevista=classe, confianca=confianca, tempo_ms=tempo_ms)
     db.add(registro)
     db.commit()
 
@@ -78,6 +80,8 @@ async def criar_previsao(
 
 
 @router.get("", response_model=list[PrevisaoHistorico])
-def listar_previsoes(limite: int = 20, db: Session = Depends(get_db)):
+def listar_previsoes(limite: int = 20, db: Session = Depends(get_db), usuario: Usuario = Depends(usuario_atual)):
+    # Cada usuário vê só as próprias análises
     limite = max(1, min(limite, 100))
-    return db.scalars(select(Previsao).order_by(Previsao.criado_em.desc()).limit(limite)).all()
+    consulta = select(Previsao).where(Previsao.usuario_id == usuario.id).order_by(Previsao.criado_em.desc()).limit(limite)
+    return db.scalars(consulta).all()

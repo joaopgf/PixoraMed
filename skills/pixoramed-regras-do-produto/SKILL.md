@@ -34,7 +34,7 @@ Protótipo acadêmico do Bootcamp de IA (TCS / SENAI Londrina, 2026) que apoia a
 
 - **Pré-processamento:** repete exatamente o treino de cada modelo. O OpenCV lê em BGR e converte para RGB nos modelos coloridos. **Nunca envie BGR ao modelo nem retire a divisão por 255 do Oral:** a acurácia caiu de 96,5% para cerca de 52% no teste.
 - **Imagem sem relação:** por decisão do professor, não há filtro que recuse imagens de outro tipo. Isso é uma limitação documentada e um trabalho futuro.
-- **Login:** é simulado, sem credenciais, em `sessionStorage`. Não crie autenticação real nem peça senha real.
+- **Login:** cadastro e login com e-mail e senha (veja `pixoramed-backend`). Senha só como hash scrypt, sessão com validade de 8 horas e histórico separado por usuário. MFA, recuperação de senha e limite de tentativas ficam como trabalho futuro.
 - **Privacidade:** a imagem é processada em memória e descartada. O banco guarda modelo, classe, confiança, tempo e horário. O código do caso fica só na sessão do navegador.
 - **Modelo:** um por tipo de exame. O escopo é só Pele, Oral e Cérebro; os outros cânceres dos notebooks antigos ficam fora do app.
 

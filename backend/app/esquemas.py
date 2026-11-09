@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class TreinoOut(BaseModel):
@@ -73,3 +73,51 @@ class PrevisaoHistorico(BaseModel):
     classe_prevista: str
     confianca: float
     tempo_ms: float
+
+
+# ---------- Autenticação ----------
+
+# Formato básico de e-mail: algo@dominio.tld, sem espaços
+PADRAO_EMAIL = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+
+
+class CadastroIn(BaseModel):
+    nome: str = Field(min_length=2, max_length=80)
+    email: str = Field(max_length=254, pattern=PADRAO_EMAIL)
+    senha: str = Field(min_length=8, max_length=128)
+
+    # mode="before": limpa antes de conferir tamanho e formato
+    @field_validator("nome", mode="before")
+    @classmethod
+    def limpar_nome(cls, valor):
+        return " ".join(valor.split()) if isinstance(valor, str) else valor
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def minusculas(cls, valor):
+        return valor.strip().lower() if isinstance(valor, str) else valor
+
+
+class LoginIn(BaseModel):
+    email: str = Field(max_length=254)
+    senha: str = Field(max_length=128)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def minusculas(cls, valor):
+        return valor.strip().lower() if isinstance(valor, str) else valor
+
+
+class UsuarioOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    nome: str
+    email: str
+    criado_em: datetime
+
+
+class SessaoOut(BaseModel):
+    token: str
+    expira_em: datetime
+    usuario: UsuarioOut

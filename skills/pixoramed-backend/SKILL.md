@@ -88,16 +88,20 @@ def limiar_baixa_certeza_do_modelo(modelo):
 
 ## Contrato da API
 
-Inclua os routers `treinos`, `modelos` e `previsoes`. CORS só com `GET` e `POST`. Documentação em `/docs`.
+Inclua os routers `auth`, `treinos`, `modelos` e `previsoes`. CORS só com `GET` e `POST` e os cabeçalhos `Authorization` e `Content-Type`. Documentação em `/docs`.
 
 | Rota | Resposta |
 |---|---|
+| `POST /api/auth/cadastro` | 201 com `SessaoOut`; e-mail repetido dá 409 |
+| `POST /api/auth/login` | `SessaoOut`; e-mail inexistente ou senha errada dão 401 com a mesma mensagem, `E-mail ou senha incorretos.` |
+| `GET /api/auth/eu` | `UsuarioOut` (exige login) |
+| `POST /api/auth/sair` | 204, apaga a sessão (exige login) |
 | `GET /api/saude` | `{"status": "ok", "modelos": n}` |
 | `GET /api/treinos?cancer=&modo=&normalizado=` | Lista de treinos, ordenada por `cancer`, `modo` e `data_hora` |
 | `GET /api/treinos/canceres` | Lista de nomes |
 | `GET /api/modelos` | Lista de modelos, ordenada por `cancer` e `modo` |
-| `POST /api/previsoes` | Multipart, com `modelo_id` e `arquivo` |
-| `GET /api/previsoes?limite=20` | Histórico mais recente primeiro, com `limite` entre 1 e 100 |
+| `POST /api/previsoes` | Multipart, com `modelo_id` e `arquivo` (exige login; grava `usuario_id`) |
+| `GET /api/previsoes?limite=20` | Histórico **do usuário logado**, mais recente primeiro, com `limite` entre 1 e 100 |
 
 **`ModeloOut`:** `id`, `cancer`, `modo`, `tamanho`, `normalizado` (`escala != 1`), `classes`, `descricao`, `metricas`, `limiar`, `limiar_inconclusivo`, `limiar_baixa_certeza`.
 
@@ -106,6 +110,13 @@ Inclua os routers `treinos`, `modelos` e `previsoes`. CORS só com `GET` e `POST
 **`PrevisaoHistorico`:** `id`, `criado_em`, `modelo_id`, `classe_prevista`, `confianca`, `tempo_ms`.
 
 **`TreinoOut`:** todas as colunas da tabela `treinos`.
+
+**Autenticação (`app/autenticacao.py`, `app/routers/auth.py`):** sem dependências novas, só a biblioteca padrão.
+
+- `CadastroIn`: `nome` (2 a 80, espaços repetidos removidos), `email` (até 254, formato `algo@dominio.tld`) e `senha` (8 a 128). Limpe nome e e-mail com `field_validator(mode="before")`, antes de conferir tamanho e formato; o e-mail vai para minúsculas. `LoginIn`: `email` e `senha`. `UsuarioOut`: `id`, `nome`, `email`, `criado_em`. `SessaoOut`: `token`, `expira_em`, `usuario`.
+- Senha: `hashlib.scrypt` com `n=2**14`, `r=8`, `p=1`, salt de 16 bytes e `dklen=32`, guardada como `scrypt$n$r$p$salt$hash` em base64. Confira com `hmac.compare_digest`. No login com e-mail inexistente, confira contra um `HASH_FALSO`, para o tempo de resposta não revelar quais e-mails têm conta.
+- Sessão: token `secrets.token_urlsafe(32)`; o banco guarda só o SHA-256. Validade em `settings.sessao_horas` (padrão 8). Ao criar uma sessão, apague as vencidas do mesmo usuário.
+- `sessao_atual` lê `Authorization: Bearer` com `HTTPBearer(auto_error=False)` e responde 401 (`Sessão expirada ou inválida. Entre novamente.`, com `WWW-Authenticate: Bearer`) sem token, com token desconhecido ou vencido. `usuario_atual` depende dela.
 
 Fluxo de `POST /api/previsoes`:
 
@@ -132,9 +143,9 @@ cd backend
 uvicorn app.main:app --reload
 ```
 
-## Testes: `backend/tests/test_api.py`
+## Testes: `backend/tests/`
 
-Crie uma fixture de módulo que define `DATABASE_URL`, `MODELS_DIR` e `RESULTADOS_CSV` em `os.environ`, usando `tmp_path_factory`, **antes** de importar `app.main`, porque a configuração é lida na importação. Depois, abra `TestClient(app)` com `with`. A sessão falsa implementa `get_inputs()`, que devolve um objeto com `name`, e `run()`. Coloque-a em `app.state.registro.modelos["falso"]`. Cubra:
+Em `conftest.py`, crie uma fixture de sessão `app` que define `DATABASE_URL`, `MODELS_DIR`, `RESULTADOS_CSV` e `FRONTEND_DIR` em `os.environ`, usando `tmp_path_factory`, **antes** de importar `app.main`, porque a configuração é lida na importação. Depois, abra `TestClient(app)` com `with`. A fixture `cliente` cadastra um usuário e devolve um `TestClient` já com o cabeçalho `Authorization`, usado pelos testes de `test_api.py`. A sessão falsa implementa `get_inputs()`, que devolve um objeto com `name`, e `run()`. Coloque-a em `app.state.registro.modelos["falso"]`. Cubra:
 
 - Saúde, importação do CSV e filtro de treinos.
 - Modelo inexistente (404), `separar_dataset` e arquivo vazio (422, nos dois pré-processamentos).
@@ -142,3 +153,5 @@ Crie uma fixture de módulo que define `DATABASE_URL`, `MODELS_DIR` e `RESULTADO
 - `preprocessar_pil`: formato, normalização e recusa de imagem inválida ou pequena.
 - `indice_previsto`, sem limiar e com limiar de 0,18.
 - `POST /api/previsoes` com uma sessão ONNX falsa: logits `[3, 0]` dão classe; `[0.2, 0]` dão `inconclusivo`; com limiar, 0,2 dá a segunda classe, sem inconclusivo, e `limiar_baixa_certeza` igual a 0,8.
+
+Em `test_auth.py`: cadastro (e-mail limpo e em minúsculas, senha fora da resposta e guardada só como hash), e-mail repetido (409), dados inválidos (422), login certo e errado com a mesma mensagem, rotas protegidas sem token (401), `eu` e `sair` (o token deixa de valer), sessão vencida, histórico separado por usuário e a migração de `atualizar_esquema` num banco antigo sem `usuario_id`.

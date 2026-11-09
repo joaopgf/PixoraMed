@@ -5,10 +5,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.db import Base, SessionLocal, engine
+from app.db import Base, SessionLocal, atualizar_esquema, engine
 from app.importacao import importar_resultados
 from app.inferencia import RegistroModelos
-from app.routers import modelos, previsoes, treinos
+from app.routers import auth, modelos, previsoes, treinos
 from app.site import registrar_site
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -18,6 +18,7 @@ log = logging.getLogger("pixoramed")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(engine)
+    atualizar_esquema(engine)
 
     if settings.importar_csv_no_inicio:
         with SessionLocal() as db:
@@ -41,9 +42,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.lista_cors,
     allow_methods=["GET", "POST"],
-    allow_headers=["*"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
+app.include_router(auth.router)
 app.include_router(treinos.router)
 app.include_router(modelos.router)
 app.include_router(previsoes.router)

@@ -25,6 +25,9 @@ class Settings(BaseSettings):
 
     max_upload_mb: int = 10
 
+    # Validade da sessão de login
+    sessao_horas: int = 8
+
     # Abaixo desta confiança, o resultado é "inconclusivo" (não vale para modelos com limiar próprio, como o da Pele)
     limiar_inconclusivo: float = 0.8
 

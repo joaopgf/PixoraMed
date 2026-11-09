@@ -63,7 +63,7 @@ backend/
     exportar_ensemble_pele.py   5 .pt do pacote da Pele -> models/pele_cor.onnx + .json
     importar_resultados.py   importa um resultados.csv para o banco
   tests/
-frontend/            React (página pública, acesso simulado, painel, análise, histórico, resultados, modelos, limitações)
+frontend/            React (página pública, login e cadastro, painel, análise, histórico, resultados, modelos, limitações)
 models/              modelos ONNX carregados pela API
 data/resultados.csv  resultados dos treinos (cópia do Projeto-ML-Cancer)
 docs/                como salvar o modelo nos notebooks
@@ -153,12 +153,18 @@ Só as execuções novas são inseridas (a chave é `data_hora` + `dataset`).
 
 | Método | Rota | O que faz |
 |---|---|---|
+| POST | `/api/auth/cadastro` | Cria a conta (`nome`, `email`, `senha`) e já devolve a sessão |
+| POST | `/api/auth/login` | Entra com `email` e `senha` e devolve o token da sessão |
+| GET | `/api/auth/eu` | Usuário da sessão atual (exige login) |
+| POST | `/api/auth/sair` | Apaga a sessão no servidor (exige login) |
 | GET | `/api/saude` | Status e número de modelos carregados |
 | GET | `/api/treinos` | Treinos (filtros: `cancer`, `modo`, `normalizado`) |
 | GET | `/api/treinos/canceres` | Tipos de câncer com treinos |
 | GET | `/api/modelos` | Modelos disponíveis para previsão |
-| POST | `/api/previsoes` | Envia `modelo_id` + `arquivo` (imagem) e recebe a classe e as probabilidades |
-| GET | `/api/previsoes` | Histórico das últimas previsões |
+| POST | `/api/previsoes` | Envia `modelo_id` + `arquivo` (imagem) e recebe a classe e as probabilidades (exige login) |
+| GET | `/api/previsoes` | Histórico das últimas previsões do usuário logado (exige login) |
+
+As rotas que exigem login recebem o cabeçalho `Authorization: Bearer <token>`. A senha é guardada só como hash scrypt com salt, e o banco guarda só o SHA-256 do token. A sessão vale por 8 horas (variável `SESSAO_HORAS`).
 
 ## Deploy na nuvem
 
@@ -199,4 +205,4 @@ Reduzimos as imagens para 128×128 e, no Multi Cancer, usamos só uma parte das 
 
 ## Privacidade
 
-A imagem enviada é processada em memória e descartada. A tabela `previsoes` guarda só o modelo, a classe prevista, a confiança, o tempo e o horário.
+A imagem enviada é processada em memória e descartada. A tabela `previsoes` guarda só o modelo, a classe prevista, a confiança, o tempo, o horário e o usuário que fez a análise. Cada usuário vê só o próprio histórico.

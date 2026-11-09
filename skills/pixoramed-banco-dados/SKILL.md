@@ -43,16 +43,25 @@ Crie o engine com `pool_pre_ping=True`; no SQLite, passe `check_same_thread=Fals
 | `acc_por_fold`, `f1_por_fold` | `String(200)`, padrão vazio |
 | `pasta_graficos` | `String(300)`, padrão vazio |
 
+**`usuarios`:** contas de acesso. `id`; `nome` (`String(80)`); `email` (`String(254)`, único, com índice, sempre em minúsculas); `senha_hash` (`String(200)`, formato `scrypt$n$r$p$salt$hash`); `criado_em`.
+
+**`sessoes`:** sessões de login. `id`; `usuario_id` (chave estrangeira com `ON DELETE CASCADE`); `token_hash` (`String(64)`, único: SHA-256 do token, nunca o token); `criado_em`; `expira_em`.
+
+As datas de `usuarios` e `sessoes` usam `agora()`, que devolve UTC **sem fuso**, para comparar igual no SQLite e no Postgres.
+
 **`previsoes`:** histórico das análises. **Não crie coluna para a imagem nem para dados de paciente.**
 
 | Coluna | Tipo |
 |---|---|
 | `id` | inteiro, chave primária |
+| `usuario_id` | inteiro, chave estrangeira para `usuarios`, com índice, aceita nulo (análises de antes do login ficam sem dono e não aparecem para ninguém) |
 | `criado_em` | `DateTime`, padrão `datetime.now(timezone.utc)` |
 | `modelo_id` | `String(60)`, com índice |
 | `classe_prevista` | `String(60)`, incluindo `inconclusivo` |
 | `confianca` | `Float`: probabilidade da classe prevista |
 | `tempo_ms` | `Float` |
+
+`create_all` não altera tabelas que já existem. Por isso, `atualizar_esquema(engine)` em `app/db.py`, chamada no `lifespan` logo depois do `create_all`, acrescenta `previsoes.usuario_id` e o índice quando faltam, como no banco do Neon criado antes do login. Ela pode rodar várias vezes.
 
 ## Importação: `app/importacao.py`
 

@@ -1,29 +1,6 @@
-import os
-from pathlib import Path
-
 import cv2
 import numpy as np
 import pytest
-
-RAIZ = Path(__file__).resolve().parents[2]
-
-
-@pytest.fixture(scope="module")
-def cliente(tmp_path_factory):
-    # Banco temporário e pasta de modelos vazia: o teste não depende do que está em models/
-    pasta = tmp_path_factory.mktemp("pixoramed")
-    os.environ["DATABASE_URL"] = f"sqlite:///{pasta / 'teste.db'}"
-    os.environ["MODELS_DIR"] = str(pasta / "models")
-    os.environ["RESULTADOS_CSV"] = str(RAIZ / "data" / "resultados.csv")
-    # Sem o site: o build local do React (frontend/dist) não interfere nos testes da API
-    os.environ["FRONTEND_DIR"] = str(pasta / "sem_site")
-
-    from fastapi.testclient import TestClient
-
-    from app.main import app
-
-    with TestClient(app) as cliente:
-        yield cliente
 
 
 def test_saude(cliente):
