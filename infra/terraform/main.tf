@@ -61,7 +61,22 @@ resource "render_web_service" "api" {
 
   env_vars = {
     DATABASE_URL = { value = neon_project.banco.connection_uri }
-    IA_URL       = { value = render_web_service.ia.url }
-    IA_TOKEN     = { value = random_password.token_ia.result }
   }
+}
+
+# Endereço e token da IA para a API principal. Ficam num grupo de variáveis, e não em env_vars acima, porque
+# o provedor do Render envia o modo de manutenção em toda atualização de serviço, e o Render recusa isso no
+# plano gratuito ("maintenance mode can only be configured for non-free tier services"). Criar o grupo e
+# ligá-lo ao serviço não atualiza o serviço.
+resource "render_env_group" "ia" {
+  name = "${var.nome}-cliente-ia"
+  env_vars = {
+    IA_URL   = { value = render_web_service.ia.url }
+    IA_TOKEN = { value = random_password.token_ia.result }
+  }
+}
+
+resource "render_env_group_link" "api_ia" {
+  env_group_id = render_env_group.ia.id
+  service_ids  = [render_web_service.api.id]
 }
