@@ -32,7 +32,7 @@ Texto não gera pesos de modelo nem resultados de treino. Para o sistema ficar i
 
 - **Modelos:** `models/*.onnx` e `*.json`, ou os `.pt` para converter, ou o dataset com GPU para treinar.
 - **Tabela de treinos:** `data/resultados.csv`.
-- **Imagens:** `docs/processo_bpmn.png`, as ilustrações de `frontend/public/organs/` e os gráficos de `frontend/public/resultados/pele/`.
+- **Imagens:** os PNGs dos workflows em `docs/bpmn/`, as ilustrações de `frontend/public/organs/` e os gráficos de `frontend/public/resultados/pele/`.
 
 Sem os modelos, o app funciona, mas mostra "Modelo não conectado". A skill de regras proíbe inventar métricas para preencher essa falta.
 

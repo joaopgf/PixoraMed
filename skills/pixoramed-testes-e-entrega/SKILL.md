@@ -61,7 +61,7 @@ Apresentação de até 20 minutos: contexto (3), BPMN e arquitetura (3), demonst
 
 | Requisito | Onde está no projeto |
 |---|---|
-| BPMN 2.0 | `docs/processo_bpmn.png` e README |
+| BPMN 2.0 | Três workflows em `docs/bpmn/` (login, microsserviço de IA e uso do sistema) e no README |
 | Python e Pandas | `backend/app/importacao.py` e notebooks |
 | SQL | `backend/app/tabelas.py` e `db.py` |
 | Visualização | Página de resultados e gráficos dos notebooks |

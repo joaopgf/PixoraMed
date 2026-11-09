@@ -8,9 +8,35 @@ Projeto integrador do Bootcamp de IA (TCS / SENAI Londrina, 2026). Os notebooks 
 
 > **Aviso:** ferramenta acadêmica. Não é um dispositivo médico e não faz diagnóstico.
 
-## Processo (BPMN 2.0)
+## Workflows (BPMN 2.0)
 
-![Processo de classificação de imagem em BPMN 2.0](docs/processo_bpmn.png)
+Três processos, em `docs/bpmn/`. Os arquivos `.bpmn` seguem o padrão BPMN 2.0 e abrem em [bpmn.io](https://demo.bpmn.io) e no Camunda Modeler; também podem ser importados no Lucidchart. Os PNGs estão em alta resolução, para dar zoom.
+
+### 1. Login e cadastro
+
+Quem não tem conta se cadastra: a confirmação da senha é conferida no navegador, e a API valida os dados, recusa e-mail repetido e grava só o hash scrypt da senha. Quem tem conta informa e-mail e senha; erro de e-mail ou de senha recebe a mesma mensagem. Nos dois casos, a API cria uma sessão de 8 horas e o banco guarda só o hash do token.
+
+![Workflow de login e cadastro](docs/bpmn/1_login.png)
+
+Arquivo: [`docs/bpmn/1_login.bpmn`](docs/bpmn/1_login.bpmn)
+
+### 2. Microsserviço de IA
+
+Quando o container sobe, a IA carrega os modelos ONNX uma vez. A cada análise, a API principal confere o tamanho da imagem e envia a imagem à IA com o token. A IA confere o token, o modelo e a imagem, pré-processa como no treino, roda o modelo e devolve só as probabilidades. A API decide a classe e grava o resultado, sem a imagem.
+
+![Workflow do microsserviço de IA](docs/bpmn/2_microsservico_ia.png)
+
+Arquivo: [`docs/bpmn/2_microsservico_ia.bpmn`](docs/bpmn/2_microsservico_ia.bpmn)
+
+### 3. Uso do sistema: análise de uma imagem
+
+O usuário entra, escolhe o tipo de câncer, envia a imagem, confirma o consentimento e revisa o caso. A IA devolve as probabilidades, e o sistema decide: em Oral e Cérebro, "inconclusivo" abaixo de 80%; na Pele, maligno a partir de 18%, com aviso de baixa certeza. O resultado é gravado sem a imagem e exibido com os avisos.
+
+![Workflow de uso do sistema](docs/bpmn/3_uso_do_sistema.png)
+
+Arquivo: [`docs/bpmn/3_uso_do_sistema.bpmn`](docs/bpmn/3_uso_do_sistema.bpmn)
+
+Os três diagramas são gerados por `docs/bpmn/gerador/gerar.py`. Para mudar um processo, edite as etapas lá e rode `python gerar.py` dentro dessa pasta; depois exporte os PNGs de novo, por exemplo pelo bpmn.io.
 
 ## Arquitetura
 
@@ -80,7 +106,7 @@ ia/                  microsserviço de IA
 frontend/            React (página pública, login e cadastro, painel, análise, histórico, resultados, modelos, limitações)
 models/              modelos ONNX carregados pelo microsserviço de IA
 data/resultados.csv  resultados dos treinos (cópia do Projeto-ML-Cancer)
-docs/                como salvar o modelo nos notebooks
+docs/                workflows BPMN (docs/bpmn), deck e como salvar o modelo nos notebooks
 infra/terraform/     Neon + Render (API principal e microsserviço de IA)
 docker-compose.yml
 ```

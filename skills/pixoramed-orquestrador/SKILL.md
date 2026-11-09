@@ -18,7 +18,7 @@ O PixoraMed é um protótipo acadêmico que classifica imagens médicas de cânc
 | Modelos prontos (`*.onnx` e `*.json`) | `models/` | O app funciona e mostra "Modelo não conectado" |
 | Modelos em PyTorch (`.pt`) | Pasta indicada pelo usuário | Execute `pixoramed-treino-modelos`, se houver dataset e GPU |
 | Tabela de treinos | `data/resultados.csv` | A página de resultados fica sem execuções |
-| Workflow BPMN | `docs/processo_bpmn.png` | O README fica sem o diagrama; peça a imagem ao grupo |
+| Workflows BPMN | `docs/bpmn/` (login, microsserviço de IA e uso do sistema) | Gere os `.bpmn` com `docs/bpmn/gerador/gerar.py` e exporte os PNGs |
 | Imagens das telas e dos gráficos | `frontend/public/` | Use estados vazios; não invente imagens de resultados |
 
 4. Pergunte ao usuário só o que impede o trabalho: pasta do projeto, onde estão os modelos e se o deploy deve ser feito. Para o resto, siga as regras destas skills.

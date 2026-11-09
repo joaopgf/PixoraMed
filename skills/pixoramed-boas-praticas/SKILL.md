@@ -23,7 +23,7 @@ frontend/
   Dockerfile, nginx.conf
 models/           <id>.onnx + <id>.json, README.md
 data/             resultados.csv
-docs/             processo_bpmn.png, salvar_modelo.md
+docs/             bpmn/ (3 workflows .bpmn + .png e o gerador), salvar_modelo.md
 infra/terraform/  main.tf, variables.tf, outputs.tf, versions.tf, terraform.tfvars.example
 docker-compose.yml, .env.example, .gitignore, .gitattributes, .dockerignore, README.md
 ```
