@@ -61,6 +61,8 @@ services:
     command: sh -c "npm ci && npm run dev"
     environment:
       BACKEND_URL: http://backend:8080
+      # No Windows/macOS a pasta montada não avisa o container das alterações: o Vite confere por polling
+      CHOKIDAR_USEPOLLING: "true"
     volumes:
       - ../frontend:/app
       - frontend-node-modules:/app/node_modules

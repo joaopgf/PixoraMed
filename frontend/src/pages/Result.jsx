@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { Alert, PageHeader, Steps } from "../components/common";
 import Icon from "../components/Icon";
+import ProbabilityPieChart from "../components/ProbabilityPieChart";
 import { useAnalysis } from "../context/AnalysisContext";
 import { useModels, usePredictionHistory } from "../hooks/useApiData";
 import { LEAKAGE_SUSPICION, SCOPE_WARNING } from "../utils/datasetNotes";
@@ -160,19 +161,12 @@ export default function Result() {
         <div className="placeholder-box">
           <h4>Probabilidade por classe</h4>
           {current ? (
-            <div className="prob-list" style={{ marginTop: 12 }}>
-              {current.probabilities.map((item) => (
-                <div key={item.className}>
-                  <div className="prob-top">
-                    <span>{className(item.className)}</span>
-                    <span>{formatPercent(item.probability * 100)}</span>
-                  </div>
-                  <div className="prob-bar">
-                    <span style={{ width: `${Math.max(item.probability * 100, 0.5)}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ProbabilityPieChart
+              probabilities={current.probabilities}
+              predictedClass={current.predictedClass}
+              formatName={className}
+              formatValue={(value) => formatPercent(value * 100)}
+            />
           ) : (
             <p>Disponível só logo após a análise. O histórico guarda apenas a classe prevista e a confiança.</p>
           )}

@@ -1,32 +1,69 @@
 /* Estilos complementares: telas ligadas à API (probabilidades, gráficos, paginação, estados vazios). */
-.prob-list {
-  display: grid;
-  gap: 11px;
-}
-.prob-top {
+/* Gráfico de pizza (rosca) das probabilidades por classe */
+.pie-chart {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin: 12px 0 0;
+}
+.pie-chart-plot {
+  position: relative;
+  width: min(220px, 100%);
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+}
+.pie-chart-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+.pie-chart-center strong {
+  font-size: var(--font-size-lg);
+  font-variant-numeric: tabular-nums;
+}
+.pie-chart-center span {
+  color: #6f8798;
+  font-size: var(--font-size-xs);
+}
+.pie-chart-legend {
+  display: grid;
+  gap: 8px;
+  flex: 1 1 180px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pie-chart-legend li {
+  display: flex;
+  align-items: center;
   gap: 10px;
   color: #3d6076;
-  font-size: 11px;
-  font-weight: 650;
+  font-size: var(--font-size-sm);
 }
-.prob-top span:last-child {
-  font-variant-numeric: tabular-nums;
+.pie-chart-legend li.predicted {
+  color: var(--ink);
+  font-weight: 700;
+}
+.pie-chart-swatch {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border-radius: 4px;
+}
+.pie-chart-name {
+  flex: 1;
+}
+.pie-chart-name small {
   color: #6f8798;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
 }
-.prob-bar {
-  height: 8px;
-  margin-top: 5px;
-  border-radius: 99px;
-  background: #eaf2f6;
-  overflow: hidden;
-}
-.prob-bar span {
-  display: block;
-  height: 100%;
-  border-radius: 99px;
-  background: linear-gradient(90deg, #49c6df, #238bb2);
+.pie-chart-value {
+  font-variant-numeric: tabular-nums;
 }
 .seg {
   display: inline-flex;
@@ -42,7 +79,7 @@
   border-radius: 8px;
   color: #66869a;
   background: transparent;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
 }
 .seg button.active {
@@ -51,7 +88,7 @@
 }
 .chart-box {
   height: 320px;
-  font-size: 11px;
+  font-size: var(--font-size-sm);
 }
 .tag-warn {
   display: inline-flex;
@@ -60,7 +97,7 @@
   border-radius: 999px;
   color: #8f7039;
   background: #fff8e9;
-  font-size: 8px;
+  font-size: var(--font-size-xs);
   font-weight: 750;
   cursor: help;
 }
@@ -95,7 +132,7 @@
   }
   .app-topbar .pill {
     padding: 6px 8px;
-    font-size: 8px;
+    font-size: var(--font-size-xs);
   }
   .chart-box {
     height: 280px;
@@ -122,7 +159,7 @@
   flex-wrap: wrap;
   margin-top: 13px;
   color: #547286;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .pagination-controls {
   display: flex;
@@ -138,7 +175,7 @@
   padding-left: 10px;
   border-left: 2px solid #dcebf3;
   color: #6f8798;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
@@ -146,7 +183,7 @@
   padding: 22px;
   text-align: center;
   color: #8a9ca8;
-  font-size: 11px;
+  font-size: var(--font-size-sm);
 }
 .notes {
   display: grid;
@@ -155,7 +192,7 @@
   padding: 0;
   list-style: none;
   color: #547286;
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   line-height: 1.6;
 }
 .notes strong {
@@ -168,7 +205,7 @@
 .text {
   margin: 0 0 10px;
   color: #547286;
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   line-height: 1.7;
 }
 .stack {
@@ -190,5 +227,5 @@
   border-radius: 11px;
   background: #fff;
   color: var(--ink);
-  font-size: 11px;
+  font-size: var(--font-size-sm);
 }
