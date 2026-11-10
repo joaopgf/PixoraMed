@@ -62,9 +62,15 @@ Veja [infra/README.md](infra/README.md): o Terraform cria o projeto da Vercel e 
 
 ## Workflows (BPMN 2.0)
 
-Três processos em `docs/bpmn/` (`1_login`, `2_ai_service`, `3_system_usage`), que abrem em [bpmn.io](https://demo.bpmn.io) e no Camunda Modeler. São gerados por `docs/bpmn/generator/generate.py`.
+Três processos em `docs/bpmn/`, que abrem em [bpmn.io](https://demo.bpmn.io) e no Camunda Modeler:
 
-> Os diagramas ainda descrevem a versão anterior do login (hash scrypt e sessão gravada no banco). Hoje o login usa BCrypt e JWT: atualize as etapas no gerador e exporte os PNGs de novo.
+| Workflow | O que mostra |
+|---|---|
+| `1_login` | Cadastro e login: senha com hash BCrypt e token JWT guardado só no navegador |
+| `2_ai_service` | Como o backend chama o ai-service (token interno, validações e decisão da classe) |
+| `3_system_usage` | Uma análise completa, do módulo escolhido até o resultado |
+
+Os diagramas são gerados por `docs/bpmn/generator/generate.py`. Para mudar um processo, edite as etapas lá, rode `python generate.py` dentro dessa pasta e exporte os PNGs de novo (por exemplo, pelo bpmn.io).
 
 ## Modelos
 

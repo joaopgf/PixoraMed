@@ -7,14 +7,14 @@
     <bpmn:laneSet id="LaneSet_3d7942b34aaa">
       <bpmn:lane id="Lane_2eadeb477925" name="Usuário">
         <bpmn:flowNodeRef>startEvent_4ff3e2fd6ced</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>userTask_61f9b0495362</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>userTask_cb41fc8a4056</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>userTask_87d7a84cea45</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>userTask_7a91066fc580</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>userTask_ae631bb110bb</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>userTask_45aff8efc6ca</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>endEvent_2962593c6612</bpmn:flowNodeRef>
       </bpmn:lane>
-      <bpmn:lane id="Lane_f7522b126e8c" name="Sistema (site e API principal)">
+      <bpmn:lane id="Lane_f7522b126e8c" name="Sistema (site e backend)">
         <bpmn:flowNodeRef>serviceTask_fdf7a534fd43</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>exclusiveGateway_efd2d03402f6</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>serviceTask_c029a6597bb1</bpmn:flowNodeRef>
@@ -27,7 +27,7 @@
         <bpmn:flowNodeRef>serviceTask_9bbd8b8c9f0d</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>serviceTask_79d00366ad52</bpmn:flowNodeRef>
       </bpmn:lane>
-      <bpmn:lane id="Lane_db1ee7740b0e" name="Microsserviço de IA">
+      <bpmn:lane id="Lane_db1ee7740b0e" name="ai-service">
         <bpmn:flowNodeRef>serviceTask_cbbd7e608ade</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>exclusiveGateway_f44e173d671d</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>serviceTask_fda87f3fc1af</bpmn:flowNodeRef>
@@ -36,14 +36,14 @@
       </bpmn:lane>
     </bpmn:laneSet>
     <bpmn:startEvent id="startEvent_4ff3e2fd6ced" name="Usuário logado">
-      <bpmn:outgoing>Flow_50638bb076b3</bpmn:outgoing>
+      <bpmn:outgoing>Flow_4fdc423f69fe</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:userTask id="userTask_61f9b0495362" name="Escolher o tipo de câncer">
-      <bpmn:incoming>Flow_50638bb076b3</bpmn:incoming>
-      <bpmn:outgoing>Flow_9930da37de3b</bpmn:outgoing>
+    <bpmn:userTask id="userTask_cb41fc8a4056" name="Escolher o tipo de câncer">
+      <bpmn:incoming>Flow_4fdc423f69fe</bpmn:incoming>
+      <bpmn:outgoing>Flow_fc977c062ba5</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="userTask_87d7a84cea45" name="Enviar a imagem">
-      <bpmn:incoming>Flow_9930da37de3b</bpmn:incoming>
+      <bpmn:incoming>Flow_fc977c062ba5</bpmn:incoming>
       <bpmn:incoming>Flow_b2b5709076d1</bpmn:incoming>
       <bpmn:incoming>Flow_8d57f36f6d29</bpmn:incoming>
       <bpmn:outgoing>Flow_291fa084dbdb</bpmn:outgoing>
@@ -133,8 +133,8 @@
     <bpmn:endEvent id="endEvent_2962593c6612" name="Fim">
       <bpmn:incoming>Flow_0b8957a7d9fe</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_50638bb076b3" sourceRef="startEvent_4ff3e2fd6ced" targetRef="userTask_61f9b0495362" />
-    <bpmn:sequenceFlow id="Flow_9930da37de3b" sourceRef="userTask_61f9b0495362" targetRef="userTask_87d7a84cea45" />
+    <bpmn:sequenceFlow id="Flow_4fdc423f69fe" sourceRef="startEvent_4ff3e2fd6ced" targetRef="userTask_cb41fc8a4056" />
+    <bpmn:sequenceFlow id="Flow_fc977c062ba5" sourceRef="userTask_cb41fc8a4056" targetRef="userTask_87d7a84cea45" />
     <bpmn:sequenceFlow id="Flow_291fa084dbdb" sourceRef="userTask_87d7a84cea45" targetRef="serviceTask_fdf7a534fd43" />
     <bpmn:sequenceFlow id="Flow_870890560a7c" sourceRef="serviceTask_fdf7a534fd43" targetRef="exclusiveGateway_efd2d03402f6" />
     <bpmn:sequenceFlow id="Flow_b2b5709076d1" sourceRef="exclusiveGateway_efd2d03402f6" targetRef="userTask_87d7a84cea45" name="Não" />
@@ -220,7 +220,7 @@
           <dc:Bounds x="390" y="111" width="140" height="36" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="userTask_61f9b0495362_di" bpmnElement="userTask_61f9b0495362">
+      <bpmndi:BPMNShape id="userTask_cb41fc8a4056_di" bpmnElement="userTask_cb41fc8a4056">
         <dc:Bounds x="625" y="40" width="210" height="90" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="userTask_87d7a84cea45_di" bpmnElement="userTask_87d7a84cea45">
@@ -331,11 +331,11 @@
       <bpmndi:BPMNShape id="TextAnnotation_8f7f579fe405_di" bpmnElement="TextAnnotation_8f7f579fe405">
         <dc:Bounds x="4430" y="155" width="320" height="60" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_50638bb076b3_di" bpmnElement="Flow_50638bb076b3">
+      <bpmndi:BPMNEdge id="Flow_4fdc423f69fe_di" bpmnElement="Flow_4fdc423f69fe">
         <di:waypoint x="480" y="85" />
         <di:waypoint x="625" y="85" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_9930da37de3b_di" bpmnElement="Flow_9930da37de3b">
+      <bpmndi:BPMNEdge id="Flow_fc977c062ba5_di" bpmnElement="Flow_fc977c062ba5">
         <di:waypoint x="835" y="85" />
         <di:waypoint x="895" y="85" />
       </bpmndi:BPMNEdge>

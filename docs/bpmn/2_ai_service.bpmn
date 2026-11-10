@@ -5,7 +5,7 @@
   </bpmn:collaboration>
   <bpmn:process id="Process_0754fd9428f8" name="PixoraMed: microsserviço de IA" isExecutable="false">
     <bpmn:laneSet id="LaneSet_d1ea6b1a2e08">
-      <bpmn:lane id="Lane_2dce5c285ef9" name="API principal">
+      <bpmn:lane id="Lane_2dce5c285ef9" name="Backend (Spring Boot)">
         <bpmn:flowNodeRef>startEvent_9fb82b29765c</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>exclusiveGateway_80472aa43888</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>endEvent_6b8420bded84</bpmn:flowNodeRef>
@@ -15,7 +15,7 @@
         <bpmn:flowNodeRef>serviceTask_a2d3312a5ba0</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>endEvent_a95560a83f77</bpmn:flowNodeRef>
       </bpmn:lane>
-      <bpmn:lane id="Lane_ab1fd88506cd" name="Microsserviço de IA (Docker)">
+      <bpmn:lane id="Lane_ab1fd88506cd" name="ai-service (FastAPI + ONNX, Docker)">
         <bpmn:flowNodeRef>startEvent_ec7927f21f71</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>serviceTask_c9455aed8c28</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>serviceTask_70c39b4dd20f</bpmn:flowNodeRef>
@@ -38,7 +38,7 @@
       <bpmn:incoming>Flow_1aad3f381d3b</bpmn:incoming>
       <bpmn:outgoing>Flow_f5da67450331</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:serviceTask id="serviceTask_70c39b4dd20f" name="Responder /saude (health check)">
+    <bpmn:serviceTask id="serviceTask_70c39b4dd20f" name="Responder /health (health check)">
       <bpmn:incoming>Flow_f5da67450331</bpmn:incoming>
       <bpmn:outgoing>Flow_d65257f791fb</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -134,19 +134,19 @@
       <bpmn:text>Uma vez, na subida. Cada pedido usa o modelo que já está na memória.</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:textAnnotation id="TextAnnotation_d4c5d8b62fcf">
-      <bpmn:text>O Render chama /saude para saber se o serviço está no ar. É a única rota sem token.</bpmn:text>
+      <bpmn:text>O Render chama /health para saber se o serviço está no ar. É a única rota sem token.</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:textAnnotation id="TextAnnotation_e89173db927d">
       <bpmn:text>Espera até 120 s, porque no Render gratuito a IA pode estar dormindo. Sem resposta: "serviço de IA indisponível" (503).</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:textAnnotation id="TextAnnotation_16eb081c680c">
-      <bpmn:text>Cabeçalho X-Token-IA. O token é gerado pelo Terraform e o mesmo vai para os dois serviços.</bpmn:text>
+      <bpmn:text>Cabeçalho X-Internal-Token. O token (AI_SERVICE_TOKEN) é gerado pelo Terraform e o mesmo vai para os dois serviços.</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:textAnnotation id="TextAnnotation_081d2be396de">
-      <bpmn:text>A API responde "serviço de IA indisponível" (503) e registra o erro.</bpmn:text>
+      <bpmn:text>O backend responde "serviço de IA indisponível" (503) e registra o erro.</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:textAnnotation id="TextAnnotation_f9bf82dec61a">
-      <bpmn:text>Nos dois casos, a API repassa a recusa ao navegador com a mesma mensagem.</bpmn:text>
+      <bpmn:text>Nos dois casos, o backend repassa a recusa ao navegador com a mesma mensagem.</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:textAnnotation id="TextAnnotation_683c7203d258">
       <bpmn:text>Oral e Cérebro: OpenCV, BGR para RGB, 128x128, divisão por 255. Pele: PIL, 224x224, normalização ImageNet.</bpmn:text>

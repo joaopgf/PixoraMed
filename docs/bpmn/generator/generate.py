@@ -26,7 +26,7 @@ def x(col):
 # =====================================================================
 d = Diagram("login", "PixoraMed: login e cadastro", [
     ("usuario", "Usuário (navegador)", 2),
-    ("api", "API principal", 2),
+    ("api", "Backend (Spring Boot)", 2),
     ("banco", "Banco de dados (Neon)", 2),
 ])
 d.node("inicio", "startEvent", "Início", "usuario", 0)
@@ -37,15 +37,14 @@ d.node("preencher", "userTask", "Preencher nome, e-mail, senha e confirmação",
 d.node("g_senhas", "exclusiveGateway", "Senha e confirmação iguais?", "usuario", 4, row=1, label="top")
 d.node("validar", "serviceTask", "Validar nome, e-mail e senha", "api", 5)
 d.node("g_validos", "exclusiveGateway", "Dados válidos e e-mail livre?", "api", 6, label="top")
-d.node("hash", "serviceTask", "Gerar o hash da senha (scrypt com salt)", "api", 7)
+d.node("hash", "serviceTask", "Gerar o hash da senha (BCrypt)", "api", 7)
 d.node("gravar_usuario", "serviceTask", "Gravar o usuário", "banco", 8)
 d.node("conferir", "serviceTask", "Buscar o usuário e conferir a senha", "api", 9)
 d.node("g_cred", "exclusiveGateway", "E-mail e senha corretos?", "api", 10, label="right")
-d.node("sessao", "serviceTask", "Criar a sessão (token aleatório, 8 horas)", "api", 11)
-d.node("gravar_token", "serviceTask", "Gravar só o hash do token", "banco", 12)
-d.node("guardar", "userTask", "Guardar o token no navegador", "usuario", 13)
-d.node("painel", "userTask", "Acessar o painel", "usuario", 14)
-d.node("fim", "endEvent", "Fim", "usuario", 15)
+d.node("sessao", "serviceTask", "Gerar o token JWT (assinado, válido por 8 horas)", "api", 11)
+d.node("guardar", "userTask", "Guardar o token no navegador", "usuario", 12)
+d.node("painel", "userTask", "Acessar o painel", "usuario", 13)
+d.node("fim", "endEvent", "Fim", "usuario", 14)
 
 u0 = d.nodes["abrir"]["cy"]
 u1 = d.nodes["preencher"]["cy"]
@@ -68,30 +67,28 @@ d.flow("informar", "conferir", route="hv")
 d.flow("conferir", "g_cred")
 d.flow("g_cred", "sessao", "Sim", label_at=(x(10) + 40, a0 + 6))
 d.flow("g_cred", "informar", "Não", points=[(x(10), 22), (x(3), 22)], exit_side="top", entry_side="top", label_at=(x(10) + 8, 30))
-d.flow("sessao", "gravar_token", route="hv")
-d.flow("gravar_token", "guardar", route="hv")
+d.flow("sessao", "guardar", route="hv")
 d.flow("guardar", "painel")
 d.flow("painel", "fim")
 
 d.note("n_validar", "Nome de 2 a 80 letras, e-mail válido e senha de 8 a 128 caracteres. E-mail já cadastrado é recusado.", "validar", -105, 95, 330, 60)
-d.note("n_hash", "A senha nunca é guardada: só o hash scrypt com salt.", "hash", -105, 70, 260, 52)
+d.note("n_hash", "A senha nunca é guardada: só o hash BCrypt.", "hash", -105, 70, 260, 52)
 d.note("n_cred", "Mesma mensagem para e-mail inexistente e senha errada, para não revelar quem tem conta.", "g_cred", -120, 70, 300, 60)
-d.note("n_sessao", "\"Sair\" apaga a sessão. Sessão vencida ou apagada volta para o login.", "sessao", -105, -(a0 - u1) - 30, 280, 52, side="top")
-d.note("n_token", "O banco guarda só o SHA-256 do token.", "gravar_token", -105, 70, 240, 45)
-d.note("n_guardar", "\"Manter conectado\": localStorage. Sem a opção: sessionStorage, que some ao fechar a aba.", "guardar", -340, 75, 300, 60)
-d.note("n_painel", "Análises e histórico exigem o token (Authorization: Bearer).", "painel", -105, 75, 290, 52)
+d.note("n_sessao", "O token não fica no banco. \"Sair\" apaga o token do navegador; token vencido volta para o login.", "sessao", -250, -(a0 - u1) - 30, 270, 52, side="top")
+d.note("n_guardar", "\"Manter conectado\": localStorage. Sem a opção: sessionStorage, que some ao fechar a aba.", "guardar", -105, 75, 255, 60)
+d.note("n_painel", "Análises e histórico exigem o token (Authorization: Bearer).", "painel", -95, 75, 290, 52)
 d.save(OUTPUT_DIR / "1_login.bpmn")
 
 # =====================================================================
 # 2. Microsserviço de IA
 # =====================================================================
 d = Diagram("ia", "PixoraMed: microsserviço de IA", [
-    ("api", "API principal", 2),
-    ("ia", "Microsserviço de IA (Docker)", 3),
+    ("api", "Backend (Spring Boot)", 2),
+    ("ia", "ai-service (FastAPI + ONNX, Docker)", 3),
 ])
 d.node("sobe", "startEvent", "Container da IA sobe", "ia", 0)
 d.node("carregar", "serviceTask", "Carregar os modelos ONNX da pasta models/", "ia", 1)
-d.node("saude", "serviceTask", "Responder /saude (health check)", "ia", 2)
+d.node("saude", "serviceTask", "Responder /health (health check)", "ia", 2)
 d.node("pronta", "endEvent", "Pronta para pedidos", "ia", 3)
 
 d.node("pedido", "startEvent", "Pedido de análise (usuário logado)", "api", 4)
@@ -133,12 +130,12 @@ d.flow("gravar", "responder")
 d.flow("responder", "entregue")
 
 d.note("n_carregar", "Uma vez, na subida. Cada pedido usa o modelo que já está na memória.", "carregar", -105, 70, 300, 52)
-d.note("n_saude", "O Render chama /saude para saber se o serviço está no ar. É a única rota sem token.", "saude", -50, 70, 300, 60)
+d.note("n_saude", "O Render chama /health para saber se o serviço está no ar. É a única rota sem token.", "saude", -50, 70, 300, 60)
 d.note("n_enviar", "Espera até 120 s, porque no Render gratuito a IA pode estar dormindo. Sem resposta: \"serviço de IA indisponível\" (503).",
        "enviar", -105, 70, 330, 75)
-d.note("n_token", "Cabeçalho X-Token-IA. O token é gerado pelo Terraform e o mesmo vai para os dois serviços.", "g_token", -330, -150, 280, 60, side="left")
-d.note("n_401", "A API responde \"serviço de IA indisponível\" (503) e registra o erro.", "r401", -330, -25, 270, 52, side="left")
-d.note("n_recusas", "Nos dois casos, a API repassa a recusa ao navegador com a mesma mensagem.", "r422", 50, -25, 280, 52, side="right")
+d.note("n_token", "Cabeçalho X-Internal-Token. O token (AI_SERVICE_TOKEN) é gerado pelo Terraform e o mesmo vai para os dois serviços.", "g_token", -330, -150, 280, 60, side="left")
+d.note("n_401", "O backend responde \"serviço de IA indisponível\" (503) e registra o erro.", "r401", -330, -25, 270, 52, side="left")
+d.note("n_recusas", "Nos dois casos, o backend repassa a recusa ao navegador com a mesma mensagem.", "r422", 50, -25, 280, 52, side="right")
 d.note("n_preproc", "Oral e Cérebro: OpenCV, BGR para RGB, 128x128, divisão por 255. Pele: PIL, 224x224, normalização ImageNet.",
        "preproc", -105, -150, 330, 60)
 d.note("n_devolver", "A IA não decide a classe, não acessa o banco e não guarda a imagem.", "devolver", -60, 70, 290, 52)
@@ -151,8 +148,8 @@ d.save(OUTPUT_DIR / "2_ai_service.bpmn")
 # =====================================================================
 d = Diagram("uso", "PixoraMed: análise de uma imagem", [
     ("usuario", "Usuário", 2),
-    ("sistema", "Sistema (site e API principal)", 4),
-    ("ia", "Microsserviço de IA", 2),
+    ("sistema", "Sistema (site e backend)", 4),
+    ("ia", "ai-service", 2),
 ])
 # O login fica no workflow 1: este processo começa com o usuário já logado
 d.node("inicio", "startEvent", "Usuário logado", "usuario", 1)

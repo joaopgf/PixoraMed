@@ -16,7 +16,7 @@
         <bpmn:flowNodeRef>userTask_7584ff1a46ee</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>endEvent_c9a59a0beeb1</bpmn:flowNodeRef>
       </bpmn:lane>
-      <bpmn:lane id="Lane_bfceaddad802" name="API principal">
+      <bpmn:lane id="Lane_bfceaddad802" name="Backend (Spring Boot)">
         <bpmn:flowNodeRef>serviceTask_3bc60356048b</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>exclusiveGateway_1366fdf6a905</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>serviceTask_5bfe6cf521c4</bpmn:flowNodeRef>
@@ -26,7 +26,6 @@
       </bpmn:lane>
       <bpmn:lane id="Lane_42a587c9cfbb" name="Banco de dados (Neon)">
         <bpmn:flowNodeRef>serviceTask_fcdb7e94ceca</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>serviceTask_5eaa1efc3067</bpmn:flowNodeRef>
       </bpmn:lane>
     </bpmn:laneSet>
     <bpmn:startEvent id="startEvent_7017e9cccb42" name="Início">
@@ -66,7 +65,7 @@
       <bpmn:outgoing>Flow_611eaeae501d</bpmn:outgoing>
       <bpmn:outgoing>Flow_c28817919c3b</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:serviceTask id="serviceTask_5bfe6cf521c4" name="Gerar o hash da senha (scrypt com salt)">
+    <bpmn:serviceTask id="serviceTask_5bfe6cf521c4" name="Gerar o hash da senha (BCrypt)">
       <bpmn:incoming>Flow_611eaeae501d</bpmn:incoming>
       <bpmn:outgoing>Flow_cff2290bdf55</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -83,25 +82,21 @@
       <bpmn:outgoing>Flow_84f5cbd80fa8</bpmn:outgoing>
       <bpmn:outgoing>Flow_bd592a85f9cf</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:serviceTask id="serviceTask_331f32165a6c" name="Criar a sessão (token aleatório, 8 horas)">
+    <bpmn:serviceTask id="serviceTask_331f32165a6c" name="Gerar o token JWT (assinado, válido por 8 horas)">
       <bpmn:incoming>Flow_13b49c1819ad</bpmn:incoming>
       <bpmn:incoming>Flow_84f5cbd80fa8</bpmn:incoming>
-      <bpmn:outgoing>Flow_5a5cb9cf7fb0</bpmn:outgoing>
-    </bpmn:serviceTask>
-    <bpmn:serviceTask id="serviceTask_5eaa1efc3067" name="Gravar só o hash do token">
-      <bpmn:incoming>Flow_5a5cb9cf7fb0</bpmn:incoming>
-      <bpmn:outgoing>Flow_7ece730508be</bpmn:outgoing>
+      <bpmn:outgoing>Flow_074c5183af7c</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:userTask id="userTask_b4bb193094fb" name="Guardar o token no navegador">
-      <bpmn:incoming>Flow_7ece730508be</bpmn:incoming>
-      <bpmn:outgoing>Flow_84d635ec4a61</bpmn:outgoing>
+      <bpmn:incoming>Flow_074c5183af7c</bpmn:incoming>
+      <bpmn:outgoing>Flow_644e866dae91</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="userTask_7584ff1a46ee" name="Acessar o painel">
-      <bpmn:incoming>Flow_84d635ec4a61</bpmn:incoming>
-      <bpmn:outgoing>Flow_9fb2a3d7657d</bpmn:outgoing>
+      <bpmn:incoming>Flow_644e866dae91</bpmn:incoming>
+      <bpmn:outgoing>Flow_c5b0e7e3cafa</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:endEvent id="endEvent_c9a59a0beeb1" name="Fim">
-      <bpmn:incoming>Flow_9fb2a3d7657d</bpmn:incoming>
+      <bpmn:incoming>Flow_c5b0e7e3cafa</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_905cc9c3fbf5" sourceRef="startEvent_7017e9cccb42" targetRef="userTask_213f4c10f319" />
     <bpmn:sequenceFlow id="Flow_9936f7393b4f" sourceRef="userTask_213f4c10f319" targetRef="exclusiveGateway_0b8fa02323e9" />
@@ -119,24 +114,20 @@
     <bpmn:sequenceFlow id="Flow_af55931d636b" sourceRef="serviceTask_3c8660efae05" targetRef="exclusiveGateway_4fbe0a0007a2" />
     <bpmn:sequenceFlow id="Flow_84f5cbd80fa8" sourceRef="exclusiveGateway_4fbe0a0007a2" targetRef="serviceTask_331f32165a6c" name="Sim" />
     <bpmn:sequenceFlow id="Flow_bd592a85f9cf" sourceRef="exclusiveGateway_4fbe0a0007a2" targetRef="userTask_8080dfa0aa31" name="Não" />
-    <bpmn:sequenceFlow id="Flow_5a5cb9cf7fb0" sourceRef="serviceTask_331f32165a6c" targetRef="serviceTask_5eaa1efc3067" />
-    <bpmn:sequenceFlow id="Flow_7ece730508be" sourceRef="serviceTask_5eaa1efc3067" targetRef="userTask_b4bb193094fb" />
-    <bpmn:sequenceFlow id="Flow_84d635ec4a61" sourceRef="userTask_b4bb193094fb" targetRef="userTask_7584ff1a46ee" />
-    <bpmn:sequenceFlow id="Flow_9fb2a3d7657d" sourceRef="userTask_7584ff1a46ee" targetRef="endEvent_c9a59a0beeb1" />
+    <bpmn:sequenceFlow id="Flow_074c5183af7c" sourceRef="serviceTask_331f32165a6c" targetRef="userTask_b4bb193094fb" />
+    <bpmn:sequenceFlow id="Flow_644e866dae91" sourceRef="userTask_b4bb193094fb" targetRef="userTask_7584ff1a46ee" />
+    <bpmn:sequenceFlow id="Flow_c5b0e7e3cafa" sourceRef="userTask_7584ff1a46ee" targetRef="endEvent_c9a59a0beeb1" />
     <bpmn:textAnnotation id="TextAnnotation_187bc58fd7cb">
       <bpmn:text>Nome de 2 a 80 letras, e-mail válido e senha de 8 a 128 caracteres. E-mail já cadastrado é recusado.</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:textAnnotation id="TextAnnotation_d8cba999313f">
-      <bpmn:text>A senha nunca é guardada: só o hash scrypt com salt.</bpmn:text>
+      <bpmn:text>A senha nunca é guardada: só o hash BCrypt.</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:textAnnotation id="TextAnnotation_19c4266cea2c">
       <bpmn:text>Mesma mensagem para e-mail inexistente e senha errada, para não revelar quem tem conta.</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:textAnnotation id="TextAnnotation_3e570fb6ad4b">
-      <bpmn:text>"Sair" apaga a sessão. Sessão vencida ou apagada volta para o login.</bpmn:text>
-    </bpmn:textAnnotation>
-    <bpmn:textAnnotation id="TextAnnotation_d449f7480ad2">
-      <bpmn:text>O banco guarda só o SHA-256 do token.</bpmn:text>
+      <bpmn:text>O token não fica no banco. "Sair" apaga o token do navegador; token vencido volta para o login.</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:textAnnotation id="TextAnnotation_2864c318265e">
       <bpmn:text>"Manter conectado": localStorage. Sem a opção: sessionStorage, que some ao fechar a aba.</bpmn:text>
@@ -148,23 +139,22 @@
     <bpmn:association id="Association_d8cba999313f" sourceRef="serviceTask_5bfe6cf521c4" targetRef="TextAnnotation_d8cba999313f" />
     <bpmn:association id="Association_19c4266cea2c" sourceRef="exclusiveGateway_4fbe0a0007a2" targetRef="TextAnnotation_19c4266cea2c" />
     <bpmn:association id="Association_3e570fb6ad4b" sourceRef="serviceTask_331f32165a6c" targetRef="TextAnnotation_3e570fb6ad4b" />
-    <bpmn:association id="Association_d449f7480ad2" sourceRef="serviceTask_5eaa1efc3067" targetRef="TextAnnotation_d449f7480ad2" />
     <bpmn:association id="Association_2864c318265e" sourceRef="userTask_b4bb193094fb" targetRef="TextAnnotation_2864c318265e" />
     <bpmn:association id="Association_8446f56367ac" sourceRef="userTask_7584ff1a46ee" targetRef="TextAnnotation_8446f56367ac" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="Diagram_b30a8d64b5ce">
     <bpmndi:BPMNPlane id="Plane_b30a8d64b5ce" bpmnElement="Collaboration_b5c7383eb08b">
       <bpmndi:BPMNShape id="Participant_2ffd8d9a4ef6_di" bpmnElement="Participant_2ffd8d9a4ef6" isHorizontal="true">
-        <dc:Bounds x="0" y="0" width="4370" height="960" />
+        <dc:Bounds x="0" y="0" width="4100" height="960" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Lane_46d50801d148_di" bpmnElement="Lane_46d50801d148" isHorizontal="true">
-        <dc:Bounds x="30" y="0" width="4340" height="320" />
+        <dc:Bounds x="30" y="0" width="4070" height="320" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Lane_bfceaddad802_di" bpmnElement="Lane_bfceaddad802" isHorizontal="true">
-        <dc:Bounds x="30" y="320" width="4340" height="320" />
+        <dc:Bounds x="30" y="320" width="4070" height="320" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Lane_42a587c9cfbb_di" bpmnElement="Lane_42a587c9cfbb" isHorizontal="true">
-        <dc:Bounds x="30" y="640" width="4340" height="320" />
+        <dc:Bounds x="30" y="640" width="4070" height="320" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="startEvent_7017e9cccb42_di" bpmnElement="startEvent_7017e9cccb42">
         <dc:Bounds x="170" y="65" width="40" height="40" />
@@ -220,19 +210,16 @@
       <bpmndi:BPMNShape id="serviceTask_331f32165a6c_di" bpmnElement="serviceTask_331f32165a6c">
         <dc:Bounds x="3055" y="360" width="210" height="90" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="serviceTask_5eaa1efc3067_di" bpmnElement="serviceTask_5eaa1efc3067">
-        <dc:Bounds x="3325" y="680" width="210" height="90" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="userTask_b4bb193094fb_di" bpmnElement="userTask_b4bb193094fb">
-        <dc:Bounds x="3595" y="40" width="210" height="90" />
+        <dc:Bounds x="3325" y="40" width="210" height="90" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="userTask_7584ff1a46ee_di" bpmnElement="userTask_7584ff1a46ee">
-        <dc:Bounds x="3865" y="40" width="210" height="90" />
+        <dc:Bounds x="3595" y="40" width="210" height="90" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="endEvent_c9a59a0beeb1_di" bpmnElement="endEvent_c9a59a0beeb1">
-        <dc:Bounds x="4220" y="65" width="40" height="40" />
+        <dc:Bounds x="3950" y="65" width="40" height="40" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="4170" y="111" width="140" height="36" />
+          <dc:Bounds x="3900" y="111" width="140" height="36" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="TextAnnotation_187bc58fd7cb_di" bpmnElement="TextAnnotation_187bc58fd7cb">
@@ -245,16 +232,13 @@
         <dc:Bounds x="2770" y="475" width="300" height="60" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="TextAnnotation_3e570fb6ad4b_di" bpmnElement="TextAnnotation_3e570fb6ad4b">
-        <dc:Bounds x="3055" y="205" width="280" height="52" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="TextAnnotation_d449f7480ad2_di" bpmnElement="TextAnnotation_d449f7480ad2">
-        <dc:Bounds x="3325" y="795" width="240" height="45" />
+        <dc:Bounds x="2910" y="205" width="270" height="52" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="TextAnnotation_2864c318265e_di" bpmnElement="TextAnnotation_2864c318265e">
-        <dc:Bounds x="3360" y="160" width="300" height="60" />
+        <dc:Bounds x="3325" y="160" width="255" height="60" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="TextAnnotation_8446f56367ac_di" bpmnElement="TextAnnotation_8446f56367ac">
-        <dc:Bounds x="3865" y="160" width="290" height="52" />
+        <dc:Bounds x="3605" y="160" width="290" height="52" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_905cc9c3fbf5_di" bpmnElement="Flow_905cc9c3fbf5">
         <di:waypoint x="210" y="85" />
@@ -356,23 +340,18 @@
           <dc:Bounds x="2898" y="30" width="39" height="20" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_5a5cb9cf7fb0_di" bpmnElement="Flow_5a5cb9cf7fb0">
+      <bpmndi:BPMNEdge id="Flow_074c5183af7c_di" bpmnElement="Flow_074c5183af7c">
         <di:waypoint x="3265" y="405" />
         <di:waypoint x="3430" y="405" />
-        <di:waypoint x="3430" y="680" />
+        <di:waypoint x="3430" y="130" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_7ece730508be_di" bpmnElement="Flow_7ece730508be">
-        <di:waypoint x="3535" y="725" />
-        <di:waypoint x="3700" y="725" />
-        <di:waypoint x="3700" y="130" />
+      <bpmndi:BPMNEdge id="Flow_644e866dae91_di" bpmnElement="Flow_644e866dae91">
+        <di:waypoint x="3535" y="85" />
+        <di:waypoint x="3595" y="85" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_84d635ec4a61_di" bpmnElement="Flow_84d635ec4a61">
+      <bpmndi:BPMNEdge id="Flow_c5b0e7e3cafa_di" bpmnElement="Flow_c5b0e7e3cafa">
         <di:waypoint x="3805" y="85" />
-        <di:waypoint x="3865" y="85" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_9fb2a3d7657d_di" bpmnElement="Flow_9fb2a3d7657d">
-        <di:waypoint x="4075" y="85" />
-        <di:waypoint x="4220" y="85" />
+        <di:waypoint x="3950" y="85" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Association_187bc58fd7cb_di" bpmnElement="Association_187bc58fd7cb">
         <di:waypoint x="1540" y="450" />
@@ -390,17 +369,13 @@
         <di:waypoint x="3160" y="360" />
         <di:waypoint x="3160" y="257" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Association_d449f7480ad2_di" bpmnElement="Association_d449f7480ad2">
-        <di:waypoint x="3430" y="770" />
-        <di:waypoint x="3430" y="795" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Association_2864c318265e_di" bpmnElement="Association_2864c318265e">
-        <di:waypoint x="3700" y="130" />
-        <di:waypoint x="3660" y="160" />
+        <di:waypoint x="3430" y="130" />
+        <di:waypoint x="3430" y="160" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Association_8446f56367ac_di" bpmnElement="Association_8446f56367ac">
-        <di:waypoint x="3970" y="130" />
-        <di:waypoint x="3970" y="160" />
+        <di:waypoint x="3700" y="130" />
+        <di:waypoint x="3700" y="160" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
