@@ -1,39 +1,71 @@
-# Deploy do PixoraMed
+# infra
 
-Dois serviços no Render, a API principal (com o site) e o microsserviço de IA, e o banco no Neon. Tudo no plano gratuito:
+Tudo que é infraestrutura do PixoraMed fica aqui, separado do código dos serviços:
 
-| Serviço | O que roda | Observação |
+- `docker-compose.yml`: ambiente **local** de desenvolvimento.
+- `terraform/`: ambiente de **produção** (Vercel, Render e Neon).
+
+## docker-compose (só desenvolvimento local)
+
+Sobe os quatro serviços no seu computador, numa rede interna própria:
+
+| Serviço | O que é | Porta no seu computador |
 |---|---|---|
-| **Render** | API principal: site React + FastAPI (`backend/Dockerfile`) | Região `virginia`. "Dorme" após 15 min sem uso; a primeira chamada leva ~1 min |
-| **Render** | Microsserviço de IA: modelos ONNX (`ia/Dockerfile`) | Região `virginia`. Endereço público, protegido pelo token `IA_TOKEN` |
-| **Neon** | PostgreSQL | Região `aws-us-east-1` (Virginia), a mesma do Render |
+| `db` | PostgreSQL 17, com os dados num volume (`db-data`) | `127.0.0.1:5432` (ou `DB_PORT`), para pgAdmin |
+| `ai-service` | build de `../ai-service` | nenhuma (só o backend acessa) |
+| `backend` | build de `../backend` | `127.0.0.1:8080` |
+| `frontend` | Vite em modo desenvolvimento, com o código montado | `127.0.0.1:5173` |
 
-O Terraform cria o banco no Neon e os dois serviços no Render, apontando para o GitHub. Ele também gera um token aleatório e passa à API principal o endereço do banco (`DATABASE_URL`), o endereço da IA (`IA_URL`) e o token (`IA_TOKEN`), que vai também para a IA. Depois disso, cada `git push` na `main` faz o Render gerar e publicar as duas imagens de novo.
+```bash
+cd infra
+copy .env.example .env        # Linux/Mac: cp .env.example .env  e troque as senhas
+docker compose up --build     # site em http://localhost:5173
+docker compose down           # para tudo (os dados ficam no volume)
+docker compose down -v        # para tudo e apaga o banco local
+```
 
-## Com Terraform
+Proteção das informações: nenhuma senha fica no `docker-compose.yml`. Usuário e senha do banco, `JWT_SECRET` e `AI_SERVICE_TOKEN` vêm do `infra/.env`, que fica fora do git (o modelo versionado é o `.env.example`). As portas só abrem em `127.0.0.1`, então não ficam acessíveis na rede. Cada serviço espera o anterior ficar saudável (`depends_on` com `service_healthy`).
 
-1. Instale o [Terraform](https://developer.hashicorp.com/terraform/install) (1.6 ou mais novo). No Windows: `winget install Hashicorp.Terraform`.
-2. No Render, conecte o GitHub e dê acesso ao repositório (o Render pede para instalar o app do GitHub na primeira vez).
-3. Gere as chaves: Neon (Account settings > API keys) e Render (Account settings > API keys). O `render_owner_id` aparece na URL do workspace no Render.
-4. Preencha o arquivo de variáveis:
-   ```bash
-   cd infra/terraform
-   copy terraform.tfvars.example terraform.tfvars
-   ```
-5. Crie a infraestrutura:
-   ```bash
-   terraform init
-   terraform plan
-   terraform apply
-   ```
-6. `terraform output url_app` mostra o endereço do app. A documentação da API fica no mesmo endereço, em `/docs`.
+Produção **não** usa o compose.
 
-O `terraform.tfvars` e o `terraform.tfstate` têm segredos e ficam fora do git (`.gitignore`).
+### Por que não tem mais nginx
 
-Para remover tudo da nuvem depois da apresentação: `terraform destroy`.
+O nginx servia o build do React e repassava `/api` ao backend dentro do compose. Agora o site fica na Vercel (que já serve os arquivos e faz o repasse pelo `vercel.json`), o backend responde a API direto no Render e, no desenvolvimento, quem repassa `/api` é o próprio Vite. Ele não tinha mais função, então foi removido.
+
+## Terraform (produção)
+
+| Recurso | Provedor | Observação |
+|---|---|---|
+| `vercel_project.frontend` | Vercel | builda `frontend/` a cada push; domínio `<project_name>.vercel.app` |
+| `render_web_service.backend` | Render | `backend/Dockerfile`, health check `/api/health` |
+| `render_web_service.ai_service` | Render | `ai-service/Dockerfile`, health check `/health`, protegido pelo token interno |
+| `render_env_group.*` | Render | variáveis dos dois serviços (senha do banco, JWT, token) |
+| `neon_project.database` | Neon | **já existe e tem dados**; `prevent_destroy` impede apagar ou recriar |
+| `random_password.*` | — | gera o `JWT_SECRET` e o `AI_SERVICE_TOKEN` |
+
+Os providers têm versão fixa em `versions.tf`.
+
+### Segredos
+
+- Tokens dos provedores (`neon_api_key`, `render_api_key`, `vercel_api_token`) são variáveis `sensitive` e vêm do `terraform.tfvars` (fora do git) ou de `TF_VAR_*`. O modelo versionado é o `terraform.tfvars.example`.
+- Nenhum valor secreto está escrito nos `.tf`: senha do Neon, JWT e token interno passam de recurso para recurso.
+- O `terraform.tfstate` guarda esses valores em texto e fica **fora do git**. Ele está só no computador de quem roda o Terraform: faça backup dele (perdê-lo faz o Terraform "esquecer" os recursos).
+
+### Aplicando as mudanças desta refatoração
+
+Os recursos já existiam com nomes em português. Os blocos `moved` no `main.tf` renomeiam no state sem destruir nada.
+
+1. Acrescente `vercel_api_token` ao seu `terraform.tfvars` (Vercel > Account settings > Tokens) e conecte o GitHub na Vercel.
+2. `terraform init -upgrade`
+3. `terraform plan` e **confira**: o Neon deve aparecer só como "moved", nunca como "destroy". Os serviços do Render aparecem como atualização (Dockerfile e pasta novos).
+4. `terraform apply`
+5. Confira se o domínio da Vercel ficou `https://pixoramed.vercel.app`; se ficou outro, ajuste o `local.frontend_url` e aplique de novo.
+
+Observação: o provedor do Render tenta mudar o modo de manutenção em toda atualização de serviço, e o plano gratuito recusa isso. Por isso as variáveis ficam em env groups. Se a atualização dos serviços falhar por esse motivo, ajuste o Dockerfile e o health check no painel do Render e rode `terraform apply -refresh-only`.
+
+Para remover tudo depois da apresentação, tire o `prevent_destroy` do Neon e rode `terraform destroy`.
 
 ## No dia da apresentação
 
-- Abra o app e faça uma previsão **uns 5 minutos antes**, para acordar os dois serviços do Render. A primeira análise depois de um tempo parado pode passar de 1 minuto.
-- Tenha o vídeo gravado da demo como backup, como o guia recomenda.
+- Abra o site e faça uma análise **uns 5 minutos antes**, para acordar os dois serviços do Render (a primeira chamada pode passar de 1 minuto).
 - Se a internet falhar, `docker compose up` roda tudo no notebook.

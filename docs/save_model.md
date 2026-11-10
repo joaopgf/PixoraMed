@@ -29,23 +29,23 @@ Regra geral: **colorido e normalizado** (`rna_cor`, `normalizar = True`). As exc
 
 ## 2. Converter para ONNX
 
-De dentro de `PixoraMed/backend`, com o `.venv` ativo:
+De dentro de `PixoraMed/ai-service`, com o `.venv` ativo e o PyTorch instalado (veja o README do ai-service):
 
 ```bash
-python scripts/exportar_onnx.py "C:\caminho\para\Projeto-ML-Cancer\modelos_pt\mama_cor.pt"
+python scripts/export_onnx.py "C:\caminho\para\Projeto-ML-Cancer\modelos_pt\oral_cor.pt"
 ```
 
-O script gera `models/mama_cor.onnx` e `models/mama_cor.json`, confere se o ONNX dá a mesma saída que o PyTorch e mostra a diferença máxima.
+O script gera `models/oral_color.onnx` e `models/oral_color.json`, confere se o ONNX dá a mesma saída que o PyTorch e mostra a diferença máxima.
 
 ## 3. Carregar no app
 
-Os modelos ficam no microsserviço de IA (pasta `ia/`). Reinicie-o para ele carregar o modelo novo:
+Os modelos ficam no ai-service (pasta `ai-service/models/`). Reinicie-o para ele carregar o modelo novo:
 
-- **Terminal**: Ctrl+C no `uvicorn` da pasta `ia` e rode de novo.
-- **Docker**: `docker compose restart ia`.
+- **Terminal**: Ctrl+C no `uvicorn` da pasta `ai-service` e rode de novo.
+- **Docker**: `docker compose restart ai-service` (dentro de `infra/`).
 
-O modelo aparece em "Analisar imagem" em até 5 minutos, quando a API principal renova a lista de modelos. Façam commit dos arquivos da pasta `models/`, porque o deploy no Render só enxerga o que está no GitHub.
+O modelo aparece em "Nova análise" em até 5 minutos, quando o backend renova a lista de modelos. Façam commit dos arquivos de `ai-service/models/`, porque o deploy no Render só enxerga o que está no GitHub.
 
 ## Cuidado
 
-**O pré-processamento do app é o mesmo dos notebooks**: OpenCV, BGR → RGB na cor, `IMREAD_GRAYSCALE` no cinza, resize para 128×128, divisão pela `escala`. Se mudarem isso nos notebooks, mudem também em `ia/app/inferencia.py`.
+**O pré-processamento do app é o mesmo dos notebooks**: OpenCV, BGR → RGB na cor, `IMREAD_GRAYSCALE` no cinza, resize para 128×128, divisão pela escala (`scale` no .json). Se mudarem isso nos notebooks, mudem também em `ai-service/app/inference.py`.
