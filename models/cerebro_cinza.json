@@ -4,11 +4,7 @@
   "modo": "cinza",
   "tamanho": 128,
   "escala": 1.0,
-  "classes": [
-    "glioma",
-    "menin",
-    "tumor"
-  ],
+  "classes": ["glioma", "menin", "tumor"],
   "descricao": "",
   "metricas": {},
   "arquivo_onnx": "cerebro_cinza.onnx"

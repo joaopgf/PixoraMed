@@ -59,21 +59,21 @@ React + Vite (painel) ──/api──► API principal (backend/) ────�
 
 A API principal não carrega modelos: ela confere o login, envia a imagem ao microsserviço de IA e decide a classe final (inconclusivo, limiar da Pele) com as probabilidades que voltam. O microsserviço de IA não acessa o banco nem guarda a imagem, e só aceita chamadas com o token `IA_TOKEN`, o mesmo nos dois serviços.
 
-| Camada | Tecnologia | Onde roda |
-|---|---|---|
-| Frontend | React 19, Vite, TypeScript, Recharts, TanStack Query (CSS próprio, em `frontend/src/styles`) | Render, servido pela própria API |
-| API principal | FastAPI, SQLAlchemy 2, httpx | Render (Docker, `backend/Dockerfile`) |
-| Microsserviço de IA | FastAPI, ONNX Runtime, OpenCV, Pillow | Render (Docker, `ia/Dockerfile`) |
-| Banco | PostgreSQL (SQLite no desenvolvimento) | Neon |
-| Infra | Docker Compose (local), Terraform (nuvem) | `infra/terraform` |
+| Camada               | Tecnologia                                                                                      | Onde roda                               |
+| -------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Frontend             | React 19, Vite, TypeScript, Recharts, TanStack Query (CSS próprio, em `frontend/src/styles`) | Render, servido pela própria API       |
+| API principal        | FastAPI, SQLAlchemy 2, httpx                                                                    | Render (Docker, `backend/Dockerfile`) |
+| Microsserviço de IA | FastAPI, ONNX Runtime, OpenCV, Pillow                                                           | Render (Docker, `ia/Dockerfile`)      |
+| Banco                | PostgreSQL (SQLite no desenvolvimento)                                                          | Neon                                    |
+| Infra                | Docker Compose (local), Terraform (nuvem)                                                       | `infra/terraform`                     |
 
 O treino acontece em PyTorch na GPU. Para o app, cada modelo é exportado para **ONNX** e roda na CPU com o ONNX Runtime, sem precisar do PyTorch no servidor.
 
-| Módulo | Modelo | Entrada | Saída | Arquivo |
-|---|---|---|---|---|
-| Oral | CNN pequena (~24 mil parâmetros) | 128×128, cor | `normal` ou `scc`, a classe mais provável | ~110 KB |
-| Cérebro | CNN pequena (~24 mil parâmetros) | 128×128, cinza | `glioma`, `menin` ou `tumor`, a classe mais provável | ~110 KB |
-| Pele | Ensemble de 5 EfficientNet-B0 com calibração de Platt | 224×224, cor, normalização ImageNet | `benigno` ou `maligno` (mel + bcc), com limiar de 18% | ~80 MB |
+| Módulo  | Modelo                                                  | Entrada                                | Saída                                                      | Arquivo |
+| -------- | ------------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------- | ------- |
+| Oral     | CNN pequena (~24 mil parâmetros)                       | 128×128, cor                          | `normal` ou `scc`, a classe mais provável              | ~110 KB |
+| Cérebro | CNN pequena (~24 mil parâmetros)                       | 128×128, cinza                        | `glioma`, `menin` ou `tumor`, a classe mais provável | ~110 KB |
+| Pele     | Ensemble de 5 EfficientNet-B0 com calibração de Platt | 224×224, cor, normalização ImageNet | `benigno` ou `maligno` (mel + bcc), com limiar de 18%   | ~80 MB  |
 
 Em Oral e Cérebro, a API principal responde `inconclusivo` quando a confiança fica abaixo de 80% (variável `LIMIAR_INCONCLUSIVO`). A Pele mantém a classe do limiar próprio e, quando nenhuma classe chega a esse valor, a tela mostra um aviso de baixa certeza.
 
@@ -137,7 +137,7 @@ Microsserviço de IA, em um terminal (use o mesmo token nos dois serviços):
 cd ia
 python -m venv .venv
 .venv\Scripts\activate        # Linux/Mac: source .venv/bin/activate
-pip install -r requirements-dev.txt
+pip install -r erequirements-dev.txt
 set IA_TOKEN=token-local        # Linux/Mac: export IA_TOKEN=token-local
 uvicorn app.main:app --reload --port 8001
 ```
@@ -208,18 +208,18 @@ Só as execuções novas são inseridas (a chave é `data_hora` + `dataset`).
 
 ## API
 
-| Método | Rota | O que faz |
-|---|---|---|
-| POST | `/api/auth/cadastro` | Cria a conta (`nome`, `email`, `senha`) e já devolve a sessão |
-| POST | `/api/auth/login` | Entra com `email` e `senha` e devolve o token da sessão |
-| GET | `/api/auth/eu` | Usuário da sessão atual (exige login) |
-| POST | `/api/auth/sair` | Apaga a sessão no servidor (exige login) |
-| GET | `/api/saude` | Status da API principal (não consulta a IA) |
-| GET | `/api/treinos` | Treinos (filtros: `cancer`, `modo`, `normalizado`) |
-| GET | `/api/treinos/canceres` | Tipos de câncer com treinos |
-| GET | `/api/modelos` | Modelos disponíveis para previsão, vindos do microsserviço de IA |
-| POST | `/api/previsoes` | Envia `modelo_id` + `arquivo` (imagem) e recebe a classe e as probabilidades (exige login) |
-| GET | `/api/previsoes` | Histórico das últimas previsões do usuário logado (exige login) |
+| Método | Rota                      | O que faz                                                                                      |
+| ------- | ------------------------- | ---------------------------------------------------------------------------------------------- |
+| POST    | `/api/auth/cadastro`    | Cria a conta (`nome`, `email`, `senha`) e já devolve a sessão                          |
+| POST    | `/api/auth/login`       | Entra com `email` e `senha` e devolve o token da sessão                                   |
+| GET     | `/api/auth/eu`          | Usuário da sessão atual (exige login)                                                        |
+| POST    | `/api/auth/sair`        | Apaga a sessão no servidor (exige login)                                                      |
+| GET     | `/api/saude`            | Status da API principal (não consulta a IA)                                                   |
+| GET     | `/api/treinos`          | Treinos (filtros: `cancer`, `modo`, `normalizado`)                                       |
+| GET     | `/api/treinos/canceres` | Tipos de câncer com treinos                                                                   |
+| GET     | `/api/modelos`          | Modelos disponíveis para previsão, vindos do microsserviço de IA                            |
+| POST    | `/api/previsoes`        | Envia `modelo_id` + `arquivo` (imagem) e recebe a classe e as probabilidades (exige login) |
+| GET     | `/api/previsoes`        | Histórico das últimas previsões do usuário logado (exige login)                            |
 
 As rotas que exigem login recebem o cabeçalho `Authorization: Bearer <token>`. A senha é guardada só como hash scrypt com salt, e o banco guarda só o SHA-256 do token. A sessão vale por 8 horas (variável `SESSAO_HORAS`).
 

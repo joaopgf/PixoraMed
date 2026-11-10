@@ -2,7 +2,6 @@
 name: pixoramed-boas-praticas
 description: Aplique a estrutura de pastas, as convenções de código, o uso do ambiente virtual e as regras de git e segurança do PixoraMed. Use ao criar ou alterar qualquer arquivo do projeto.
 ---
-
 # Boas práticas do PixoraMed
 
 ## Estrutura do repositório
