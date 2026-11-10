@@ -1,4 +1,4 @@
-/* Complementos do protótipo: telas ligadas à API real (probabilidades, gráficos, estados vazios) */
+/* Estilos complementares: telas ligadas à API (probabilidades, gráficos, paginação, estados vazios). */
 .prob-list {
   display: grid;
   gap: 11px;
@@ -114,7 +114,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
-.paginacao {
+.pagination {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -124,16 +124,16 @@
   color: #547286;
   font-size: 12px;
 }
-.paginacao-controles {
+.pagination-controls {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-.paginacao .btn {
+.pagination .btn {
   min-height: 36px;
   padding: 0 12px;
 }
-.citacao {
+.citation {
   margin-top: 5px;
   padding-left: 10px;
   border-left: 2px solid #dcebf3;
@@ -148,7 +148,7 @@
   color: #8a9ca8;
   font-size: 11px;
 }
-.notas {
+.notes {
   display: grid;
   gap: 9px;
   margin: 0;
@@ -158,14 +158,14 @@
   font-size: 11px;
   line-height: 1.6;
 }
-.notas strong {
+.notes strong {
   color: #284b63;
 }
-.notas.bullets {
+.notes.bullets {
   padding-left: 17px;
   list-style: disc;
 }
-.texto {
+.text {
   margin: 0 0 10px;
   color: #547286;
   font-size: 11px;

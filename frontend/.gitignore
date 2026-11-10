@@ -1,0 +1,5 @@
+# Arquivos do frontend que não vão para o git
+node_modules/
+dist/
+.env
+.vercel/
