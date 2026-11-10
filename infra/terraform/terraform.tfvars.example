@@ -1,6 +1,8 @@
-# Copie para terraform.tfvars (que fica fora do git) e preencha
+# Modelo das variáveis do Terraform. Copie para terraform.tfvars (que fica fora do git) e preencha.
+# Alternativa sem arquivo: exporte TF_VAR_neon_api_key, TF_VAR_render_api_key e TF_VAR_vercel_api_token.
 neon_api_key     = ""
 render_api_key   = ""
 render_owner_id  = ""
-github_repo      = "joaopgf/PixoraMed"
+vercel_api_token = ""
+github_repo      = "dono/PixoraMed"
 branch           = "main"

@@ -1,3 +1,5 @@
+# Variáveis de entrada do Terraform. As sensíveis vêm do terraform.tfvars (fora do git) ou de TF_VAR_*.
+
 variable "neon_api_key" {
   description = "Chave da API do Neon (console.neon.tech > Account settings > API keys)"
   type        = string
@@ -15,6 +17,12 @@ variable "render_owner_id" {
   type        = string
 }
 
+variable "vercel_api_token" {
+  description = "Token da API da Vercel (vercel.com > Account settings > Tokens)"
+  type        = string
+  sensitive   = true
+}
+
 variable "github_repo" {
   description = "Repositório no formato dono/nome, ex.: grupo/PixoraMed"
   type        = string
@@ -26,14 +34,14 @@ variable "branch" {
   default     = "main"
 }
 
-variable "nome_banco" {
+variable "database_name" {
   description = "Nome do projeto no Neon"
   type        = string
   default     = "PixoraMedDB"
 }
 
-variable "nome" {
-  description = "Prefixo dos recursos"
+variable "project_name" {
+  description = "Prefixo dos recursos. O backend vira <project_name>.onrender.com e o site <project_name>.vercel.app"
   type        = string
   default     = "pixoramed"
 }

@@ -1,28 +1,28 @@
-# Python
-.venv/
-__pycache__/
-*.pyc
-.pytest_cache/
-
-# Node
-node_modules/
-frontend/dist/
-*.tsbuildinfo
-
-# Dados locais
-data/*.db
-modelos_pt/
-*.pt
+# Arquivos que não vão para o git em todo o repositório (cada serviço tem também o seu .gitignore)
 
 # Segredos
 .env
 *.tfvars
 !*.tfvars.example
 
-# Terraform
+# Terraform: state e plano guardam segredos (endereço do banco com senha, tokens)
 .terraform/
 *.tfstate
 *.tfstate.*
-# O plano salvo guarda segredos (endereço do banco com senha)
 *.tfplan
-.terraform.lock.hcl
+
+# Python, Node e Java
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+dist/
+target/
+
+# Banco SQLite local da versão antiga
+data/*.db
+
+# Editores
+.idea/
+.vscode/

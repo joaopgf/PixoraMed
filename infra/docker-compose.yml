@@ -1,59 +1,79 @@
-# Sobe o PixoraMed inteiro: docker compose up --build
-# App em http://localhost:8080 · API em http://localhost:8000/docs · IA em http://localhost:8001/docs
+# Ambiente LOCAL de desenvolvimento: PostgreSQL, ai-service, backend e frontend (Vite) em containers.
+# Não é usado em produção (lá: Vercel + Render + Neon, criados pelo Terraform).
+# Uso, dentro de infra/:  copy .env.example .env  (e preencha)  ->  docker compose up --build
+# Site: http://localhost:5173 · API: http://localhost:8080/api/health
 services:
   db:
     image: postgres:17-alpine
     environment:
-      POSTGRES_DB: pixoramed
-      POSTGRES_USER: pixoramed
-      POSTGRES_PASSWORD: pixoramed
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - dados_db:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
     ports:
-      # Acesso pelo pgAdmin: localhost:5433 (a 5432 fica livre para o Postgres local)
-      - "5433:5432"
+      # Só no próprio computador, para pgAdmin ou para rodar o backend fora do Docker
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pixoramed"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       retries: 10
+    networks: [pixoramed]
+
+  # Microsserviço de IA: não acessa o banco e só é acessado pelo backend (sem porta exposta)
+  ai-service:
+    build: ../ai-service
+    environment:
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN}
+    volumes:
+      # Modelos novos aparecem sem rebuild (reinicie o serviço)
+      - ../ai-service/models:/app/models:ro
+    networks: [pixoramed]
 
   backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
+    build: ../backend
     environment:
-      DATABASE_URL: postgresql://pixoramed:pixoramed@db:5432/pixoramed
-      CORS_ORIGINS: http://localhost:8080,http://localhost:5173
-      IA_URL: http://ia:8001
-      IA_TOKEN: token-local-ia
+      DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ALLOWED_ORIGINS: http://localhost:5173
+      AI_SERVICE_URL: http://ai-service:8001
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/health || exit 1"]
+      interval: 10s
+      start_period: 40s
+      retries: 10
     depends_on:
       db:
         condition: service_healthy
-      ia:
-        condition: service_started
+      ai-service:
+        condition: service_healthy
+    networks: [pixoramed]
 
-  # Microsserviço de IA: carrega os modelos ONNX e devolve probabilidades. Não acessa o banco.
-  ia:
-    build:
-      context: .
-      dockerfile: ia/Dockerfile
-    environment:
-      # Só para uso local. Na nuvem, o Terraform gera um token aleatório
-      IA_TOKEN: token-local-ia
-    volumes:
-      # Modelos novos aparecem sem rebuild (reinicie o serviço ia)
-      - ./models:/app/models:ro
-    ports:
-      - "8001:8001"
-
+  # Frontend em modo desenvolvimento (Vite), com o código montado: alterações aparecem na hora
   frontend:
-    build: ./frontend
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev"
+    environment:
+      BACKEND_URL: http://backend:8080
+    volumes:
+      - ../frontend:/app
+      - frontend-node-modules:/app/node_modules
     ports:
-      - "8080:80"
+      - "127.0.0.1:5173:5173"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    networks: [pixoramed]
 
 volumes:
-  dados_db:
+  db-data:
+  frontend-node-modules:
+
+networks:
+  pixoramed:
