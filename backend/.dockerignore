@@ -1,0 +1,6 @@
+# Arquivos que não entram no build da imagem Docker do backend
+target
+.env
+.idea
+.vscode
+*.md

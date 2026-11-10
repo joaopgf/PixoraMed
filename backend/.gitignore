@@ -1,0 +1,6 @@
+# Arquivos do backend que não vão para o git
+target/
+.env
+.idea/
+.vscode/
+*.iml
