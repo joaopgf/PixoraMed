@@ -6,3 +6,4 @@ tests
 scripts
 .env
 *.md
+.claude
