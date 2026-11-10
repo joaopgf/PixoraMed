@@ -33,6 +33,14 @@ export default function Catalogo() {
           receber uma imagem de outro tipo de exame.
         </Alerta>
       </div>
+      {modelos.isLoading && (
+        <div style={{ marginBottom: 16 }}>
+          <Alerta tipo="info">
+            Conectando ao serviço de IA. Depois de um tempo sem uso, ele leva
+            até 1 minuto para responder.
+          </Alerta>
+        </div>
+      )}
       {modelos.isError && (
         <div style={{ marginBottom: 16 }}>
           <Alerta>
@@ -59,7 +67,11 @@ export default function Catalogo() {
                   {modulo.exame} · {modulo.area}
                 </small>
                 <span className={`status-mini${conectado ? " on" : ""}`}>
-                  {conectado ? "MODELO CONECTADO" : "MODELO NÃO CONECTADO"}
+                  {modelos.isLoading
+                    ? "CONECTANDO..."
+                    : conectado
+                      ? "MODELO CONECTADO"
+                      : "MODELO NÃO CONECTADO"}
                 </span>
               </span>
               <Icone nome="chevron" />

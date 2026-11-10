@@ -78,7 +78,11 @@ export default function Modelos() {
                   <Icone nome={modulo.icone} />
                 </span>
                 <span className={`model-status${lista.length ? " on" : ""}`}>
-                  {lista.length ? "Conectado" : "Não conectado"}
+                  {modelos.isLoading
+                    ? "Conectando..."
+                    : lista.length
+                      ? "Conectado"
+                      : "Não conectado"}
                 </span>
               </div>
               <h3>
