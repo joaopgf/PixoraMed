@@ -1,0 +1,8 @@
+# Arquivos que não entram na imagem Docker do ai-service
+.venv
+__pycache__
+.pytest_cache
+tests
+scripts
+.env
+*.md

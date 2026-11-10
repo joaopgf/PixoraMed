@@ -1,18 +1,18 @@
-"""Converte um modelo salvo pelo notebook (.pt) em <id>.onnx + <id>.json para a pasta models/.
+"""Converte um modelo salvo pelo notebook (.pt) em <id>.onnx + <id>.json na pasta models/ do ai-service.
 
-Uso (de dentro de backend/):
-    python scripts/exportar_onnx.py caminho/modelos_pt/mama_cor.pt
-    python scripts/exportar_onnx.py caminho/modelos_pt/mama_cor.pt --id mama_cor --saida ../models
+Uso (de dentro de ai-service/):
+    python scripts/export_onnx.py caminho/modelos_pt/oral_cor.pt
+    python scripts/export_onnx.py caminho/modelos_pt/oral_cor.pt --id oral_color --output models
 
-O .pt é o dicionário salvo pela seção "Salvar o modelo final" dos notebooks. Se for só o state_dict,
-passe também --cancer, --modo, --classes e --escala.
+O .pt é o dicionário salvo pela seção "Salvar o modelo final" dos notebooks (chaves em português:
+cancer, modo, class_names, escala, metricas, descricao). Se for só o state_dict, passe também
+--cancer-type, --mode, --classes e --scale.
 
-Precisa do PyTorch (a versão CPU basta) e do onnx/onnxscript: pip install -r requirements-dev.txt
+Precisa do PyTorch, fora do requirements.txt para não pesar a imagem (veja o README).
 """
 
 import argparse
 import json
-import re
 import sys
 import unicodedata
 from pathlib import Path
@@ -22,16 +22,19 @@ import onnxruntime as ort
 import torch
 from torch.nn import AdaptiveAvgPool2d, Conv2d, Dropout, Flatten, Linear, MaxPool2d, Module, ReLU, Sequential
 
-RAIZ = Path(__file__).resolve().parents[2]
+SERVICE_DIR = Path(__file__).resolve().parents[1]
+# Nomes dos notebooks (português) -> identificadores do sistema
+CANCER_TYPES = {"pele": "skin", "oral": "oral", "cerebro": "brain"}
+METRIC_KEYS = {"acc_media": "accuracy_mean", "acc_desvio": "accuracy_std", "f1_media": "f1_mean", "f1_desvio": "f1_std"}
 
 
 class CustomModel(Module):
     """Mesma arquitetura dos notebooks. Os nomes (self.net) precisam ser iguais para o state_dict carregar."""
 
-    def __init__(self, canais: int, n_classes: int) -> None:
+    def __init__(self, channels: int, num_classes: int) -> None:
         super().__init__()
         self.net = Sequential(
-            Conv2d(canais, 16, kernel_size=3, padding=1),
+            Conv2d(channels, 16, kernel_size=3, padding=1),
             ReLU(),
             MaxPool2d(kernel_size=2),
             Conv2d(16, 32, kernel_size=3, padding=1),
@@ -43,103 +46,103 @@ class CustomModel(Module):
             AdaptiveAvgPool2d(1),
             Flatten(),
             Dropout(p=0.25),
-            Linear(64, n_classes),
+            Linear(64, num_classes),
         )
 
     def forward(self, x):
         return self.net(x)
 
 
-def slug(texto: str) -> str:
-    sem_acento = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
-    return re.sub(r"[^a-z0-9]+", "_", sem_acento.lower()).strip("_")
+def to_cancer_type(name: str) -> str:
+    plain = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().strip().lower()
+    return CANCER_TYPES.get(plain, plain.replace(" ", "_"))
 
 
-def normalizar_modo(modo: str) -> str:
-    modo = modo.strip().lower()
-    if modo in ("cor", "rgb"):
-        return "cor"
-    if modo in ("cinza", "gray", "grayscale"):
-        return "cinza"
-    raise ValueError(f"Modo desconhecido: {modo!r} (use 'cor' ou 'cinza')")
+def to_mode(mode: str) -> str:
+    mode = mode.strip().lower()
+    if mode in ("cor", "rgb", "color"):
+        return "color"
+    if mode in ("cinza", "gray", "grayscale"):
+        return "gray"
+    raise ValueError(f"Modo desconhecido: {mode!r} (use 'color' ou 'gray')")
 
 
-def ler_checkpoint(caminho: Path, args: argparse.Namespace) -> dict:
-    dados = torch.load(caminho, map_location="cpu", weights_only=True)
+def read_checkpoint(path: Path, args: argparse.Namespace) -> dict:
+    data = torch.load(path, map_location="cpu", weights_only=True)
 
-    if "state_dict" not in dados:
+    if "state_dict" not in data:
         # Arquivo com só os pesos: o resto vem da linha de comando
-        faltando = [nome for nome in ("cancer", "modo", "classes", "escala") if getattr(args, nome) is None]
-        if faltando:
-            sys.exit(f"O .pt tem só o state_dict. Informe: {', '.join('--' + nome for nome in faltando)}")
-        dados = {"state_dict": dados}
+        missing = [name for name in ("cancer_type", "mode", "classes", "scale") if getattr(args, name) is None]
+        if missing:
+            sys.exit(f"O .pt tem só o state_dict. Informe: {', '.join('--' + n.replace('_', '-') for n in missing)}")
+        data = {"state_dict": data}
 
     return {
-        "state_dict": dados["state_dict"],
-        "cancer": args.cancer or dados["cancer"],
-        "modo": normalizar_modo(args.modo or dados["modo"]),
-        "classes": args.classes or list(dados["class_names"]),
-        "tamanho": int(args.tamanho or dados.get("size", 128)),
-        "escala": float(args.escala if args.escala is not None else dados["escala"]),
-        "metricas": dados.get("metricas", {}),
-        "descricao": args.descricao or dados.get("descricao", ""),
+        "state_dict": data["state_dict"],
+        "cancer_type": args.cancer_type or to_cancer_type(data["cancer"]),
+        "mode": to_mode(args.mode or data["modo"]),
+        "classes": args.classes or list(data["class_names"]),
+        "size": int(args.size or data.get("size", 128)),
+        "scale": float(args.scale if args.scale is not None else data["escala"]),
+        "metrics": {METRIC_KEYS.get(k, k): v for k, v in data.get("metricas", {}).items()},
+        "description": args.description or data.get("descricao", ""),
     }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("checkpoint", type=Path)
-    parser.add_argument("--id", help="padrão: <cancer>_<modo>, ex.: mama_cor")
-    parser.add_argument("--saida", type=Path, default=RAIZ / "models")
-    parser.add_argument("--cancer")
-    parser.add_argument("--modo")
+    parser.add_argument("--id", help="padrão: <cancer_type>_<mode>, ex.: oral_color")
+    parser.add_argument("--output", type=Path, default=SERVICE_DIR / "models")
+    parser.add_argument("--cancer-type")
+    parser.add_argument("--mode")
     parser.add_argument("--classes", nargs="+")
-    parser.add_argument("--escala", type=float, help="255 se treinou com normalizar=True, 1 se não")
-    parser.add_argument("--tamanho", type=int)
-    parser.add_argument("--descricao")
+    parser.add_argument("--scale", type=float, help="255 se treinou com normalizar=True, 1 se não")
+    parser.add_argument("--size", type=int)
+    parser.add_argument("--description")
     args = parser.parse_args()
 
-    info = ler_checkpoint(args.checkpoint, args)
-    modelo_id = args.id or slug(f"{info['cancer']}_{info['modo']}")
-    canais = 3 if info["modo"] == "cor" else 1
+    info = read_checkpoint(args.checkpoint, args)
+    model_id = args.id or f"{info['cancer_type']}_{info['mode']}"
+    channels = 3 if info["mode"] == "color" else 1
 
-    modelo = CustomModel(canais, len(info["classes"]))
-    modelo.load_state_dict(info["state_dict"])
-    modelo.eval()  # desliga o Dropout
+    model = CustomModel(channels, len(info["classes"]))
+    model.load_state_dict(info["state_dict"])
+    model.eval()  # desliga o Dropout
 
-    args.saida.mkdir(parents=True, exist_ok=True)
-    arquivo_onnx = args.saida / f"{modelo_id}.onnx"
+    args.output.mkdir(parents=True, exist_ok=True)
+    onnx_path = args.output / f"{model_id}.onnx"
 
     # Entrada de exemplo no mesmo intervalo do treino: [0, 1] normalizado ou [0, 255] sem normalizar
     torch.manual_seed(0)
-    exemplo = torch.rand(1, canais, info["tamanho"], info["tamanho"]) * (255.0 / info["escala"])
+    sample = torch.rand(1, channels, info["size"], info["size"]) * (255.0 / info["scale"])
     # external_data=False: pesos dentro do próprio .onnx, sem um .onnx.data separado para perder
-    torch.onnx.export(modelo, (exemplo,), str(arquivo_onnx), input_names=["imagem"], output_names=["logits"], external_data=False)
+    torch.onnx.export(model, (sample,), str(onnx_path), input_names=["image"], output_names=["logits"], external_data=False)
 
     # Confere se o ONNX dá a mesma saída que o PyTorch
     with torch.no_grad():
-        esperado = modelo(exemplo).numpy()
-    sessao = ort.InferenceSession(str(arquivo_onnx), providers=["CPUExecutionProvider"])
-    obtido = sessao.run(None, {sessao.get_inputs()[0].name: exemplo.numpy()})[0]
-    diferenca = float(np.abs(esperado - obtido).max())
-    if not np.allclose(esperado, obtido, rtol=1e-3, atol=1e-4):
-        sys.exit(f"ONNX diferente do PyTorch (diferença máxima {diferenca:.2e}). Arquivo não confiável: {arquivo_onnx}")
+        expected = model(sample).numpy()
+    session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
+    actual = session.run(None, {session.get_inputs()[0].name: sample.numpy()})[0]
+    difference = float(np.abs(expected - actual).max())
+    if not np.allclose(expected, actual, rtol=1e-3, atol=1e-4):
+        sys.exit(f"ONNX diferente do PyTorch (diferença máxima {difference:.2e}). Arquivo não confiável: {onnx_path}")
 
-    meta = {
-        "id": modelo_id,
-        "cancer": info["cancer"],
-        "modo": info["modo"],
-        "tamanho": info["tamanho"],
-        "escala": info["escala"],
+    metadata = {
+        "id": model_id,
+        "cancer_type": info["cancer_type"],
+        "mode": info["mode"],
+        "size": info["size"],
+        "scale": info["scale"],
         "classes": info["classes"],
-        "descricao": info["descricao"],
-        "metricas": info["metricas"],
-        "arquivo_onnx": arquivo_onnx.name,
+        "description": info["description"],
+        "metrics": info["metrics"],
+        "onnx_file": onnx_path.name,
     }
-    (args.saida / f"{modelo_id}.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    (args.output / f"{model_id}.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    print(f"Exportado: {arquivo_onnx} ({arquivo_onnx.stat().st_size / 1024:.0f} KB)")
-    print(f"Diferença máxima PyTorch x ONNX: {diferenca:.2e}")
+    print(f"Exportado: {onnx_path} ({onnx_path.stat().st_size / 1024:.0f} KB)")
+    print(f"Diferença máxima PyTorch x ONNX: {difference:.2e}")
 
 
 if __name__ == "__main__":

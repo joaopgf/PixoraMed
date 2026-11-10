@@ -1,4 +1,0 @@
-# Testes (não vai para produção)
--r requirements.txt
-pytest>=8.3
-httpx>=0.28

@@ -1,0 +1,8 @@
+# Arquivos do ai-service que não vão para o git
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+# Checkpoints do PyTorch usados só na exportação
+*.pt

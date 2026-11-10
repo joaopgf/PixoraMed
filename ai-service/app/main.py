@@ -1,8 +1,7 @@
-"""Microsserviço de IA do PixoraMed.
+"""Rotas do ai-service (FastAPI): saúde, lista de modelos e predição.
 
 Carrega os modelos ONNX uma vez, na subida, e devolve as probabilidades de cada imagem.
-Não acessa banco e não guarda a imagem: recebe, calcula, responde e descarta.
-Só a API principal chama /modelos e /prever, com o token no cabeçalho X-Token-IA.
+Não acessa banco e não guarda a imagem. Só o backend chama /models e /predict, com o token no header X-Internal-Token.
 """
 
 import hmac
@@ -14,103 +13,101 @@ from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request
 from pydantic import BaseModel
 
 from app.config import settings
-from app.inferencia import ImagemInvalida, RegistroModelos, prever
+from app.inference import InvalidImage, ModelRegistry, predict
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-log = logging.getLogger("pixoramed-ia")
+log = logging.getLogger("pixoramed-ai-service")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if not settings.ia_token:
-        log.warning("IA_TOKEN não configurado: /modelos e /prever vão recusar todas as chamadas")
-    app.state.registro = RegistroModelos(settings.models_dir)
-    app.state.registro.carregar()
-    log.info("%d modelos carregados de %s", len(app.state.registro.modelos), settings.models_dir)
+    app.state.registry = ModelRegistry(settings.models_dir)
+    app.state.registry.load()
+    log.info("%d modelos carregados de %s", len(app.state.registry.models), settings.models_dir)
     yield
 
 
 app = FastAPI(
-    title="PixoraMed IA",
+    title="PixoraMed AI Service",
     description="Microsserviço que carrega os modelos ONNX e devolve as probabilidades de cada imagem.",
-    version="0.1.0",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
 
-def exigir_token(x_token_ia: str = Header(default="")) -> None:
+def require_token(x_internal_token: str = Header(default="")) -> None:
     # compare_digest: o tempo da comparação não revela quantos caracteres do token estão certos
-    if not settings.ia_token or not hmac.compare_digest(x_token_ia.encode(), settings.ia_token.encode()):
+    if not hmac.compare_digest(x_internal_token.encode(), settings.ai_service_token.encode()):
         raise HTTPException(status_code=401, detail="Token do serviço de IA ausente ou inválido.")
 
 
-class ModeloIA(BaseModel):
+class ModelOut(BaseModel):
     id: str
-    cancer: str
-    modo: str
-    tamanho: int
-    normalizado: bool
+    cancer_type: str
+    mode: str
+    size: int
+    normalized: bool
     classes: list[str]
-    descricao: str
-    metricas: dict
-    limiar: float | None = None
+    description: str
+    metrics: dict
+    threshold: float | None = None
 
 
-class PrevisaoIA(BaseModel):
-    modelo_id: str
-    cancer: str
+class PredictionOut(BaseModel):
+    model_id: str
+    cancer_type: str
     classes: list[str]
-    probabilidades: list[float]  # na mesma ordem de classes
-    tempo_ms: float
-    # Limiar próprio do modelo (Pele). A API principal decide a classe com ele
-    limiar: float | None = None
+    probabilities: list[float]  # na mesma ordem de classes
+    time_ms: float
+    # Limiar próprio do modelo (Pele). O backend decide a classe com ele
+    threshold: float | None = None
 
 
-@app.get("/saude")
-def saude(request: Request):
-    return {"status": "ok", "modelos": len(request.app.state.registro.modelos)}
+@app.get("/health")
+def health(request: Request):
+    return {"status": "ok", "models": len(request.app.state.registry.models)}
 
 
-@app.get("/modelos", response_model=list[ModeloIA], dependencies=[Depends(exigir_token)])
-def listar_modelos(request: Request):
+@app.get("/models", response_model=list[ModelOut], dependencies=[Depends(require_token)])
+def list_models(request: Request):
     return [
-        ModeloIA(
-            id=modelo.id,
-            cancer=modelo.cancer,
-            modo=modelo.modo,
-            tamanho=modelo.tamanho,
-            normalizado=modelo.escala != 1,
-            classes=modelo.classes,
-            descricao=modelo.descricao,
-            metricas=modelo.metricas,
-            limiar=modelo.limiar,
+        ModelOut(
+            id=model.id,
+            cancer_type=model.cancer_type,
+            mode=model.mode,
+            size=model.size,
+            normalized=model.scale != 1,
+            classes=model.classes,
+            description=model.description,
+            metrics=model.metrics,
+            threshold=model.threshold,
         )
-        for modelo in request.app.state.registro.listar()
+        for model in request.app.state.registry.list()
     ]
 
 
-@app.post("/prever", response_model=PrevisaoIA, dependencies=[Depends(exigir_token)])
-async def prever_imagem(request: Request, modelo_id: str = Form(...), arquivo: UploadFile = File(...)):
-    modelo = request.app.state.registro.obter(modelo_id)
-    if modelo is None:
-        raise HTTPException(status_code=404, detail=f"Modelo '{modelo_id}' não encontrado.")
+@app.post("/predict", response_model=PredictionOut, dependencies=[Depends(require_token)])
+async def predict_image(request: Request, model_id: str = Form(...), file: UploadFile = File(...)):
+    model = request.app.state.registry.get(model_id)
+    if model is None:
+        raise HTTPException(status_code=404, detail=f"Modelo '{model_id}' não encontrado.")
 
-    conteudo = await arquivo.read()
-    if len(conteudo) > settings.max_upload_mb * 1024 * 1024:
+    content = await file.read()
+    if len(content) > settings.max_upload_mb * 1024 * 1024:
         raise HTTPException(status_code=413, detail=f"Imagem maior que {settings.max_upload_mb} MB.")
 
-    inicio = time.perf_counter()
+    start = time.perf_counter()
     try:
-        probabilidades = prever(modelo, conteudo)
-    except ImagemInvalida as erro:
-        raise HTTPException(status_code=422, detail=str(erro)) from erro
-    tempo_ms = (time.perf_counter() - inicio) * 1000
+        probabilities = predict(model, content)
+    except InvalidImage as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    time_ms = (time.perf_counter() - start) * 1000
 
-    return PrevisaoIA(
-        modelo_id=modelo.id,
-        cancer=modelo.cancer,
-        classes=modelo.classes,
-        probabilidades=[float(p) for p in probabilidades],
-        tempo_ms=tempo_ms,
-        limiar=modelo.limiar,
+    return PredictionOut(
+        model_id=model.id,
+        cancer_type=model.cancer_type,
+        classes=model.classes,
+        probabilities=[float(p) for p in probabilities],
+        time_ms=time_ms,
+        threshold=model.threshold,
     )

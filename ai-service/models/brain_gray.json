@@ -1,11 +1,15 @@
 {
-  "id": "cerebro_cinza",
-  "cancer": "Cérebro",
-  "modo": "cinza",
-  "tamanho": 128,
-  "escala": 1.0,
-  "classes": ["glioma", "menin", "tumor"],
-  "descricao": "",
-  "metricas": {},
-  "arquivo_onnx": "cerebro_cinza.onnx"
+  "id": "brain_gray",
+  "cancer_type": "brain",
+  "mode": "gray",
+  "size": 128,
+  "scale": 1.0,
+  "classes": [
+    "glioma",
+    "menin",
+    "tumor"
+  ],
+  "description": "",
+  "metrics": {},
+  "onnx_file": "brain_gray.onnx"
 }

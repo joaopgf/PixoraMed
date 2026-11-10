@@ -1,12 +1,16 @@
 # models/
 
-Modelos que a API carrega ao iniciar. Cada modelo é um par:
+Modelos que o ai-service carrega ao iniciar. Cada modelo é um par:
 
 - `<id>.onnx`: a rede exportada
-- `<id>.json`: metadados (câncer, modo cor/cinza, tamanho, escala, classes, métricas)
+- `<id>.json`: metadados (`cancer_type`, `mode` color/gray, `size`, `scale`, `classes`, `metrics`, `description`)
 
-Os dois são gerados por `backend/scripts/exportar_onnx.py` a partir do `.pt` salvo no notebook. Veja `docs/salvar_modelo.md`.
+| Arquivo | Módulo | Classes | Tamanho |
+|---|---|---|---|
+| `skin_color` | Pele (ensemble de 5 EfficientNet-B0, com `threshold` de decisão, `mean` e `std`) | `benign`, `malignant` | ~80 MB |
+| `oral_color` | Oral (CNN pequena) | `normal`, `scc` | ~110 KB |
+| `brain_gray` | Cérebro (CNN pequena) | `glioma`, `menin`, `tumor` | ~110 KB |
 
-A exceção é `pele_cor`, gerado por `backend/scripts/exportar_ensemble_pele.py`. O `.onnx` reúne 5 EfficientNet-B0 e devolve a probabilidade calibrada de "maligno". O `.json` traz também a normalização (`media`, `desvio`) e o `limiar` de decisão.
+Os pares são gerados por `scripts/export_onnx.py` (CNN pequena) e `scripts/export_skin_ensemble.py` (Pele) a partir dos `.pt` dos notebooks. Veja `docs/save_model.md`.
 
-Os modelos de Oral e Cérebro têm uns 110 KB. O da Pele tem uns 80 MB, perto do limite de 100 MB por arquivo do GitHub.
+O `skin_color.onnx` tem ~80 MB, perto do limite de 100 MB por arquivo do GitHub.

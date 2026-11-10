@@ -1,25 +1,25 @@
 {
-  "id": "pele_cor",
-  "cancer": "Pele",
-  "modo": "cor",
-  "tamanho": 224,
-  "escala": 255.0,
-  "media": [
+  "id": "skin_color",
+  "cancer_type": "skin",
+  "mode": "color",
+  "size": 224,
+  "scale": 255.0,
+  "mean": [
     0.485,
     0.456,
     0.406
   ],
-  "desvio": [
+  "std": [
     0.229,
     0.224,
     0.225
   ],
   "classes": [
-    "benigno",
-    "maligno"
+    "benign",
+    "malignant"
   ],
-  "limiar": 0.17999999999999994,
-  "descricao": "Ensemble de 5 EfficientNet-B0 calibradas. Maligno: melanoma e carcinoma basocelular. Benigno: nevo, ceratose benigna, dermatofibroma e lesão vascular. Queratose actínica (akiec) ficou fora do treino.",
-  "metricas": {},
-  "arquivo_onnx": "pele_cor.onnx"
+  "threshold": 0.17999999999999994,
+  "description": "Ensemble de 5 EfficientNet-B0 calibradas. Maligno: melanoma e carcinoma basocelular. Benigno: nevo, ceratose benigna, dermatofibroma e lesão vascular. Queratose actínica (akiec) ficou fora do treino.",
+  "metrics": {},
+  "onnx_file": "skin_color.onnx"
 }
