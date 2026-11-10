@@ -1,0 +1,481 @@
+================================================================================
+HANDOFF -- PixoraMed -- REFATORAÇÃO PEDIDA PELO PROFESSOR (JAVA, REACT JS, INFRA)
+================================================================================
+
+Documento de continuidade, data de referência 10/11/2026. SUBSTITUI os resumos 3, 4
+e 5, que foram apagados: tudo o que ainda vale deles está aqui. Feito para outra
+instância do Claude, sem acesso à conversa anterior. Leia este arquivo e depois o
+README.md da raiz e o README.md de cada pasta (backend, frontend, ai-service, infra).
+
+Marcação: NÃO CONFERIDO = não verifiquei diretamente.
+
+ENDEREÇOS
+  Local:   C:\Users\joaop\OneDrive\Desktop\Projetos\PixoraMed
+  GitHub:  https://github.com/joaopgf/PixoraMed (privado, só a branch main)
+  Treino:  C:\Users\joaop\OneDrive\Desktop\Projetos\Projeto-ML-Cancer
+           https://github.com/joaopgf/Projeto-ML-Cancer (notebooks; não mexido aqui)
+NA NUVEM (versão nova no ar desde 10/11/2026)
+  Site (Vercel):        https://pixoramed.vercel.app
+  Backend (Render):     https://pixoramed.onrender.com/api/health
+  ai-service (Render):  https://pixoramed-ia.onrender.com/health  (o serviço se chama
+                        pixoramed-ai-service, mas a URL antiga foi mantida pelo Render)
+  Banco (Neon):         projeto PixoraMedDB, id purple-morning-85204023, aws-us-east-1
+  IDs: Render backend srv-dborno6417fc73973om0, ai-service srv-dbotmn67bikc73a8j5ig;
+       Vercel prj_h7AWtemIv2uKVx3N9CKbYPZ8rrnX (time "joao-5739").
+
+ÍNDICE
+ 1. Contexto do projeto e da banca
+ 2. Estado atual em uma tela
+ 3. O que foi feito nesta sessão (refatoração)
+ 4. Arquitetura atual
+ 5. Backend (Spring Boot)
+ 6. Frontend (React JS)
+ 7. ai-service (Python)
+ 8. Infraestrutura: docker compose e Terraform
+ 9. Documentação, skills, BPMN e deck
+10. Modelos e como cada módulo decide
+11. Resultados medidos (honestidade)
+12. Decisões do professor e do grupo
+13. Lista do que ainda falta
+14. Como rodar
+15. Armadilhas encontradas
+16. Convenções de trabalho
+17. Commits
+
+
+1. CONTEXTO DO PROJETO E DA BANCA
+---------------------------------
+- João Pedro (usuário) é estagiário da TCS, Bootcamp de IA II/2026, aulas no SENAI
+  Londrina. Grupo: João Pedro Gonçalves Ferreira, Samuel Rosa Costa, Ramon Camilo
+  Figueiredo, Henrique Pereira da Silva. Professor/orientador: André Maurício dos Santos.
+- PixoraMed classifica imagens médicas de câncer (Pele, Oral e Cérebro) e mostra
+  previsões e resultados dos treinos num site. Protótipo acadêmico: não faz diagnóstico.
+- Banca em 23/11/2026; entrega até 48 h antes (21/11).
+- Guia da banca: apresentação de até 20 min (contexto 3, BPMN e arquitetura 3, demo 6,
+  técnica 4, governança 2, conclusão 2). Requisitos: BPMN 2.0; Python, Pandas e SQL;
+  visualização; modelo de ML; interface funcional; contêiner ou Terraform; governança
+  e ética. Pesos: inovação e negócio 20%; técnica e arquitetura 30%; protótipo e
+  usabilidade 20%; governança e ética 15%; comunicação 15%.
+- Entregáveis: repositório com README e infraestrutura (dar acesso à banca); PDF com
+  BPMN, justificativa técnica e análise de ética e segurança; deck; vídeo de backup.
+- Divisão da fala (ajustável): Henrique abre e encerra; Ramon faz BPMN, arquitetura e
+  governança; João faz a demo; Samuel faz a parte técnica.
+
+
+2. ESTADO ATUAL EM UMA TELA
+---------------------------
+- main local = GitHub. Último commit de código/docs antes deste resumo: ed41c74.
+  Branches refactor/professor-feedback e feat/paginacao-historico foram APAGADAS
+  (local e remoto) depois do merge; tudo está na main.
+- Produção: Vercel + Render + Neon funcionando com a versão nova. João testou: criou a
+  conta no site novo e a análise funcionou.
+- Neon: só as tabelas novas users, trainings e predictions. As antigas (usuarios,
+  sessoes, treinos, previsoes) foram apagadas pelo João depois da migração. Usuários
+  antigos não existem mais: todos precisam se cadastrar de novo.
+- Testes: backend 5 passando (mvn test); ai-service 20 passando (pytest, conferido num
+  Python 3.12 limpo em Docker); frontend compila (npm run build). Terraform:
+  fmt -check e validate ok; plan = "No changes".
+- Docker compose local: parado no momento (estava rodando durante a sessão).
+- Limpeza local feita: apagados backend/.venv (~1 GB), backend/app (sobras Python) e
+  data/pixoramed.db. A pasta skills/ vazia sumiu.
+- ATENÇÃO: a pasta C:\c (criada por engano numa sessão antiga, com cópias de .bpmn)
+  AINDA EXISTE. Remoção bloqueada pela checagem de segurança; João apaga à mão.
+
+
+3. O QUE FOI FEITO NESTA SESSÃO (REFATORAÇÃO)
+---------------------------------------------
+João trouxe um prompt (prompt-refatoracao-tcs.md, no Desktop) com a lista de 19
+correções do professor. Fase 0 (auditoria) revelou que o backend era Python/FastAPI.
+João DECIDIU reescrever o backend em Spring Boot Java, frontend em React JS (sem
+TypeScript) com Vite, PostgreSQL, Docker e Terraform, num único repositório, simples,
+login sem sofisticação, sem Flyway e com cabeçalho descritivo em TODOS os arquivos.
+
+Decisões tomadas por ele (perguntas feitas):
+- Banco: tabelas novas em inglês criadas pelo Hibernate (ddl-auto=update); treinos
+  reimportados do CSV; usuários se cadastram de novo; tabelas antigas preservadas
+  (depois ele mesmo apagou).
+- Login: JWT (não token salvo no banco).
+- Frontend: converter as telas atuais (mesmo visual), não refazer.
+- Padrões aceitos: ai-service continua Python; monorepo; rewrite /api na Vercel;
+  nginx removido; requirements único; pizza com Recharts; fontes em rem.
+
+Os 19 itens do professor: TODOS FEITOS.
+  1 requirements único ........ ai-service/requirements.txt (versões ==)
+  2 código em inglês .......... tudo; glossário em docs/glossary.md
+  3 desvincular front/back .... backend não builda nem serve o site; Vercel
+  4 arquivos em inglês ........ git mv em tudo
+  5 rotas em inglês ........... /api/auth/register, /api/predictions, /dashboard...
+  6 .env.example .............. backend, frontend, ai-service, infra
+  7 README da pasta scripts ... ai-service/README.md (tabela)
+  8 como data popula o banco .. backend/README.md (com diagrama mermaid)
+  9 token da IA ............... X-Internal-Token + AI_SERVICE_TOKEN obrigatório
+ 10 nginx ..................... removido; motivo em infra/README.md
+ 11 proteger .env/Terraform ... sensitive, segredos gerados, nada versionado
+ 12 renomear pasta de IA ...... ia/ -> ai-service/
+ 13 explicar/proteger compose . infra/docker-compose.yml + infra/README.md
+ 14-17 skills ................. .claude/skills por pasta, arquitetura + boas práticas
+ 18 gráfico de pizza .......... frontend/src/components/ProbabilityPieChart.jsx
+ 19 fontes maiores ............ tokens --font-size-* em rem (corpo 16 px, mín. 14 px)
+
+Depois da refatoração, também nesta sessão:
+- terraform apply + merge + push (seção 8 conta os percalços).
+- Diagramas BPMN atualizados (BCrypt, JWT, /health, X-Internal-Token) e PNGs
+  exportados de novo com bpmn-js.
+- Deck atualizado (slides 4 a 7, 9, 15 e notas).
+- Limpeza local; branches apagadas; resumos 3, 4 e 5 substituídos por este.
+
+
+4. ARQUITETURA ATUAL
+--------------------
+Navegador -> frontend (React, Vercel). O site chama sempre /api no próprio domínio.
+  vercel.json: rewrite /api/:path* -> https://pixoramed.onrender.com/api/:path*,
+  fallback SPA para /index.html, cache desligado em /api (x-vercel-enable-rewrite-caching 0).
+-> backend (Spring Boot, Render "pixoramed"): login JWT, histórico, importa o CSV de
+   treinos, decide a classe final. SQL no Neon.
+-> ai-service (FastAPI + ONNX Runtime, Render "pixoramed-ai-service"): carrega os .onnx
+   uma vez, pré-processa, roda e devolve só probabilidades. Sem banco, sem guardar imagem.
+   Chamado só pelo backend, com o cabeçalho X-Internal-Token.
+
+Estrutura do repositório:
+  backend/     Spring Boot (Java 21, Maven), Dockerfile, .env.example, README, CLAUDE.md,
+               .claude/skills/{backend-architecture,backend-best-practices}
+  frontend/    React 19 + Vite (JS), vercel.json, .env.example, README, CLAUDE.md,
+               .claude/skills/{frontend-architecture,frontend-best-practices}
+  ai-service/  FastAPI, models/ (ONNX), scripts/ (exportação), tests/, Dockerfile,
+               requirements.txt, .env.example, README, CLAUDE.md,
+               .claude/skills/{ai-service-architecture,ai-service-best-practices}
+  infra/       docker-compose.yml, .env.example, terraform/, README, CLAUDE.md,
+               .claude/skills/infra-architecture
+  docs/        bpmn/ (3 workflows + generator/), save_model.md, glossary.md, deck .pptx
+  resumo_6.txt (este arquivo)
+
+
+5. BACKEND (SPRING BOOT)
+------------------------
+Java 21, Spring Boot 4.1.2 (gerado no start.spring.io), Maven. Pacote com.pixoramed:
+  controller (AuthController, PredictionController, TrainingController)
+  service    (AuthService, PredictionService, DecisionService, TrainingService,
+              AiServiceClient)
+  repository (UserRepository, TrainingRepository, PredictionRepository)
+  model      (User, Training, Prediction)  -> tabelas users, trainings, predictions
+  dto        (records; AiModel/AiPrediction leem o snake_case da IA com @JsonAlias)
+  security   (SecurityConfig: rotas públicas, JWT HS256 via oauth2-resource-server,
+              BCrypt, CORS; TokenService gera o JWT com subject = id do usuário)
+  exception  (ApiException + GlobalExceptionHandler -> {"message": "..."})
+Rotas: POST /api/auth/register (201, 409 se e-mail existe), POST /api/auth/login
+  (401 "E-mail ou senha incorretos." nos dois casos), GET /api/health, GET
+  /api/trainings, GET /api/models (públicas); POST /api/predictions (multipart
+  modelId + file) e GET /api/predictions?limit= (até 100) exigem Bearer token.
+  Não há rota de logout nem /me (removidas por não serem usadas).
+Configuração: application.properties só com ${VAR}; spring.config.import lê
+  backend/.env. Obrigatórias: DATABASE_URL (JDBC), DATABASE_USERNAME,
+  DATABASE_PASSWORD, JWT_SECRET (>= 32 caracteres, senão não sobe),
+  CORS_ALLOWED_ORIGINS, AI_SERVICE_URL, AI_SERVICE_TOKEN. Opcionais:
+  JWT_EXPIRATION_HOURS (8), AI_SERVICE_TIMEOUT_SECONDS (120), INCONCLUSIVE_THRESHOLD
+  (0.8), IMPORT_TRAININGS_ON_STARTUP (true), PORT (8080).
+Dados: src/main/resources/data/training-results.csv (antigo data/resultados.csv, 29
+  linhas, ";" e vírgula decimal, cabeçalho em português vindo dos notebooks).
+  TrainingService importa no ApplicationReadyEvent, idempotente (chave runAt+dataset).
+  Nomes PT viram ids: Pele->skin, Oral->oral, Cérebro->brain; cor->color,
+  cinza->gray. Outros cânceres (Rim etc.) ficam no banco mas o site filtra.
+AiServiceClient: RestClient, cache de modelos 5 min, timeout 120 s. 404/413/422 da IA
+  voltam para a tela; o resto vira 503 "O serviço de IA está indisponível...".
+Dockerfile multi-stage (maven:3.9-eclipse-temurin-21 -> eclipse-temurin:21-jre-alpine),
+  usuário não-root, JAVA_TOOL_OPTIONS -XX:MaxRAMPercentage=70 -XX:+UseSerialGC.
+Testes: DecisionServiceTest (3) e TrainingServiceTest (2), sem banco.
+Memória do backend Java no Render: NÃO MEDIDA.
+
+
+6. FRONTEND (REACT JS)
+----------------------
+React 19 + Vite 6, JavaScript (TypeScript removido). TanStack Query, React Router 7,
+Recharts. src/:
+  api/        apiClient.js (único fetch, token, erro {message}, 401 -> logout),
+              authApi, predictionsApi, trainingsApi
+  auth/       AuthContext (token em sessionStorage ou localStorage com "manter
+              conectado"; chave pixoramed_session), ProtectedRoute
+  context/    AnalysisContext (análise em andamento, módulo pendente, último resultado)
+  hooks/      useApiData (useModels, useTrainings, usePredictionHistory)
+  components/ Layout, common (PageHeader, Alert, Steps, TextLink, initials), Icon,
+              Brand, DatasetCredits, OrganVisual, SkinReproduction, ProbabilityPieChart
+  pages/      Landing, Login, Dashboard, NewAnalysis, PrepareExam, Review, Result,
+              History, TrainingResults, Models, Limitations, Account
+  utils/      modules.js (MODULES com id skin/oral/brain, className traduz benign ->
+              benigno, malignant -> maligno, inconclusive -> inconclusivo, tumor ->
+              hipofisário), datasetNotes.js
+  styles/     app.css e extras.css (classes PT renomeadas: notes, text, citation,
+              pagination...)
+Rotas: / , /login, /dashboard, /new-analysis, /analysis/:moduleId, /review,
+  /result/:id, /history, /training-results, /models, /limitations, /account.
+Sem variáveis VITE_. vite.config.js repassa /api para BACKEND_URL (padrão
+  http://localhost:8080; no compose http://backend:8080).
+Pizza: rosca do Recharts, paleta validada para daltonismo (skill dataviz), legenda em
+  texto com %, classe prevista no centro e em negrito, role="img" com descrição,
+  agrupa em "Outros" acima de 6 classes. Componente só recebe props.
+Fontes: tokens no :root de app.css (xs 0.875rem, sm 0.9375rem, base 1rem, lg
+  1.125rem, xl 1.5rem, title 2.25rem). Sidebar alargada para 280px. Conferido no
+  navegador: sem rolagem horizontal em 375 px nas telas principais.
+Sem ESLint (não existe npm run lint). Textos da tela continuam em português.
+
+
+7. AI-SERVICE (PYTHON)
+----------------------
+FastAPI. app/config.py (AI_SERVICE_TOKEN obrigatório; MODELS_DIR, MAX_UPLOAD_MB 10,
+ONNX_THREADS 1), app/inference.py (ModelRegistry, preprocess, preprocess_pil,
+predict), app/main.py.
+Rotas: GET /health (pública), GET /models e POST /predict (multipart model_id + file),
+  ambas exigem X-Internal-Token (hmac.compare_digest). JSON em snake_case:
+  model_id, cancer_type, classes, probabilities, time_ms, threshold.
+Modelos (models/): skin_color, oral_color, brain_gray (.onnx + .json com chaves em
+  inglês: id, cancer_type, mode, size, scale, mean, std, classes, threshold,
+  description, metrics, onnx_file). metrics está vazio nos três.
+scripts/: export_onnx.py (CNN pequena) e export_skin_ensemble.py (Pele). Leem os .pt
+  dos notebooks (chaves em português: cancer, modo, class_names, escala, metricas,
+  descricao). Precisam de torch, que NÃO está no requirements.txt de propósito.
+requirements.txt: fastapi 0.162.2, uvicorn[standard] 0.54.0, python-multipart 0.0.33,
+  pydantic-settings 2.16.2, numpy 2.5.4, opencv-python-headless 5.0.0.93, pillow 13.0.0,
+  onnxruntime 1.31.1, pytest 9.2.0, httpx 0.28.1.
+Dockerfile: python:3.12-slim, usuário não-root, HEALTHCHECK em /health. Imagem ~862 MB
+  (quase tudo OpenCV + ONNX Runtime).
+
+
+8. INFRAESTRUTURA: DOCKER COMPOSE E TERRAFORM
+---------------------------------------------
+docker compose (infra/docker-compose.yml): só desenvolvimento local. Serviços db
+  (postgres:17-alpine, volume db-data, porta 127.0.0.1:${DB_PORT}), ai-service (sem
+  porta exposta, models montado), backend (127.0.0.1:8080, healthcheck wget),
+  frontend (node:22-alpine rodando npm ci && npm run dev, 127.0.0.1:5173,
+  CHOKIDAR_USEPOLLING=true para o Vite ver mudanças no Windows). Rede pixoramed.
+  Credenciais de infra/.env (fora do git; existe localmente com valores aleatórios
+  gerados por mim, DB_PORT=5433).
+Terraform (infra/terraform), providers fixos: kislerdm/neon 0.18.0, render-oss/render
+  1.9.1, vercel/vercel 5.26.1, hashicorp/random 3.9.1. .terraform.lock.hcl versionado.
+  Recursos: neon_project.database (prevent_destroy), random_password.ai_service_token
+  e jwt_secret, render_web_service.backend e ai_service, render_env_group.backend e
+  ai_service + links, vercel_project.frontend (root_directory frontend, framework vite).
+  Blocos moved renomearam os recursos antigos (banco, token_ia, api, ia...) sem destruir.
+  Outputs: frontend_url, backend_url, ai_service_url, database_url (sensível).
+  terraform.tfvars (fora do git) tem neon_api_key, render_api_key, render_owner_id,
+  vercel_api_token (João criou com 30 dias de validade), github_repo, branch.
+  State LOCAL (terraform.tfstate, fora do git, contém segredos). Backups feitos antes
+  dos applies em %TEMP%\terraform.tfstate.pre-apply e .after-apply1.
+O que aconteceu no apply de 10/11:
+  1) O Render gratuito recusou atualizar os serviços ("maintenance mode can only be
+     configured for non-free tier services"), como já acontecia antes.
+  2) Contorno: PATCH direto na API do Render (dockerfilePath, dockerContext,
+     healthCheckPath e nome do ai-service) e DELETE das variáveis antigas do serviço
+     (DATABASE_URL postgres:// e IA_TOKEN). Usei a chave do tfvars sem exibi-la.
+  3) O provider da Vercel deu "Unexpected Identity Change" no plan seguinte: resolvido
+     com terraform state rm + terraform import do projeto (nada apagado na Vercel).
+  4) Segundo apply gravou os env groups; plan final "No changes".
+  5) Merge fast-forward na main e push; Render e Vercel fizeram deploy sozinhos.
+Verificado em produção: /api/health ok, 3 modelos, 29 treinos, login inválido -> 401
+  com Origin do site (CORS ok), histórico sem token -> 401. João testou cadastro e
+  análise pelo site: funcionou.
+
+
+9. DOCUMENTAÇÃO, SKILLS, BPMN E DECK
+------------------------------------
+- README.md da raiz: arquitetura, estrutura, como rodar, deploy, workflows, modelos,
+  datasets e créditos, limitações, privacidade. Cada pasta tem README próprio.
+- Skills: 7 SKILL.md em .claude/skills de cada pasta (frontmatter name/description,
+  texto em PT-BR, conteúdo arquitetural). A pasta skills/ antiga (11 skills pixoramed-*)
+  foi removida; o conteúdo útil (regras de decisão, honestidade) foi para elas.
+- docs/glossary.md: tradução PT -> EN de cada termo.
+- docs/save_model.md: guia de salvar e converter o modelo (ainda cita mama_cor.pt como
+  exemplo de nome de arquivo dos notebooks, linha 16).
+- BPMN: docs/bpmn/1_login, 2_ai_service, 3_system_usage (.bpmn + .png em 2x), gerados
+  por docs/bpmn/generator/generate.py (kit.py traduzido para inglês com verificação
+  de saída idêntica). Atualizados para BCrypt/JWT/X-Internal-Token/health. PNGs
+  exportados com bpmn-js 17.11.1 numa página local (servidor temporário que recebia o
+  PNG por POST). Os .bpmn ainda usam chaves de nó em português (dado interno).
+- Deck: docs/PixoraMed_final_presentation.pptx (16 slides). Atualizados nesta sessão:
+  4-6 (diagramas novos e legendas), 7 (Spring Boot, JWT, Vercel/Render/Neon), 9
+  (pipeline com Spring Data JPA; Pandas só nos notebooks), 15 (Python, Java, Pandas,
+  SQL e BPMN), e notas do Ramon, do João (conta nova, compose em infra) e do Samuel.
+  Abriu no PowerPoint sem reparo. Os slides 2, 3, 8 e 10-16 não mudaram.
+  Ponto para o grupo: Pandas saiu do sistema e ficou só nos notebooks; se for
+  requisito do professor, citar isso na fala.
+
+
+10. MODELOS E COMO CADA MÓDULO DECIDE
+-------------------------------------
+Pele (skin_color): ensemble de 5 EfficientNet-B0 calibradas (Platt), um ONNX de ~80 MB.
+  RGB 224x224, resize bicúbico PIL, /255 e normalização ImageNet, mínimo 100 px.
+  Classes benign e malignant (mel + bcc); akiec fora do treino. Limiar ~0,18: vira
+  malignant mesmo abaixo de 50%. Sem inconclusivo; abaixo de 80% em ambas, mantém a
+  classe e a tela mostra "baixa certeza".
+Oral (oral_color): CNN pequena (~24 mil parâmetros), RGB 128x128, /255. normal, scc.
+Cérebro (brain_gray): CNN pequena, cinza 128x128, sem divisão. glioma, menin, tumor
+  (tela: hipofisário). Não detecta ausência de tumor.
+Oral e Cérebro: "inconclusive" abaixo de 80% (INCONCLUSIVE_THRESHOLD).
+OpenCV lê em BGR e o sistema converte para RGB. BGR ou tirar /255 derruba o Oral de
+  96,5% para ~52%. Modelo treinado em RGB.
+CNN dos notebooks: 3 blocos Conv-ReLU-MaxPool (16/32/64), AdaptiveAvgPool, Dropout
+  0,25, Linear; Adam lr 0,001, batch 64, 450 épocas, StratifiedKFold 5, seed 42.
+Código original da Pele indisponível (PC do colega desligou). Arquivos .pt originais
+  da Pele (HAM10000_PACOTE_INFERENCIA) e alguns zips não foram encontrados em 06/11:
+  o skin_color.onnx no GitHub é a cópia segura.
+
+
+11. RESULTADOS MEDIDOS (HONESTIDADE)
+------------------------------------
+Oral, 200 imagens separadas, mesma fonte: 96,5% (193/200); normal 95, scc 98.
+  Limiar 80%: 188 conclusivas, 98,4% de acerto.
+Cérebro, 300 imagens separadas, mesma fonte: 98,3% (295/300). Limiar: 297
+  conclusivas, 99,0%. NÃO CONFERIDO se _4901 a _5000 ficaram fora do treino.
+Cérebro, 5 folds, 1.000/classe: cinza sem norm 95,17 ± 0,55; cor sem norm
+  94,37 ± 1,81; cinza norm 88,90; cor norm 90,13 (normalizar atrapalhou).
+Pele, modelo do app, 21 imagens (Desktop\teste_interno\pele): 8/8 malignos, 7/13
+  benignos; os 6 falsos alarmes tiveram aviso. Amostra pequena; rótulos NÃO CONFERIDOS.
+Pele, REPRODUÇÃO do treino (Colab T4, 1.915 imagens por lesão): AUC 0,939
+  (IC 0,922-0,954), sensibilidade 89,0%, especificidade 83,7%, VPP 51,2%, acurácia
+  84,5% (chutar benigno = 83,9%). NÃO é o modelo do app.
+Mama antiga (fora do escopo, evidência de mudança de domínio): 96,6% na mesma fonte,
+  34,5% em 29 imagens de outra fonte; 19 erros passaram pelo limiar de 80%.
+Tempo por previsão na IA (Docker 512 MB, 0,1 CPU): Cérebro 0,1 s, Oral 0,2 s,
+  Pele 1,7 s (1 thread; antes ~20 s). IA ~250 MB com 3 modelos.
+Demo: Pele isic_0034202 maligno 85,08%; isic_0034186 maligno 34,64% com aviso (está
+  na pasta de benignos: falso alarme); Oral oral_normal_4963 inconclusivo 57,89%.
+Regras: não inventar números; mesma fonte não é "externo"; reprodução da Pele não é o
+  modelo do app; softmax de Oral/Cérebro não é calibrado; dizer "possível vazamento"
+  no Multi Cancer (dataset aumentado, sem divisão por paciente).
+Datasets: Multi Cancer (Obuli Sai Naren, 2022, DOI 10.34740/KAGGLE/DSV/3415848) e
+  HAM10000 (Tschandl et al., 2018, DOI 10.1038/sdata.2018.161), ambos CC BY-NC-SA 4.0
+  (crédito obrigatório, sem uso comercial).
+
+
+12. DECISÕES DO PROFESSOR E DO GRUPO
+------------------------------------
+- Professor: lista de 19 itens (seção 3); nuvem com Terraform; microsserviço de IA em
+  Docker; login minimamente funcional; três workflows BPMN; workflow 3 começa com o
+  usuário logado; sem filtro que recuse imagens sem relação (limitação documentada).
+- João: backend em Spring Boot; React JS; um repositório; simples; sem Flyway; login
+  JWT; tabelas novas; manter as telas; cabeçalho em todos os arquivos (arquivos sem
+  comentário, como JSON/CSV/imagens, são descritos nos READMEs); manter o botão
+  Acurácia/F1 em Resultados; tela Conta só com perfil e Sair.
+- Escopo: só Pele, Oral e Cérebro. pele_cor do colega fica no app. Ganho de tempo é
+  hipotético (licença não comercial impede ROI real).
+
+
+13. LISTA DO QUE AINDA FALTA
+----------------------------
+App (pendências antigas, ainda abertas)
+ a. NewAnalysis: aviso diz que o modelo "sempre responde com uma das classes" (não vale
+    com o inconclusivo). Texto de UI: só mudar se o João pedir.
+ b. Etiqueta "vazamento" em Models e TrainingResults deveria ser "possível vazamento".
+ c. Gráficos de Resultados tiram a média de variantes diferentes.
+ d. Histórico e Painel mostram a confiança sem o aviso de baixa certeza.
+ e. Animação inicial ainda mostra rins e pulmões (fora do escopo).
+ f. docs/save_model.md: trocar o exemplo mama_cor.pt.
+ g. Opcionais citados nas skills: ESLint no frontend; limite de tentativas de login.
+Deploy e operação
+ h. Fazer backup do infra/terraform/terraform.tfstate (só existe no PC; tem segredos).
+ i. Token da Vercel vence em ~30 dias (criado em 10/11): gerar outro se for rodar o
+    Terraform depois disso. O site não depende dele.
+ j. Criar a conta do grupo para a demo no site novo (sem senha pessoal).
+ k. Apagar a pasta C:\c à mão.
+ l. Render gratuito: limite mensal de horas somado entre serviços do workspace
+    (3 serviços com o projeto da faculdade do João): NÃO CONFERIDO.
+ m. Timeout do rewrite da Vercel enquanto o Render acorda: NÃO CONFERIDO na doc.
+Modelos e testes
+ n. Teste de Oral e Cérebro com imagens de outra fonte (maior valor para a banca).
+ o. Confirmar com o colega a separação do Cérebro e os rótulos das 21 imagens da Pele.
+ p. Mais imagens separadas para medir o skin_color.
+Entrega
+ q. PDF com BPMN, justificativa técnica e ética: falta.
+ r. Vídeo de backup da demo: falta.
+ s. Dar acesso à banca ao repositório (privado).
+ t. Ensaiar os 20 min; revisar o deck com o grupo.
+
+
+14. COMO RODAR
+--------------
+Tudo local com Docker (dentro de infra/):
+  copy .env.example .env      (já existe um .env local)
+  docker compose up --build   -> site http://localhost:5173, API :8080/api/health
+  docker compose down         (sem -v; -v apaga o banco local)
+Sem Docker:
+  backend:    mvn spring-boot:run   (precisa de backend/.env e de um Postgres; pode ser
+              "docker compose up db" em infra/)
+  ai-service: python -m venv .venv; pip install -r requirements.txt; .env com
+              AI_SERVICE_TOKEN; uvicorn app.main:app --reload --port 8001
+  frontend:   npm ci; npm run dev
+Testes: backend "mvn test"; ai-service "pytest" (Python do PC é 3.14; testei em Docker
+  python:3.12-slim); frontend "npm run build".
+Terraform (infra/terraform): terraform plan; apply só com aprovação do João.
+BPMN: cd docs\bpmn\generator; python generate.py; exportar PNG (bpmn.io ou bpmn-js).
+Deck: python-pptx instalado no Python do sistema nesta sessão; LibreOffice NÃO existe;
+  PowerPoint existe e exporta slides via COM (PowerPoint.Application, Slide.Export).
+Banca: abrir o site ~5 min antes para acordar backend e IA.
+
+
+15. ARMADILHAS ENCONTRADAS
+--------------------------
+- Render gratuito: atualizar serviço pelo Terraform falha (modo de manutenção). Use
+  env groups e a API/painel do Render. Variável do serviço tem prioridade sobre a do
+  env group.
+- Provider Vercel 5.26.1: "Unexpected Identity Change" após criar o projeto; resolver
+  com state rm + import.
+- Render dorme após 15 min; primeira chamada pode levar ~1 min.
+- Spring Boot 4 usa Jackson 3, mas as anotações (@JsonAlias) seguem em
+  com.fasterxml.jackson.annotation. Starter web agora é spring-boot-starter-webmvc.
+- Vite no compose (Windows): precisa CHOKIDAR_USEPOLLING=true para ver mudanças.
+- OneDrive trava pastas: git mv de pasta deu "Permission denied" (mover arquivo por
+  arquivo) e rm de pasta em uso deu "Device or resource busy".
+- Checagem de segurança bloqueia rm/rmdir com glob ou caminho relativo depois de cd;
+  use caminho absoluto completo.
+- Git Bash + Python do Windows: /c/... vira C:\c\...; passe caminhos C:/... ao Python
+  (foi assim que surgiu a pasta C:\c).
+- Console do Windows (cp1252) quebra print com caracteres como "→": use
+  PYTHONIOENCODING=utf-8.
+- Validador de XSD da skill pptx não roda neste Windows (falha igual no deck original);
+  confira abrindo no PowerPoint.
+- Vercel: o rewrite externo faz cache por padrão em projetos novos; está desligado
+  em /api no vercel.json.
+- Terraform: executável em %LOCALAPPDATA%\Microsoft\WinGet\Packages\
+  Hashicorp.Terraform_Microsoft.Winget.Source_8wekyb3d8bbwe\terraform.exe; o PATH
+  também aponta para uma pasta antiga do Desktop.
+- *.tfplan guarda segredos (no .gitignore); terraform.tfstate não pode ser perdido.
+- Porta 8000/8080: o Docker do João pode estar rodando; confira antes de escrever no
+  banco. Não rodar "down -v" no projeto principal.
+- npm 11: aviso "allow-scripts" no esbuild; o build funciona.
+
+
+16. CONVENÇÕES DE TRABALHO
+--------------------------
+- Português do Brasil, objetivo. Código e nomes em inglês; textos de UI, README,
+  skills e comentários de cabeçalho em português.
+- Cabeçalho curto de descrição no topo de todo arquivo que aceita comentário.
+- Código simples e funcional, sem código desnecessário (pedido do João).
+- Commit e push só quando o João pedir; cada pedido vale para aquele trabalho.
+  Mensagens de commit em inglês no padrão "refactor: ...", "docs: ...", "chore: ...",
+  "feat: ...", com a linha Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>.
+- João agora trabalha só na main (branches antigas apagadas).
+- terraform apply só depois de mostrar o plan e o João aprovar.
+- Nunca pedir nem exibir chaves; o João preenche terraform.tfvars.
+- Não criar conta no site de produção; testar login em Docker local.
+- Ações externas (push, apply, apagar coisas) só com aprovação explícita.
+- Honestidade dos resultados é prioridade (seção 11).
+
+
+17. COMMITS
+-----------
+Desta sessão (todos na main e no GitHub):
+  aaa8e07 refactor: reorganize repository into backend, frontend, ai-service and infra
+  9bd49d3 refactor: rewrite backend in Spring Boot with JWT login
+  d398c55 refactor: translate ai-service to English and unify requirements
+  81ad90d refactor: convert frontend to React JS with English names and routes
+  6d4eeb0 chore: local docker compose and Terraform for Vercel, Render and Neon
+  59ff600 feat: probability pie chart and larger fonts
+  b53c15e docs: English file names and READMEs for every service
+  bd15892 docs: architecture skills separated per service
+  3822f0d chore: keep Claude skills out of the Docker images
+  e5e1a84 docs: update BPMN workflows to the Spring Boot backend and JWT login
+  ed41c74 docs: update presentation deck to the new architecture
+  (+ o commit deste resumo)
+Antes desta sessão: 10ecb56 (pequenas alterações, commit do João), a9c3eac
+  ("Conectando..." enquanto a IA acorda), b7525d0 (paginação do histórico), 0ba2f1b
+  (microsserviço de IA), f5fc483 (login com sessão), 98169bb e anteriores (modelos e
+  app inicial). Histórico completo: git log.
+Projeto-ML-Cancer: último conhecido 526c051 (notebook de reprodução da Pele).
