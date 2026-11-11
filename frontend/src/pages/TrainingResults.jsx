@@ -29,15 +29,21 @@ export default function TrainingResults() {
   const [metric, setMetric] = useState("acc");
   const [normalized, setNormalized] = useState(true);
 
-  const cancerTypes = useMemo(
-    () => [...new Set(trainings.data?.map((t) => t.cancerType))].sort(),
+  // Os gráficos comparam só execuções sem variante (configuração padrão), para não misturar configurações
+  const standardRuns = useMemo(
+    () => (trainings.data ?? []).filter((t) => !t.variant),
     [trainings.data],
+  );
+
+  const cancerTypes = useMemo(
+    () => [...new Set(standardRuns.map((t) => t.cancerType))].sort(),
+    [standardRuns],
   );
 
   const colorVsGray = useMemo(
     () =>
       cancerTypes.map((cancerType) => {
-        const ofCancer = (trainings.data ?? []).filter(
+        const ofCancer = standardRuns.filter(
           (t) => t.cancerType === cancerType && t.normalized === normalized,
         );
         const color = average(ofCancer.filter((t) => t.mode === "color"), metric);
@@ -50,7 +56,7 @@ export default function TrainingResults() {
           gray_std: gray?.std,
         };
       }),
-    [cancerTypes, trainings.data, metric, normalized],
+    [cancerTypes, standardRuns, metric, normalized],
   );
 
   const normalization = useMemo(
@@ -58,7 +64,7 @@ export default function TrainingResults() {
       cancerTypes
         .flatMap((cancerType) =>
           ["color", "gray"].map((mode) => {
-            const group = (trainings.data ?? []).filter((t) => t.cancerType === cancerType && t.mode === mode);
+            const group = standardRuns.filter((t) => t.cancerType === cancerType && t.mode === mode);
             const yes = average(group.filter((t) => t.normalized), metric);
             const no = average(group.filter((t) => !t.normalized), metric);
             return {
@@ -71,7 +77,7 @@ export default function TrainingResults() {
           }),
         )
         .filter((row) => row.normalized !== undefined && row.raw !== undefined),
-    [cancerTypes, trainings.data, metric],
+    [cancerTypes, standardRuns, metric],
   );
 
   const metricName = metric === "acc" ? "Acurácia" : "F1 macro";
@@ -102,7 +108,7 @@ export default function TrainingResults() {
         <div className="stack">
           <Panel
             title={`Cor vs. tons de cinza · ${metricName}`}
-            description="Barras ausentes: configuração ainda não rodada com 5 folds."
+            description="Só execuções sem variante. Barras ausentes: configuração ainda não rodada com 5 folds."
             actions={
               <Toggle
                 options={[
@@ -125,7 +131,7 @@ export default function TrainingResults() {
 
           <Panel
             title={`Efeito da normalização · ${metricName}`}
-            description="Só as configurações rodadas das duas formas."
+            description="Só execuções sem variante, nas configurações rodadas das duas formas."
           >
             <BarChartWithError
               data={normalization}
@@ -162,7 +168,7 @@ export default function TrainingResults() {
                         {t.variant && <span className="tiny muted"> ({t.variant})</span>}
                         {LEAKAGE_SUSPICION[t.cancerType] && (
                           <span className="tag-warn" title={LEAKAGE_SUSPICION[t.cancerType]}>
-                            vazamento
+                            possível vazamento
                           </span>
                         )}
                       </td>

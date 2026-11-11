@@ -70,7 +70,7 @@ export default function Models() {
                 {module.name}
                 {LEAKAGE_SUSPICION[module.id] && (
                   <span className="tag-warn" title={LEAKAGE_SUSPICION[module.id]}>
-                    vazamento
+                    possível vazamento
                   </span>
                 )}
               </h3>

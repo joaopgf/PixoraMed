@@ -31,3 +31,9 @@ export function buildResultView(data, current, model) {
     inconclusiveText,
   };
 }
+
+// Para listas (histórico e painel): o registro do banco tem só classe e confiança, e o modelo traz os limiares
+export function isLowConfidence(record, models = []) {
+  const model = models.find((item) => item.id === record.modelId);
+  return model ? buildResultView(record, null, model).lowConfidence : false;
+}

@@ -453,14 +453,6 @@ select:focus-visible {
   animation: gentle-rotation 11s ease-in-out infinite alternate;
   filter: drop-shadow(0 14px 22px rgba(34, 145, 187, 0.12));
 }
-.art.kidneys img {
-  animation-duration: 12s;
-  animation-delay: -3.2s;
-}
-.art.lungs img {
-  animation-duration: 10.5s;
-  animation-delay: -1.4s;
-}
 @keyframes gentle-rotation {
   0% {
     transform: perspective(1200px) rotateY(-2.2deg) rotateX(0.8deg)
@@ -605,33 +597,9 @@ select:focus-visible {
 .visual-controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
   padding: 12px 5px 0;
-}
-.dots {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.dot {
-  width: 7px;
-  height: 7px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: #b8d2df;
-  cursor: pointer;
-  transition: all 0.25s;
-}
-.dot.active {
-  width: 22px;
-  border-radius: 9px;
-  background: #2b9dc3;
-}
-.control-actions {
-  display: flex;
-  gap: 7px;
 }
 .control-btn {
   display: inline-flex;

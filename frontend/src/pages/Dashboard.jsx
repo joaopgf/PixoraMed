@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 
 import { PageHeader, TextLink } from "../components/common";
 import Icon from "../components/Icon";
+import LowConfidenceTag from "../components/LowConfidenceTag";
 import QueryState from "../components/QueryState";
 import { useModels, usePredictionHistory, useTrainings } from "../hooks/useApiData";
 import { className, formatDate, formatPercent, MODULES, parseModelId, recordCode } from "../utils/modules";
+import { isLowConfidence } from "../utils/resultView";
 import Panel from "../components/Panel";
 
 const WORKFLOW = [
@@ -140,7 +142,10 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="activity-state">
-                  <strong>{className(record.predictedClass)}</strong>
+                  <strong>
+                    {className(record.predictedClass)}
+                    {isLowConfidence(record, models.data) && <LowConfidenceTag />}
+                  </strong>
                   <small>Confiança {formatPercent(record.confidence * 100)}</small>
                 </div>
               </div>

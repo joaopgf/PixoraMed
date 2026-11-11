@@ -4,9 +4,11 @@ import { useNavigate } from "react-router-dom";
 
 import { PageHeader } from "../components/common";
 import Icon from "../components/Icon";
-import { usePredictionHistory } from "../hooks/useApiData";
+import LowConfidenceTag from "../components/LowConfidenceTag";
+import { useModels, usePredictionHistory } from "../hooks/useApiData";
 import { downloadCsv } from "../utils/exportCsv";
 import { className, formatDate, formatPercent, modeName, MODULES, parseModelId, recordCode } from "../utils/modules";
+import { isLowConfidence } from "../utils/resultView";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -29,6 +31,7 @@ function exportCsv(records) {
 export default function History() {
   const navigate = useNavigate();
   const history = usePredictionHistory();
+  const models = useModels();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
@@ -133,6 +136,7 @@ export default function History() {
                     </td>
                     <td>
                       <span className="table-status neutral">{className(record.predictedClass)}</span>
+                      {isLowConfidence(record, models.data) && <LowConfidenceTag />}
                     </td>
                     <td className="mono">{formatPercent(record.confidence * 100)}</td>
                     <td>{formatDate(record.createdAt)}</td>

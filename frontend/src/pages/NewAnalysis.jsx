@@ -25,8 +25,9 @@ export default function NewAnalysis() {
       <div style={{ marginBottom: 16 }}>
         <Alert type="info">
           <strong>Use o módulo certo para cada imagem.</strong>
-          <br />O modelo sempre responde com uma das classes do treino, mesmo se
-          receber uma imagem de outro tipo de exame.
+          <br />O modelo não reconhece imagens de outro tipo de exame: ele pode
+          indicar uma das classes do treino mesmo assim. Em Oral e Cérebro, a
+          resposta vira "inconclusivo" quando a confiança fica abaixo de 80%.
         </Alert>
       </div>
       {models.isLoading && (

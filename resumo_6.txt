@@ -360,15 +360,22 @@ Datasets: Multi Cancer (Obuli Sai Naren, 2022, DOI 10.34740/KAGGLE/DSV/3415848) 
 
 13. LISTA DO QUE AINDA FALTA
 ----------------------------
-App (pendências antigas, ainda abertas)
- a. NewAnalysis: aviso diz que o modelo "sempre responde com uma das classes" (não vale
-    com o inconclusivo). Texto de UI: só mudar se o João pedir.
- b. Etiqueta "vazamento" em Models e TrainingResults deveria ser "possível vazamento".
- c. Gráficos de Resultados tiram a média de variantes diferentes.
- d. Histórico e Painel mostram a confiança sem o aviso de baixa certeza.
- e. Animação inicial ainda mostra rins e pulmões (fora do escopo).
- f. docs/save_model.md: trocar o exemplo mama_cor.pt.
- g. Opcionais citados nas skills: ESLint no frontend; limite de tentativas de login.
+App
+ Feito em 11/11 (commit da modularização e o seguinte): etiqueta "possível
+    vazamento"; aviso da Nova análise corrigido (cita o inconclusivo); etiqueta
+    "baixa certeza" no Histórico e no Painel (utils/resultView.isLowConfidence);
+    gráficos de Resultados só com execuções sem variante (o CSV atual não tem
+    variante, então não mudou nada visível); animação só com o cérebro (rins e
+    pulmões removidos); telas internas com React.lazy (pacote principal de 774 KB
+    para 320 KB). Também: componentes Panel, InfoPair, Toggle, QueryState,
+    ImageDropzone, BarChartWithError, LowConfidenceTag; utils resultView e exportCsv.
+ a. docs/save_model.md: trocar o exemplo mama_cor.pt.
+ b. Opcionais: ESLint no frontend; dividir o CSS global (2.395 linhas); testes de
+    componentes; limite de tentativas de login (backend).
+ c. Investigar o erro "ERR_FILE_NOT_FOUND" que aparece no console do navegador
+    (suspeita: URL de prévia de imagem já liberada; NÃO CONFERIDO).
+ d. Prettier: npx não conseguiu baixar o pacote (erro de rede do npm); formatação
+    dos arquivos novos foi ajustada à mão.
 Deploy e operação
  h. Fazer backup do infra/terraform/terraform.tfstate (só existe no PC; tem segredos).
  i. Token da Vercel vence em ~30 dias (criado em 10/11): gerar outro se for rodar o

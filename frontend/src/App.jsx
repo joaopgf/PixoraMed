@@ -1,21 +1,23 @@
 // Rotas do site: páginas públicas (início e login) e as telas internas, que exigem login.
-import { useEffect } from "react";
+import { lazy, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import ProtectedRoute from "./auth/ProtectedRoute";
 import Layout from "./components/Layout";
-import Account from "./pages/Account";
-import Dashboard from "./pages/Dashboard";
-import History from "./pages/History";
 import Landing from "./pages/Landing";
-import Limitations from "./pages/Limitations";
 import Login from "./pages/Login";
-import Models from "./pages/Models";
-import NewAnalysis from "./pages/NewAnalysis";
-import PrepareExam from "./pages/PrepareExam";
-import Result from "./pages/Result";
-import Review from "./pages/Review";
-import TrainingResults from "./pages/TrainingResults";
+
+// Telas internas carregadas só quando abertas: a primeira visita baixa menos JavaScript
+const Account = lazy(() => import("./pages/Account"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const History = lazy(() => import("./pages/History"));
+const Limitations = lazy(() => import("./pages/Limitations"));
+const Models = lazy(() => import("./pages/Models"));
+const NewAnalysis = lazy(() => import("./pages/NewAnalysis"));
+const PrepareExam = lazy(() => import("./pages/PrepareExam"));
+const Result = lazy(() => import("./pages/Result"));
+const Review = lazy(() => import("./pages/Review"));
+const TrainingResults = lazy(() => import("./pages/TrainingResults"));
 
 // Volta ao topo a cada troca de página
 function ScrollToTop() {

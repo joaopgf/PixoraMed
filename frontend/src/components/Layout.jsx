@@ -1,4 +1,5 @@
 // Estrutura das telas internas: menu lateral, barra do topo, menu inferior no celular e a página atual.
+import { Suspense } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext";
@@ -112,7 +113,10 @@ export default function Layout() {
           </div>
         </header>
         <main className="content">
-          <Outlet />
+          {/* As telas internas são carregadas sob demanda (App.jsx); o menu continua na tela enquanto isso */}
+          <Suspense fallback={<div className="empty">Carregando...</div>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
 
