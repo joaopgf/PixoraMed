@@ -2,6 +2,10 @@
 
 Classificação de imagens médicas de câncer (Pele, Oral e Cérebro) com redes neurais, e um site para fazer análises e comparar os resultados dos treinos.
 
+**Acesse o sistema:** [pixoramed.vercel.app](https://pixoramed.vercel.app)
+
+> O backend e a IA ficam no plano gratuito do Render e dormem depois de 15 minutos sem uso: a primeira análise pode levar cerca de 1 minuto.
+
 Projeto integrador do Bootcamp de IA (TCS / SENAI Londrina, 2026). Os notebooks de treino ficam no repositório **Projeto-ML-Cancer**; este repositório tem o sistema que usa os modelos treinados lá.
 
 > **Aviso:** ferramenta acadêmica. Não é um dispositivo médico e não faz diagnóstico.
