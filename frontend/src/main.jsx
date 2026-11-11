@@ -7,8 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AuthProvider } from "./auth/AuthContext";
 import { AnalysisProvider } from "./context/AnalysisContext";
-import "./styles/app.css";
-import "./styles/extras.css";
+import "./styles/index.css";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, retry: 1 } },

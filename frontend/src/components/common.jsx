@@ -3,14 +3,6 @@ import { Link } from "react-router-dom";
 
 import Icon from "./Icon";
 
-// Duas iniciais do nome, para o avatar
-export function initials(name) {
-  const parts = name.trim().split(/\s+/);
-  return (
-    ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase() || "?"
-  );
-}
-
 export function PageHeader({ label, title, description, actions }) {
   return (
     <div className="page-head">

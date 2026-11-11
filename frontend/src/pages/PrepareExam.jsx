@@ -117,7 +117,7 @@ export default function PrepareExam() {
             <ImageDropzone id="imageInput" maxMb={MAX_MB} onFile={setFile} onError={setError} />
           </div>
 
-          {analysis.file && analysis.fileUrl && (
+          {analysis.moduleId === module.id && analysis.fileUrl && (
             <div className="preview-box">
               <div className="preview-top">
                 <span>PRÉ-VISUALIZAÇÃO</span>

@@ -1,0 +1,127 @@
+/* Módulos e modelos, e conta do usuário. */
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.model-card {
+  padding: 16px;
+  border: 1px solid #e2ebf0;
+  border-radius: 15px;
+  background: #fff;
+}
+.model-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.model-card h3 {
+  margin: 13px 0 5px;
+  font-size: var(--font-size-sm);
+}
+.model-card p {
+  margin: 0 0 12px;
+  color: #8599a6;
+  font-size: var(--font-size-xs);
+  line-height: 1.55;
+}
+.model-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #97753c;
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.model-status:before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d7a44d;
+}
+.model-spec {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid #eef2f4;
+  font-size: var(--font-size-xs);
+}
+.model-spec span {
+  color: #8ca0ac;
+}
+.model-spec strong {
+  color: #527186;
+  font-weight: 650;
+}
+.account-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 15px;
+}
+.profile-card {
+  padding: 22px;
+  border: 1px solid #e2ebf0;
+  border-radius: 17px;
+  background: #fff;
+}
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 18px;
+}
+.avatar.large {
+  width: 52px;
+  height: 52px;
+  flex-basis: 52px;
+  font-size: var(--font-size-base);
+}
+.profile-hero h3 {
+  margin: 0 0 4px;
+  font-size: var(--font-size-base);
+}
+.profile-hero p {
+  margin: 0;
+  color: #8a9ca8;
+  font-size: var(--font-size-xs);
+}
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 13px 0;
+  border-top: 1px solid #edf1f4;
+}
+.setting-row strong {
+  display: block;
+  font-size: var(--font-size-xs);
+}
+.setting-row small {
+  display: block;
+  margin-top: 4px;
+  color: #8a9ca8;
+  font-size: var(--font-size-xs);
+}
+.toggle-demo {
+  width: 34px;
+  height: 19px;
+  padding: 2px;
+  border: 0;
+  border-radius: 99px;
+  background: #cbd9e1;
+}
+.toggle-demo:after {
+  content: "";
+  display: block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}

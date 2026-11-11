@@ -1,0 +1,60 @@
+/* Histórico de análises e tabelas. */
+.table-wrap {
+  overflow: auto;
+  border: 1px solid #e3ebf0;
+  border-radius: 15px;
+  background: #fff;
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 650px;
+}
+.data-table th {
+  padding: 13px 14px;
+  color: #8a9ca8;
+  background: #f8fbfc;
+  text-align: left;
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.data-table td {
+  padding: 14px;
+  border-top: 1px solid #edf1f4;
+  color: #516f82;
+  font-size: var(--font-size-xs);
+}
+.data-table td strong {
+  color: #284b63;
+  font-size: var(--font-size-xs);
+}
+.table-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: #8f7039;
+  background: #fff8e9;
+  font-size: var(--font-size-xs);
+  font-weight: 750;
+}
+.table-status.neutral {
+  color: #6b8493;
+  background: #f2f6f8;
+}
+.table-action {
+  border: 0;
+  color: #277c9e;
+  background: transparent;
+  font-size: var(--font-size-xs);
+  font-weight: 750;
+}
+.history-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 13px;
+}

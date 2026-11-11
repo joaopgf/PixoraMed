@@ -203,8 +203,9 @@ Recharts. src/:
   utils/      modules.js (MODULES com id skin/oral/brain, className traduz benign ->
               benigno, malignant -> maligno, inconclusive -> inconclusivo, tumor ->
               hipofisário), datasetNotes.js
-  styles/     app.css e extras.css (classes PT renomeadas: notes, text, citation,
-              pagination...)
+  styles/     index.css junta base, shared, layout, landing, login, dashboard,
+              modules, upload, result, history, models-account, responsive e
+              extras (classes PT renomeadas: notes, text, citation, pagination...)
 Rotas: / , /login, /dashboard, /new-analysis, /analysis/:moduleId, /review,
   /result/:id, /history, /training-results, /models, /limitations, /account.
 Sem variáveis VITE_. vite.config.js repassa /api para BACKEND_URL (padrão
@@ -215,7 +216,7 @@ Pizza: rosca do Recharts, paleta validada para daltonismo (skill dataviz), legen
 Fontes: tokens no :root de app.css (xs 0.875rem, sm 0.9375rem, base 1rem, lg
   1.125rem, xl 1.5rem, title 2.25rem). Sidebar alargada para 280px. Conferido no
   navegador: sem rolagem horizontal em 375 px nas telas principais.
-Sem ESLint (não existe npm run lint). Textos da tela continuam em português.
+ESLint 9 com npm run lint. Textos da tela continuam em português.
 
 
 7. AI-SERVICE (PYTHON)
@@ -370,11 +371,13 @@ App
     para 320 KB). Também: componentes Panel, InfoPair, Toggle, QueryState,
     ImageDropzone, BarChartWithError, LowConfidenceTag; utils resultView e exportCsv.
  a. docs/save_model.md: trocar o exemplo mama_cor.pt.
- b. Opcionais: ESLint no frontend; dividir o CSS global (2.395 linhas); testes de
-    componentes; limite de tentativas de login (backend).
- c. Investigar o erro "ERR_FILE_NOT_FOUND" que aparece no console do navegador
-    (suspeita: URL de prévia de imagem já liberada; NÃO CONFERIDO).
- d. Prettier: npx não conseguiu baixar o pacote (erro de rede do npm); formatação
+ Também feito: ESLint 9 (npm run lint, eslint.config.js, sem erros); CSS dividido
+    em 12 arquivos por área em src/styles (index.css junta na ordem; o CSS do build
+    ficou byte a byte igual); erro ERR_FILE_NOT_FOUND corrigido (o AnalysisContext
+    liberava o endereço blob da prévia antes da tela trocar de imagem e criava dois
+    endereços por imagem no StrictMode; agora libera no cleanup de um useEffect).
+ b. Opcionais: testes de componentes; limite de tentativas de login (backend).
+ c. Prettier: npx não conseguiu baixar o pacote (erro de rede do npm); formatação
     dos arquivos novos foi ajustada à mão.
 Deploy e operação
  h. Fazer backup do infra/terraform/terraform.tfstate (só existe no PC; tem segredos).

@@ -2,10 +2,10 @@
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext";
-import { initials, PageHeader } from "../components/common";
+import { PageHeader } from "../components/common";
 import Icon from "../components/Icon";
 import InfoPair from "../components/InfoPair";
-import { formatDate } from "../utils/modules";
+import { formatDate, initials } from "../utils/modules";
 
 export default function Account() {
   const navigate = useNavigate();

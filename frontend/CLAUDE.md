@@ -9,4 +9,4 @@ Antes de mexer no código, leia as skills desta pasta:
 
 Regras rápidas: código e nomes em inglês, textos da tela em português; fontes só pelas variáveis `--font-size-*`; a API é chamada só por `src/api`.
 
-Validar: `npm run build`.
+Validar: `npm run lint` e `npm run build`.

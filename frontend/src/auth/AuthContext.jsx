@@ -1,4 +1,5 @@
 // Estado do login: guarda o token no navegador, entrega o usuário logado e faz logout quando a sessão vence.
+/* eslint-disable react-refresh/only-export-components -- o Provider e o hook ficam juntos de propósito */
 import { useQueryClient } from "@tanstack/react-query";
 import {
   createContext,

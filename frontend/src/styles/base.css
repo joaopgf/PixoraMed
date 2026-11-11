@@ -1,0 +1,109 @@
+/* Base: tamanhos de fonte, cores, reset e estilos do corpo da página. */
+:root {
+  /* Tamanhos de fonte do site inteiro (1rem = 16px). Altere aqui para mudar todas as telas. */
+  --font-size-xs: 0.875rem; /* 14px: rótulos, etiquetas e textos auxiliares (mínimo) */
+  --font-size-sm: 0.9375rem; /* 15px: textos secundários, tabelas e menus */
+  --font-size-base: 1rem; /* 16px: corpo do texto e formulários */
+  --font-size-lg: 1.125rem; /* 18px: destaques e subtítulos */
+  --font-size-xl: 1.5rem; /* 24px: títulos de seção e números dos cartões */
+  --font-size-title: 2.25rem; /* 36px: título das páginas */
+  --ink: #17344b;
+  --ink2: #24475f;
+  --muted: #6f8798;
+  --soft: #8ca0ad;
+  --blue: #247fa5;
+  --blue2: #17698f;
+  --cyan: #52cce7;
+  --line: #e1ebf1;
+  --line2: #d3e2eb;
+  --bg: #f5f9fc;
+  --white: #fff;
+  --pale: #eaf5fa;
+  --teal: #3ab8ad;
+  --warning: #a8792a;
+  --warning-bg: #fff8e9;
+  --shadow: 0 16px 45px rgba(45, 112, 145, 0.08);
+  --radius: 20px;
+}
+* {
+  box-sizing: border-box;
+}
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--ink);
+  font-family:
+    Inter,
+    "Segoe UI",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  background:
+    radial-gradient(
+      ellipse at 78% 8%,
+      rgba(172, 224, 242, 0.26),
+      transparent 36%
+    ),
+    linear-gradient(135deg, #fbfdff 0%, #f3f8fb 55%, #fbfdff 100%);
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button {
+  cursor: pointer;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(48, 160, 200, 0.28);
+  outline-offset: 2px;
+}
+.hidden {
+  display: none !important;
+}
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: var(--font-size-sm);
+}
+.tiny {
+  font-size: var(--font-size-xs);
+}
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #2582a8;
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+.eyebrow:before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: #39b9db;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(57, 185, 219, 0.1);
+}

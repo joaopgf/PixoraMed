@@ -4,8 +4,8 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext";
 import Brand from "./Brand";
-import { initials } from "./common";
 import Icon from "./Icon";
+import { initials } from "../utils/modules";
 
 const NAVIGATION = [
   { to: "/dashboard", name: "Visão geral", icon: "home", group: "WORKSPACE" },

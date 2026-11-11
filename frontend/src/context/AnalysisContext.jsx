@@ -1,5 +1,6 @@
 // Estado da análise em andamento (módulo, modelo, imagem, consentimento) e do último resultado.
 // Só vale nesta aba do navegador: a imagem e as probabilidades não são guardadas no banco.
+/* eslint-disable react-refresh/only-export-components -- o Provider e o hook ficam juntos de propósito */
 import {
   createContext,
   useCallback,
@@ -29,20 +30,25 @@ export function AnalysisProvider({ children }) {
   const [analysis, setAnalysis] = useState(EMPTY_ANALYSIS);
   const [lastResult, setLastResult] = useState(null);
 
+  // O endereço da prévia é criado fora do setAnalysis: o React pode rodar essa função duas vezes
   const setFile = useCallback((file) => {
-    setAnalysis((current) => {
-      if (current.fileUrl) URL.revokeObjectURL(current.fileUrl);
-      return { ...current, file, fileUrl: file ? URL.createObjectURL(file) : null };
-    });
+    const fileUrl = file ? URL.createObjectURL(file) : null;
+    setAnalysis((current) => ({ ...current, file, fileUrl }));
   }, []);
 
   const startAnalysis = useCallback((moduleId) => {
-    setAnalysis((current) => {
-      if (current.fileUrl) URL.revokeObjectURL(current.fileUrl);
-      return { ...EMPTY_ANALYSIS, moduleId };
-    });
+    setAnalysis({ ...EMPTY_ANALYSIS, moduleId });
     setLastResult(null);
   }, []);
+
+  // Libera o endereço antigo da prévia só depois que a tela já trocou de imagem.
+  // Liberar antes fazia o navegador tentar carregar um arquivo que não existe mais (ERR_FILE_NOT_FOUND).
+  useEffect(() => {
+    const fileUrl = analysis.fileUrl;
+    return () => {
+      if (fileUrl) URL.revokeObjectURL(fileUrl);
+    };
+  }, [analysis.fileUrl]);
 
   // Ao sair da conta, descarta a análise em andamento
   useEffect(() => {

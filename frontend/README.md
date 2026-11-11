@@ -12,7 +12,8 @@ hooks/      useApiData (consultas com cache do TanStack Query: modelos, treinos,
 components/ peças visuais reutilizáveis (Layout, ProbabilityPieChart, Icon...)
 pages/      uma tela por rota
 utils/      catálogo de módulos, textos dos datasets e formatação
-styles/     CSS global, com os tamanhos de fonte em variáveis (--font-size-*)
+styles/     CSS em um arquivo por área (base, layout, landing, dashboard...), juntados na ordem certa por index.css;
+            os tamanhos de fonte ficam em variáveis (--font-size-*) no base.css
 ```
 
 Fluxo dos dados: **página → hook → serviço de `api/` → apiClient → backend**. Componentes recebem dados por props e não chamam a API.
@@ -40,6 +41,7 @@ Veja [`.env.example`](.env.example). O site não usa nenhuma variável `VITE_*`:
 cd frontend
 npm ci
 npm run dev       # http://localhost:5173 (precisa do backend rodando)
+npm run lint      # ESLint (regras do JavaScript, dos hooks do React e do Vite)
 npm run build     # gera dist/
 ```
 

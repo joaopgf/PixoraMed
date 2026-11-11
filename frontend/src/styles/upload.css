@@ -1,0 +1,231 @@
+/* Fluxo da análise: preparar exame, envio da imagem, prévia e consentimento. */
+.steps-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 20px;
+  padding: 14px 17px;
+  border: 1px solid #e3edf2;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.7);
+}
+.flow-step {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #9aabb6;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+.flow-step span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #eef3f6;
+  color: #7d96a5;
+  font-size: var(--font-size-xs);
+}
+.flow-step.active {
+  color: #276f90;
+}
+.flow-step.active span {
+  color: #fff;
+  background: #2a89ac;
+}
+.flow-connector {
+  height: 1px;
+  flex: 1;
+  max-width: 75px;
+  background: #e3ebf0;
+}
+.selected-module {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 15px;
+  border: 1px solid #dcebf2;
+  border-radius: 15px;
+  background: #f7fbfd;
+  margin-bottom: 15px;
+}
+.selected-module .module-icon {
+  width: 44px;
+  height: 44px;
+  flex-basis: 44px;
+}
+.selected-module strong {
+  display: block;
+  font-size: var(--font-size-base);
+}
+.selected-module small {
+  display: block;
+  margin-top: 4px;
+  color: #8297a5;
+  font-size: var(--font-size-xs);
+}
+.upload-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  gap: 15px;
+  align-items: start;
+}
+.upload-panel {
+  padding: 22px;
+  border: 1px solid #e1ebf0;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+}
+.upload-panel h3 {
+  margin: 0 0 5px;
+  font-family: Inter, "Segoe UI", sans-serif;
+  font-size: var(--font-size-lg);
+}
+.upload-panel > p {
+  margin: 0 0 17px;
+  color: #8195a2;
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 13px;
+  margin-bottom: 14px;
+}
+.dropzone {
+  display: flex;
+  min-height: 190px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px;
+  border: 1.5px dashed rgba(69, 155, 190, 0.42);
+  border-radius: 16px;
+  background: linear-gradient(
+    145deg,
+    rgba(244, 250, 253, 0.94),
+    rgba(251, 253, 255, 0.8)
+  );
+  color: #668397;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.dropzone:hover,
+.dropzone.dragover {
+  border-color: #39a7ca;
+  background: #eff9fd;
+}
+.dropzone .upload-symbol {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  background: #e5f4fa;
+  color: #3288aa;
+}
+.dropzone strong {
+  color: #31556d;
+  font-size: var(--font-size-sm);
+}
+.dropzone span:not(.upload-symbol) {
+  font-size: var(--font-size-xs);
+}
+.dropzone small {
+  margin-top: 4px;
+  color: #99aab5;
+  font-size: var(--font-size-xs);
+}
+.preview-box {
+  margin-top: 13px;
+  padding: 12px;
+  border: 1px solid #e1ebf0;
+  border-radius: 13px;
+  background: #f9fcfd;
+}
+.preview-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  color: #557286;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+.preview-box img {
+  display: block;
+  max-width: 100%;
+  max-height: 260px;
+  margin: 12px auto 9px;
+  border-radius: 9px;
+  object-fit: contain;
+}
+.file-details {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #8699a6;
+  font-size: var(--font-size-xs);
+}
+.upload-side {
+  display: grid;
+  gap: 13px;
+}
+.side-info {
+  padding: 19px;
+  border: 1px solid #e2ebf0;
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.82);
+}
+.side-info h3 {
+  margin: 0 0 8px;
+  font-family: Inter, "Segoe UI", sans-serif;
+  font-size: var(--font-size-base);
+}
+.side-info p,
+.side-info li {
+  color: #8095a3;
+  font-size: var(--font-size-xs);
+  line-height: 1.65;
+}
+.side-info ul {
+  padding-left: 16px;
+  margin: 10px 0 0;
+}
+.side-info li + li {
+  margin-top: 6px;
+}
+.upload-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 17px;
+  flex-wrap: wrap;
+}
+.form-error {
+  color: #a14c4c;
+  font-size: var(--font-size-xs);
+  min-height: 15px;
+}
+.consent-box {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #e8edf1;
+  border-radius: 12px;
+  background: #fbfdfe;
+  color: #768c9a;
+  font-size: var(--font-size-xs);
+  line-height: 1.55;
+}
+.consent-box input {
+  margin-top: 2px;
+  accent-color: #2a89ac;
+}

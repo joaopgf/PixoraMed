@@ -20,7 +20,7 @@ O frontend só apresenta dados e coleta a entrada do usuário. Toda regra de neg
 | `src/pages/` | Uma tela por rota; junta hooks, contextos e componentes |
 | `src/components/` | Peças visuais reutilizáveis; recebem dados por props e não chamam a API |
 | `src/utils/` | Catálogo de módulos, textos dos datasets, formatação, `resultView` (interpretação do resultado) e `exportCsv` |
-| `src/styles/` | CSS global com variáveis (cores e `--font-size-*`) |
+| `src/styles/` | Um arquivo por área (`base`, `shared`, `layout`, `landing`, `dashboard`, `upload`, `result`...), juntados por `index.css`; `responsive.css` fica por último porque sobrescreve os outros. Variáveis (`--font-size-*`, cores) no `base.css` |
 
 ## Fluxo de dados
 
@@ -74,9 +74,11 @@ O site sempre chama `/api` no próprio domínio. No desenvolvimento, o Vite repa
 ## Acessibilidade e fontes
 
 - Tamanhos só pelas variáveis `--font-size-*` em `rem` (corpo 16 px, rótulos no mínimo 14 px). Não use `px` em `font-size`.
+- Endereços `blob:` de prévia de imagem: crie fora de funções de atualização de estado e libere no cleanup de um `useEffect` (veja `AnalysisContext`), senão o navegador tenta carregar um arquivo já liberado.
 - Gráficos: identidade nunca só por cor (legenda em texto com valores), `role="img"` com descrição completa. Exemplo: `components/ProbabilityPieChart.jsx`.
 - Campos com `<label>`, botões com texto ou `aria-label`.
 
-## Ainda falta (alvo)
+## Validação
 
-- Lint (ESLint) e testes de componentes: hoje a validação é o `npm run build`.
+- `npm run lint` (ESLint 9: regras recomendadas, hooks do React e recarregamento do Vite) e `npm run build`.
+- Ainda falta (alvo): testes de componentes.
