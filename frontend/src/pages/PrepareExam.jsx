@@ -31,22 +31,14 @@ export default function PrepareExam() {
     if (module && analysis.moduleId !== module.id) startAnalysis(module.id);
   }, [module, analysis.moduleId, startAnalysis]);
 
-  // Escolhe o modelo do módulo assim que a lista chega (o colorido, se houver)
-  useEffect(() => {
-    if (
-      !available.length ||
-      available.some((model) => model.id === analysis.modelId)
-    )
-      return;
-    const preferred =
-      available.find((model) => model.mode === "color") ?? available[0];
-    updateAnalysis({ modelId: preferred.id });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [models.data, moduleId, analysis.modelId]);
-
   if (!module) return <Navigate to="/new-analysis" replace />;
 
-  const model = available.find((item) => item.id === analysis.modelId);
+  // Modelo usado: o escolhido no campo ou, sem escolha, o colorido do módulo (se houver).
+  // Calculado no render, sem useEffect; vai para a análise quando o usuário avança para a revisão
+  const model =
+    available.find((item) => item.id === analysis.modelId) ??
+    available.find((item) => item.mode === "color") ??
+    available[0];
 
   const pending = !analysis.file
     ? "Selecione uma imagem para continuar."
@@ -122,7 +114,7 @@ export default function PrepareExam() {
               <label htmlFor="model">Modelo</label>
               <select
                 id="model"
-                value={analysis.modelId}
+                value={model?.id ?? ""}
                 disabled={!available.length}
                 onChange={(event) =>
                   updateAnalysis({ modelId: event.target.value })
@@ -205,7 +197,10 @@ export default function PrepareExam() {
               type="button"
               className="btn primary"
               disabled={!!pending}
-              onClick={() => navigate("/review")}
+              onClick={() => {
+                updateAnalysis({ modelId: model.id });
+                navigate("/review");
+              }}
             >
               Revisar caso <Icon name="arrow" />
             </button>

@@ -26,6 +26,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
+        <!-- Cliente HTTP do ai-service: o Spring Boot fornece o RestClient.Builder já configurado -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-restclient</artifactId>
+        </dependency>
         <!-- Validação dos DTOs de entrada (@NotBlank, @Size...) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

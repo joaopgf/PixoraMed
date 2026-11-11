@@ -35,14 +35,16 @@ public class AiServiceClient {
     private List<AiModel> cachedModels;
     private long cachedAt;
 
-    public AiServiceClient(@Value("${app.ai-service.url}") String url,
+    // O RestClient.Builder vem do Spring Boot já configurado (conversores JSON), como a documentação recomenda
+    public AiServiceClient(RestClient.Builder builder,
+                           @Value("${app.ai-service.url}") String url,
                            @Value("${app.ai-service.token}") String token,
                            @Value("${app.ai-service.timeout-seconds}") int timeoutSeconds) {
         // No Render gratuito a IA pode estar dormindo: acordar leva perto de 1 minuto
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(timeoutSeconds));
         factory.setReadTimeout(Duration.ofSeconds(timeoutSeconds));
-        this.http = RestClient.builder()
+        this.http = builder
                 .baseUrl(url)
                 .defaultHeader("X-Internal-Token", token)
                 .requestFactory(factory)
