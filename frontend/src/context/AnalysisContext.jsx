@@ -61,7 +61,8 @@ export function AnalysisProvider({ children }) {
       setPendingModule,
       analysis,
       startAnalysis,
-      updateAnalysis: (data) => setAnalysis((current) => ({ ...current, ...data })),
+      updateAnalysis: (data) =>
+        setAnalysis((current) => ({ ...current, ...data })),
       setFile,
       lastResult,
       setLastResult,
@@ -70,7 +71,9 @@ export function AnalysisProvider({ children }) {
   );
 
   return (
-    <AnalysisContext.Provider value={value}>{children}</AnalysisContext.Provider>
+    <AnalysisContext.Provider value={value}>
+      {children}
+    </AnalysisContext.Provider>
   );
 }
 

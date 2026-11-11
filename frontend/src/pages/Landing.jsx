@@ -11,7 +11,10 @@ import { useAnalysis } from "../context/AnalysisContext";
 import { MODULES } from "../utils/modules";
 
 const STEPS = [
-  { title: "Escolha o exame", text: "Acesse o módulo correspondente ao tipo de imagem." },
+  {
+    title: "Escolha o exame",
+    text: "Acesse o módulo correspondente ao tipo de imagem.",
+  },
   {
     title: "Envie a imagem",
     text: "Confira o arquivo antes de executar a análise. A imagem é processada e descartada.",
@@ -74,7 +77,9 @@ export default function Landing() {
                 Conhecer os módulos
               </a>
             </div>
-            <div className="public-meta">VISÃO COMPUTACIONAL · PYTORCH · PESQUISA APLICADA</div>
+            <div className="public-meta">
+              VISÃO COMPUTACIONAL · PYTORCH · PESQUISA APLICADA
+            </div>
           </div>
           <div className="public-visual-wrap">
             <OrganVisual controls />
@@ -90,7 +95,9 @@ export default function Landing() {
             <div>
               <div className="eyebrow">ÁREAS DE ANÁLISE</div>
               <h2>O que deseja analisar?</h2>
-              <p>Selecione um módulo para conhecer o fluxo de envio do exame.</p>
+              <p>
+                Selecione um módulo para conhecer o fluxo de envio do exame.
+              </p>
             </div>
             <div className="module-count">
               <strong>{String(MODULES.length).padStart(2, "0")}</strong>
@@ -103,7 +110,12 @@ export default function Landing() {
           </div>
           <div className="module-grid">
             {MODULES.map((module) => (
-              <button key={module.id} type="button" className="module-card" onClick={() => openModule(module.id)}>
+              <button
+                key={module.id}
+                type="button"
+                className="module-card"
+                onClick={() => openModule(module.id)}
+              >
                 <span className="module-icon">
                   <Icon name={module.icon} />
                 </span>
@@ -133,7 +145,11 @@ export default function Landing() {
           ))}
         </section>
 
-        <section className="public-modules" id="public-data" style={{ marginBottom: 20 }}>
+        <section
+          className="public-modules"
+          id="public-data"
+          style={{ marginBottom: 20 }}
+        >
           <div className="section-head">
             <div>
               <div className="eyebrow">DADOS E CRÉDITOS</div>
@@ -146,7 +162,10 @@ export default function Landing() {
 
         <section id="public-about">
           <Alert type="info" icon="shield">
-            <strong>Projeto acadêmico de pesquisa aplicada (Bootcamp de IA TCS / SENAI).</strong>
+            <strong>
+              Projeto acadêmico de pesquisa aplicada (Bootcamp de IA TCS /
+              SENAI).
+            </strong>
             <br />
             Esta interface não faz diagnóstico, não substitui a avaliação de um
             profissional e não deve receber dados reais de pacientes.
@@ -156,7 +175,9 @@ export default function Landing() {
 
       <footer className="public-footer" style={{ marginTop: 24 }}>
         <Brand />
-        <span className="footer-copy">Visão computacional aplicada à saúde</span>
+        <span className="footer-copy">
+          Visão computacional aplicada à saúde
+        </span>
         <span className="tiny muted">Versão demonstrativa 0.2</span>
       </footer>
     </div>

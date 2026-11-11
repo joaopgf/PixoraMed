@@ -6,7 +6,14 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 // Classes de alerta (malignas) usam sempre o vermelho; as demais seguem a ordem fixa da paleta, sem
 // vermelho nem laranja, para não parecerem alerta.
 const ALERT_COLOR = "#d03b3b";
-const COLORS = ["#2a78d6", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6"];
+const COLORS = [
+  "#2a78d6",
+  "#1baf7a",
+  "#eda100",
+  "#e87ba4",
+  "#008300",
+  "#6250d6",
+];
 const OTHERS_COLOR = "#8a8a8a";
 // Com mais classes que isso, as menores viram uma fatia "Outros"
 const MAX_SLICES = 6;
@@ -14,16 +21,26 @@ const MAX_SLICES = 6;
 // probabilities: [{ className, probability }] na ordem das classes do modelo · predictedClass: classe decidida
 // pelo backend · alertClasses: classes pintadas de vermelho · formatName: nome da classe na tela
 // formatValue: probabilidade (0 a 1) em texto
-export default function ProbabilityPieChart({ probabilities, predictedClass, alertClasses = [], formatName, formatValue }) {
+export default function ProbabilityPieChart({
+  probabilities,
+  predictedClass,
+  alertClasses = [],
+  formatName,
+  formatValue,
+}) {
   // A cor segue a classe (ordem do modelo), não a posição no ranking: a mesma classe tem sempre a mesma cor
   let nextColor = 0;
   const colorOf = new Map(
     probabilities.map((item) => [
       item.className,
-      alertClasses.includes(item.className) ? ALERT_COLOR : COLORS[nextColor++ % COLORS.length],
+      alertClasses.includes(item.className)
+        ? ALERT_COLOR
+        : COLORS[nextColor++ % COLORS.length],
     ]),
   );
-  const sorted = [...probabilities].sort((a, b) => b.probability - a.probability);
+  const sorted = [...probabilities].sort(
+    (a, b) => b.probability - a.probability,
+  );
   let slices = sorted.map((item) => ({
     key: item.className,
     name: formatName(item.className),
@@ -32,11 +49,17 @@ export default function ProbabilityPieChart({ probabilities, predictedClass, ale
   }));
   if (sorted.length > MAX_SLICES) {
     const kept = slices.slice(0, MAX_SLICES - 1);
-    const others = slices.slice(MAX_SLICES - 1).reduce((sum, slice) => sum + slice.value, 0);
-    slices = [...kept, { key: "others", name: "Outros", value: others, color: OTHERS_COLOR }];
+    const others = slices
+      .slice(MAX_SLICES - 1)
+      .reduce((sum, slice) => sum + slice.value, 0);
+    slices = [
+      ...kept,
+      { key: "others", name: "Outros", value: others, color: OTHERS_COLOR },
+    ];
   }
 
-  const highlighted = slices.find((slice) => slice.key === predictedClass) ?? slices[0];
+  const highlighted =
+    slices.find((slice) => slice.key === predictedClass) ?? slices[0];
   const description = `Gráfico de pizza das probabilidades por classe: ${slices
     .map((slice) => `${slice.name} ${formatValue(slice.value)}`)
     .join(", ")}.`;
@@ -72,13 +95,23 @@ export default function ProbabilityPieChart({ probabilities, predictedClass, ale
       </div>
       <ul className="pie-chart-legend" aria-hidden="true">
         {slices.map((slice) => (
-          <li key={slice.key} className={slice.key === predictedClass ? "predicted" : ""}>
-            <span className="pie-chart-swatch" style={{ background: slice.color }} />
+          <li
+            key={slice.key}
+            className={slice.key === predictedClass ? "predicted" : ""}
+          >
+            <span
+              className="pie-chart-swatch"
+              style={{ background: slice.color }}
+            />
             <span className="pie-chart-name">
               {slice.name}
-              {slice.key === predictedClass && <small> · classe prevista</small>}
+              {slice.key === predictedClass && (
+                <small> · classe prevista</small>
+              )}
             </span>
-            <span className="pie-chart-value mono">{formatValue(slice.value)}</span>
+            <span className="pie-chart-value mono">
+              {formatValue(slice.value)}
+            </span>
           </li>
         ))}
       </ul>

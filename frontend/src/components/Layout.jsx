@@ -11,7 +11,12 @@ const NAVIGATION = [
   { to: "/dashboard", name: "Visão geral", icon: "home", group: "WORKSPACE" },
   { to: "/new-analysis", name: "Nova análise", icon: "plusfile" },
   { to: "/history", name: "Histórico de análises", icon: "clock" },
-  { to: "/training-results", name: "Resultados dos treinos", icon: "chart", group: "PROJETO" },
+  {
+    to: "/training-results",
+    name: "Resultados dos treinos",
+    icon: "chart",
+    group: "PROJETO",
+  },
   { to: "/models", name: "Módulos e modelos", icon: "layers" },
   { to: "/limitations", name: "Limitações e ética", icon: "warning" },
   { to: "/account", name: "Conta e segurança", icon: "shield", group: "CONTA" },
@@ -42,10 +47,30 @@ export default function Layout() {
   const inAnalysis = ANALYSIS_PATHS.some((path) => pathname.startsWith(path));
 
   const mobileItems = [
-    { to: "/dashboard", name: "Início", icon: "home", active: pathname === "/dashboard" },
-    { to: "/new-analysis", name: "Nova análise", icon: "plusfile", active: inAnalysis },
-    { to: "/history", name: "Histórico", icon: "clock", active: pathname === "/history" },
-    { to: "/training-results", name: "Resultados", icon: "chart", active: pathname === "/training-results" },
+    {
+      to: "/dashboard",
+      name: "Início",
+      icon: "home",
+      active: pathname === "/dashboard",
+    },
+    {
+      to: "/new-analysis",
+      name: "Nova análise",
+      icon: "plusfile",
+      active: inAnalysis,
+    },
+    {
+      to: "/history",
+      name: "Histórico",
+      icon: "clock",
+      active: pathname === "/history",
+    },
+    {
+      to: "/training-results",
+      name: "Resultados",
+      icon: "chart",
+      active: pathname === "/training-results",
+    },
   ];
 
   return (
@@ -60,7 +85,9 @@ export default function Layout() {
               {item.group && <div className="side-label">{item.group}</div>}
               <NavLink
                 to={item.to}
-                className={({ isActive }) => `nav-item${isActive ? " active" : ""}`}
+                className={({ isActive }) =>
+                  `nav-item${isActive ? " active" : ""}`
+                }
               >
                 <Icon name={item.icon} />
                 <span>{item.name}</span>

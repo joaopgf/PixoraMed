@@ -1,413 +1,1160 @@
 <!doctype html>
 <!-- Documento de entrega da banca (BPMN, justificativa técnica, ética e segurança). Gera o PDF com o Edge: veja docs/delivery/README.md. -->
 <html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<title>PixoraMed: documento de entrega</title>
-<style>
-  :root {
-    --ink: #1c2430;
-    --muted: #5a6573;
-    --line: #d5dbe3;
-    --soft: #f2f5f9;
-    --accent: #1f6f8b;
-    --warn-bg: #fff6e5;
-    --warn-line: #e0a63a;
-  }
-  @page { size: A4; margin: 18mm 17mm 18mm 17mm; }
-  @page wide { size: A4 landscape; margin: 12mm 14mm; }
-  * { box-sizing: border-box; }
-  html { background: #fff; }
-  body {
-    margin: 0;
-    color: var(--ink);
-    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    font-size: 10.5pt;
-    line-height: 1.5;
-  }
-  h1, h2, h3 { line-height: 1.25; margin: 0; }
-  h2 {
-    font-size: 17pt;
-    color: var(--accent);
-    padding-bottom: 4pt;
-    border-bottom: 1.5pt solid var(--accent);
-    margin: 0 0 10pt;
-    break-after: avoid;
-  }
-  h3 { font-size: 12pt; margin: 14pt 0 5pt; break-after: avoid; }
-  p { margin: 0 0 7pt; }
-  ul { margin: 0 0 8pt; padding-left: 16pt; }
-  li { margin-bottom: 3pt; }
-  code { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; background: var(--soft); padding: 0 2pt; border-radius: 2pt; }
-  table { width: 100%; border-collapse: collapse; margin: 4pt 0 10pt; font-size: 9.5pt; break-inside: avoid; }
-  th, td { text-align: left; vertical-align: top; padding: 4pt 6pt; border-bottom: 0.75pt solid var(--line); }
-  th { background: var(--soft); font-weight: 600; }
-  td.num, th.num { text-align: right; white-space: nowrap; }
-  .section { break-before: page; }
-  .note {
-    background: var(--warn-bg);
-    border-left: 3pt solid var(--warn-line);
-    padding: 6pt 9pt;
-    margin: 6pt 0 10pt;
-    font-size: 9.5pt;
-    break-inside: avoid;
-  }
-  .muted { color: var(--muted); }
-  .small { font-size: 9pt; }
+  <head>
+    <meta charset="utf-8" />
+    <title>PixoraMed: documento de entrega</title>
+    <style>
+      :root {
+        --ink: #1c2430;
+        --muted: #5a6573;
+        --line: #d5dbe3;
+        --soft: #f2f5f9;
+        --accent: #1f6f8b;
+        --warn-bg: #fff6e5;
+        --warn-line: #e0a63a;
+      }
+      @page {
+        size: A4;
+        margin: 18mm 17mm 18mm 17mm;
+      }
+      @page wide {
+        size: A4 landscape;
+        margin: 12mm 14mm;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        background: #fff;
+      }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.5;
+      }
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+        margin: 0;
+      }
+      h2 {
+        font-size: 17pt;
+        color: var(--accent);
+        padding-bottom: 4pt;
+        border-bottom: 1.5pt solid var(--accent);
+        margin: 0 0 10pt;
+        break-after: avoid;
+      }
+      h3 {
+        font-size: 12pt;
+        margin: 14pt 0 5pt;
+        break-after: avoid;
+      }
+      p {
+        margin: 0 0 7pt;
+      }
+      ul {
+        margin: 0 0 8pt;
+        padding-left: 16pt;
+      }
+      li {
+        margin-bottom: 3pt;
+      }
+      code {
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 9.5pt;
+        background: var(--soft);
+        padding: 0 2pt;
+        border-radius: 2pt;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 4pt 0 10pt;
+        font-size: 9.5pt;
+        break-inside: avoid;
+      }
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        padding: 4pt 6pt;
+        border-bottom: 0.75pt solid var(--line);
+      }
+      th {
+        background: var(--soft);
+        font-weight: 600;
+      }
+      td.num,
+      th.num {
+        text-align: right;
+        white-space: nowrap;
+      }
+      .section {
+        break-before: page;
+      }
+      .note {
+        background: var(--warn-bg);
+        border-left: 3pt solid var(--warn-line);
+        padding: 6pt 9pt;
+        margin: 6pt 0 10pt;
+        font-size: 9.5pt;
+        break-inside: avoid;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .small {
+        font-size: 9pt;
+      }
 
-  /* Capa */
-  .cover { height: 255mm; display: flex; flex-direction: column; justify-content: space-between; }
-  .cover .brand { font-size: 11pt; letter-spacing: 2pt; color: var(--accent); font-weight: 600; text-transform: uppercase; }
-  .cover h1 { font-size: 34pt; margin-top: 70mm; }
-  .cover .subtitle { font-size: 14pt; color: var(--muted); margin-top: 6pt; max-width: 150mm; }
-  .cover dl { display: grid; grid-template-columns: 34mm 1fr; gap: 3pt 8pt; margin: 0; font-size: 10pt; }
-  .cover dt { color: var(--muted); }
-  .cover dd { margin: 0; }
+      /* Capa */
+      .cover {
+        height: 255mm;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .cover .brand {
+        font-size: 11pt;
+        letter-spacing: 2pt;
+        color: var(--accent);
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .cover h1 {
+        font-size: 34pt;
+        margin-top: 70mm;
+      }
+      .cover .subtitle {
+        font-size: 14pt;
+        color: var(--muted);
+        margin-top: 6pt;
+        max-width: 150mm;
+      }
+      .cover dl {
+        display: grid;
+        grid-template-columns: 34mm 1fr;
+        gap: 3pt 8pt;
+        margin: 0;
+        font-size: 10pt;
+      }
+      .cover dt {
+        color: var(--muted);
+      }
+      .cover dd {
+        margin: 0;
+      }
 
-  /* Sumário */
-  .toc ol { padding-left: 16pt; font-size: 11pt; }
-  .toc li { margin-bottom: 5pt; }
-  .toc ol ol { font-size: 10pt; margin-top: 3pt; }
+      /* Sumário */
+      .toc ol {
+        padding-left: 16pt;
+        font-size: 11pt;
+      }
+      .toc li {
+        margin-bottom: 5pt;
+      }
+      .toc ol ol {
+        font-size: 10pt;
+        margin-top: 3pt;
+      }
 
-  /* Arquitetura */
-  .arch { display: grid; grid-template-columns: 1fr; gap: 0; margin: 6pt 0 12pt; break-inside: avoid; }
-  .arch .box { border: 1pt solid var(--line); border-radius: 4pt; padding: 6pt 9pt; background: var(--soft); }
-  .arch .box b { color: var(--accent); }
-  .arch .arrow { text-align: center; color: var(--muted); font-size: 9pt; padding: 2pt 0; }
-  .arch .row { display: grid; grid-template-columns: 1fr 26mm 1fr; align-items: center; }
+      /* Arquitetura */
+      .arch {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0;
+        margin: 6pt 0 12pt;
+        break-inside: avoid;
+      }
+      .arch .box {
+        border: 1pt solid var(--line);
+        border-radius: 4pt;
+        padding: 6pt 9pt;
+        background: var(--soft);
+      }
+      .arch .box b {
+        color: var(--accent);
+      }
+      .arch .arrow {
+        text-align: center;
+        color: var(--muted);
+        font-size: 9pt;
+        padding: 2pt 0;
+      }
+      .arch .row {
+        display: grid;
+        grid-template-columns: 1fr 26mm 1fr;
+        align-items: center;
+      }
 
-  /* Páginas dos BPMN em paisagem */
-  .wide { page: wide; break-before: page; }
-  .wide h3 { margin-top: 0; font-size: 14pt; color: var(--accent); }
-  .wide img { width: 100%; height: auto; display: block; border: 0.75pt solid var(--line); margin: 6pt 0 8pt; }
-  .wide .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14pt; font-size: 9.5pt; }
-</style>
-</head>
-<body>
+      /* Páginas dos BPMN em paisagem */
+      .wide {
+        page: wide;
+        break-before: page;
+      }
+      .wide h3 {
+        margin-top: 0;
+        font-size: 14pt;
+        color: var(--accent);
+      }
+      .wide img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border: 0.75pt solid var(--line);
+        margin: 6pt 0 8pt;
+      }
+      .wide .cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 14pt;
+        font-size: 9.5pt;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- CAPA -->
+    <section class="cover">
+      <div>
+        <div class="brand">PixoraMed</div>
+        <h1>Documento de entrega</h1>
+        <p class="subtitle">
+          Workflows BPMN 2.0, justificativa técnica e análise de ética,
+          governança e segurança do protótipo de classificação de imagens de
+          câncer.
+        </p>
+      </div>
+      <div>
+        <div class="note" style="margin-bottom: 14pt">
+          Protótipo acadêmico. O PixoraMed não é um dispositivo médico, não foi
+          validado clinicamente e não faz diagnóstico.
+        </div>
+        <dl>
+          <dt>Programa</dt>
+          <dd>Bootcamp de IA II/2026, TCS e SENAI Londrina</dd>
+          <dt>Grupo</dt>
+          <dd>
+            Henrique Pereira da Silva, João Pedro Gonçalves Ferreira, Ramon
+            Camilo Figueiredo, Samuel Rosa Costa
+          </dd>
+          <dt>Orientador</dt>
+          <dd>Prof. André Maurício dos Santos</dd>
+          <dt>Banca</dt>
+          <dd>23/11/2026</dd>
+          <dt>Sistema</dt>
+          <dd>https://pixoramed.vercel.app</dd>
+        </dl>
+      </div>
+    </section>
 
-<!-- CAPA -->
-<section class="cover">
-  <div>
-    <div class="brand">PixoraMed</div>
-    <h1>Documento de entrega</h1>
-    <p class="subtitle">Workflows BPMN 2.0, justificativa técnica e análise de ética, governança e segurança do protótipo de classificação de imagens de câncer.</p>
-  </div>
-  <div>
-    <div class="note" style="margin-bottom:14pt">Protótipo acadêmico. O PixoraMed não é um dispositivo médico, não foi validado clinicamente e não faz diagnóstico.</div>
-    <dl>
-      <dt>Programa</dt><dd>Bootcamp de IA II/2026, TCS e SENAI Londrina</dd>
-      <dt>Grupo</dt><dd>Henrique Pereira da Silva, João Pedro Gonçalves Ferreira, Ramon Camilo Figueiredo, Samuel Rosa Costa</dd>
-      <dt>Orientador</dt><dd>Prof. André Maurício dos Santos</dd>
-      <dt>Banca</dt><dd>23/11/2026</dd>
-      <dt>Sistema</dt><dd>https://pixoramed.vercel.app</dd>
-    </dl>
-  </div>
-</section>
-
-<!-- SUMÁRIO -->
-<section class="section toc">
-  <h2>Sumário</h2>
-  <ol>
-    <li>Contexto, problema e objetivo</li>
-    <li>Workflows BPMN 2.0
+    <!-- SUMÁRIO -->
+    <section class="section toc">
+      <h2>Sumário</h2>
       <ol>
-        <li>Login e cadastro</li>
-        <li>Microsserviço de IA</li>
-        <li>Uso do sistema: análise de uma imagem</li>
+        <li>Contexto, problema e objetivo</li>
+        <li>
+          Workflows BPMN 2.0
+          <ol>
+            <li>Login e cadastro</li>
+            <li>Microsserviço de IA</li>
+            <li>Uso do sistema: análise de uma imagem</li>
+          </ol>
+        </li>
+        <li>
+          Justificativa técnica
+          <ol>
+            <li>Arquitetura</li>
+            <li>Escolha das tecnologias</li>
+            <li>Dados: Python, Pandas e SQL</li>
+            <li>Modelos de machine learning</li>
+            <li>Resultados medidos</li>
+            <li>Infraestrutura: Docker e Terraform</li>
+            <li>Qualidade e testes</li>
+          </ol>
+        </li>
+        <li>
+          Ética, governança e segurança
+          <ol>
+            <li>Uso responsável e limites do protótipo</li>
+            <li>Viés e vazamento de dados</li>
+            <li>Privacidade (LGPD)</li>
+            <li>Segurança da aplicação</li>
+            <li>Licenças e créditos dos dados</li>
+            <li>Riscos e mitigações</li>
+          </ol>
+        </li>
+        <li>Conclusão e trabalhos futuros</li>
+        <li>Referências</li>
       </ol>
-    </li>
-    <li>Justificativa técnica
-      <ol>
-        <li>Arquitetura</li>
-        <li>Escolha das tecnologias</li>
-        <li>Dados: Python, Pandas e SQL</li>
-        <li>Modelos de machine learning</li>
-        <li>Resultados medidos</li>
-        <li>Infraestrutura: Docker e Terraform</li>
-        <li>Qualidade e testes</li>
-      </ol>
-    </li>
-    <li>Ética, governança e segurança
-      <ol>
-        <li>Uso responsável e limites do protótipo</li>
-        <li>Viés e vazamento de dados</li>
-        <li>Privacidade (LGPD)</li>
-        <li>Segurança da aplicação</li>
-        <li>Licenças e créditos dos dados</li>
-        <li>Riscos e mitigações</li>
-      </ol>
-    </li>
-    <li>Conclusão e trabalhos futuros</li>
-    <li>Referências</li>
-  </ol>
-</section>
+    </section>
 
-<!-- 1. CONTEXTO -->
-<section class="section">
-  <h2>1. Contexto, problema e objetivo</h2>
-  <p>A leitura de imagens médicas é uma etapa demorada da triagem de câncer, e a fila de exames depende da disponibilidade de especialistas. Redes neurais treinadas com imagens públicas conseguem separar padrões visuais de algumas lesões, mas um número alto de acurácia sozinho não diz se o modelo serve para pacientes reais.</p>
-  <p>O <b>PixoraMed</b> é um protótipo que classifica imagens de três tipos de câncer e mostra, no mesmo site, o resultado de cada análise e o desempenho medido de cada modelo, com os limites dessa medida:</p>
-  <table>
-    <tr><th>Módulo</th><th>Tipo de imagem</th><th>Classes</th><th>Dataset</th></tr>
-    <tr><td>Pele</td><td>Dermatoscopia, colorida</td><td>benigno, maligno</td><td>HAM10000</td></tr>
-    <tr><td>Oral</td><td>Histopatologia, colorida</td><td>normal, carcinoma espinocelular (SCC)</td><td>Multi Cancer</td></tr>
-    <tr><td>Cérebro</td><td>Ressonância magnética, tons de cinza</td><td>glioma, meningioma, hipofisário</td><td>Multi Cancer</td></tr>
-  </table>
-  <h3>Objetivo</h3>
-  <p>Entregar um fluxo completo e funcional, do treino dos modelos à interface, que mostre como um sistema de apoio à triagem poderia funcionar e, ao mesmo tempo, deixe claro onde ele falha. O sistema permite:</p>
-  <ul>
-    <li>criar conta e entrar com login seguro;</li>
-    <li>escolher o módulo, enviar uma imagem e receber a classe prevista com as probabilidades de cada classe;</li>
-    <li>consultar o histórico das próprias análises e exportá-lo em CSV;</li>
-    <li>comparar os resultados dos treinos (acurácia, F1, desvio entre folds) e ler as limitações de cada modelo.</li>
-  </ul>
-  <h3>Público e valor</h3>
-  <p>O cenário pensado é o de um médico que já sabe qual exame tem em mãos e quer uma segunda leitura rápida para priorizar casos. O ganho de tempo é hipotético: os datasets usados têm licença não comercial, o protótipo não foi validado clinicamente e por isso não calculamos retorno financeiro.</p>
-  <div class="note">Escopo deliberadamente limitado a três módulos. Outros cânceres testados nos notebooks (por exemplo, mama) ficaram fora do sistema por resultados ruins em imagens de outra fonte (seção 3.5).</div>
-</section>
+    <!-- 1. CONTEXTO -->
+    <section class="section">
+      <h2>1. Contexto, problema e objetivo</h2>
+      <p>
+        A leitura de imagens médicas é uma etapa demorada da triagem de câncer,
+        e a fila de exames depende da disponibilidade de especialistas. Redes
+        neurais treinadas com imagens públicas conseguem separar padrões visuais
+        de algumas lesões, mas um número alto de acurácia sozinho não diz se o
+        modelo serve para pacientes reais.
+      </p>
+      <p>
+        O <b>PixoraMed</b> é um protótipo que classifica imagens de três tipos
+        de câncer e mostra, no mesmo site, o resultado de cada análise e o
+        desempenho medido de cada modelo, com os limites dessa medida:
+      </p>
+      <table>
+        <tr>
+          <th>Módulo</th>
+          <th>Tipo de imagem</th>
+          <th>Classes</th>
+          <th>Dataset</th>
+        </tr>
+        <tr>
+          <td>Pele</td>
+          <td>Dermatoscopia, colorida</td>
+          <td>benigno, maligno</td>
+          <td>HAM10000</td>
+        </tr>
+        <tr>
+          <td>Oral</td>
+          <td>Histopatologia, colorida</td>
+          <td>normal, carcinoma espinocelular (SCC)</td>
+          <td>Multi Cancer</td>
+        </tr>
+        <tr>
+          <td>Cérebro</td>
+          <td>Ressonância magnética, tons de cinza</td>
+          <td>glioma, meningioma, hipofisário</td>
+          <td>Multi Cancer</td>
+        </tr>
+      </table>
+      <h3>Objetivo</h3>
+      <p>
+        Entregar um fluxo completo e funcional, do treino dos modelos à
+        interface, que mostre como um sistema de apoio à triagem poderia
+        funcionar e, ao mesmo tempo, deixe claro onde ele falha. O sistema
+        permite:
+      </p>
+      <ul>
+        <li>criar conta e entrar com login seguro;</li>
+        <li>
+          escolher o módulo, enviar uma imagem e receber a classe prevista com
+          as probabilidades de cada classe;
+        </li>
+        <li>
+          consultar o histórico das próprias análises e exportá-lo em CSV;
+        </li>
+        <li>
+          comparar os resultados dos treinos (acurácia, F1, desvio entre folds)
+          e ler as limitações de cada modelo.
+        </li>
+      </ul>
+      <h3>Público e valor</h3>
+      <p>
+        O cenário pensado é o de um médico que já sabe qual exame tem em mãos e
+        quer uma segunda leitura rápida para priorizar casos. O ganho de tempo é
+        hipotético: os datasets usados têm licença não comercial, o protótipo
+        não foi validado clinicamente e por isso não calculamos retorno
+        financeiro.
+      </p>
+      <div class="note">
+        Escopo deliberadamente limitado a três módulos. Outros cânceres testados
+        nos notebooks (por exemplo, mama) ficaram fora do sistema por resultados
+        ruins em imagens de outra fonte (seção 3.5).
+      </div>
+    </section>
 
-<!-- 2. BPMN -->
-<section class="section">
-  <h2>2. Workflows BPMN 2.0</h2>
-  <p>Os três processos foram modelados em BPMN 2.0 e estão em <code>docs/bpmn/</code> como arquivos <code>.bpmn</code>, que abrem no bpmn.io e no Camunda Modeler, e como imagens <code>.png</code>. Os diagramas são gerados por código (<code>docs/bpmn/generator/generate.py</code>), o que mantém as etapas iguais ao que o sistema faz de verdade: quando o código muda, o processo é atualizado e exportado de novo.</p>
-  <table>
-    <tr><th>Workflow</th><th>Raias</th><th>O que mostra</th></tr>
-    <tr><td>1. Login e cadastro</td><td>Usuário, Backend, Banco</td><td>Cadastro com validação, hash BCrypt da senha e emissão do token JWT</td></tr>
-    <tr><td>2. Microsserviço de IA</td><td>Backend, ai-service</td><td>Subida do serviço, token interno, validações e quem decide a classe</td></tr>
-    <tr><td>3. Uso do sistema</td><td>Usuário, Sistema, IA</td><td>Uma análise completa, do módulo escolhido até o resultado com avisos</td></tr>
-  </table>
-  <p>O workflow 3 começa com o usuário já logado, como pedido pelo orientador; o login fica todo no workflow 1. As anotações de texto dentro dos diagramas registram as regras de negócio (limites, mensagens de erro, o que é ou não gravado), para que o processo possa ser lido sem o código.</p>
-  <p class="muted small">As próximas três páginas trazem cada diagrama em página horizontal, seguido das decisões que ele documenta.</p>
-</section>
+    <!-- 2. BPMN -->
+    <section class="section">
+      <h2>2. Workflows BPMN 2.0</h2>
+      <p>
+        Os três processos foram modelados em BPMN 2.0 e estão em
+        <code>docs/bpmn/</code> como arquivos <code>.bpmn</code>, que abrem no
+        bpmn.io e no Camunda Modeler, e como imagens <code>.png</code>. Os
+        diagramas são gerados por código
+        (<code>docs/bpmn/generator/generate.py</code>), o que mantém as etapas
+        iguais ao que o sistema faz de verdade: quando o código muda, o processo
+        é atualizado e exportado de novo.
+      </p>
+      <table>
+        <tr>
+          <th>Workflow</th>
+          <th>Raias</th>
+          <th>O que mostra</th>
+        </tr>
+        <tr>
+          <td>1. Login e cadastro</td>
+          <td>Usuário, Backend, Banco</td>
+          <td>
+            Cadastro com validação, hash BCrypt da senha e emissão do token JWT
+          </td>
+        </tr>
+        <tr>
+          <td>2. Microsserviço de IA</td>
+          <td>Backend, ai-service</td>
+          <td>
+            Subida do serviço, token interno, validações e quem decide a classe
+          </td>
+        </tr>
+        <tr>
+          <td>3. Uso do sistema</td>
+          <td>Usuário, Sistema, IA</td>
+          <td>
+            Uma análise completa, do módulo escolhido até o resultado com avisos
+          </td>
+        </tr>
+      </table>
+      <p>
+        O workflow 3 começa com o usuário já logado, como pedido pelo
+        orientador; o login fica todo no workflow 1. As anotações de texto
+        dentro dos diagramas registram as regras de negócio (limites, mensagens
+        de erro, o que é ou não gravado), para que o processo possa ser lido sem
+        o código.
+      </p>
+      <p class="muted small">
+        As próximas três páginas trazem cada diagrama em página horizontal,
+        seguido das decisões que ele documenta.
+      </p>
+    </section>
 
-<section class="wide">
-  <h3>2.1 Login e cadastro</h3>
-  <img src="../bpmn/1_login.png" alt="Diagrama BPMN do login e cadastro do PixoraMed">
-  <div class="cols">
-    <ul>
-      <li>O navegador confere se a senha e a confirmação são iguais; o backend valida de novo nome (2 a 80 letras), e-mail e senha (8 a 128 caracteres), porque validação no navegador pode ser contornada.</li>
-      <li>A senha nunca é gravada: o banco guarda só o hash BCrypt.</li>
-      <li>E-mail inexistente e senha errada recebem a mesma mensagem, para não revelar quem tem conta.</li>
-    </ul>
-    <ul>
-      <li>O token JWT é assinado pelo backend e vale 8 horas. Ele não fica no banco: "Sair" apaga o token do navegador e um token vencido volta para o login.</li>
-      <li>"Manter conectado" guarda o token no <code>localStorage</code>; sem a opção, no <code>sessionStorage</code>, que some ao fechar a aba.</li>
-      <li>Análises e histórico exigem o cabeçalho <code>Authorization: Bearer</code>.</li>
-    </ul>
-  </div>
-</section>
+    <section class="wide">
+      <h3>2.1 Login e cadastro</h3>
+      <img
+        src="../bpmn/1_login.png"
+        alt="Diagrama BPMN do login e cadastro do PixoraMed"
+      />
+      <div class="cols">
+        <ul>
+          <li>
+            O navegador confere se a senha e a confirmação são iguais; o backend
+            valida de novo nome (2 a 80 letras), e-mail e senha (8 a 128
+            caracteres), porque validação no navegador pode ser contornada.
+          </li>
+          <li>A senha nunca é gravada: o banco guarda só o hash BCrypt.</li>
+          <li>
+            E-mail inexistente e senha errada recebem a mesma mensagem, para não
+            revelar quem tem conta.
+          </li>
+        </ul>
+        <ul>
+          <li>
+            O token JWT é assinado pelo backend e vale 8 horas. Ele não fica no
+            banco: "Sair" apaga o token do navegador e um token vencido volta
+            para o login.
+          </li>
+          <li>
+            "Manter conectado" guarda o token no <code>localStorage</code>; sem
+            a opção, no <code>sessionStorage</code>, que some ao fechar a aba.
+          </li>
+          <li>
+            Análises e histórico exigem o cabeçalho
+            <code>Authorization: Bearer</code>.
+          </li>
+        </ul>
+      </div>
+    </section>
 
-<section class="wide">
-  <h3>2.2 Microsserviço de IA</h3>
-  <img src="../bpmn/2_ai_service.png" alt="Diagrama BPMN do microsserviço de IA do PixoraMed">
-  <div class="cols">
-    <ul>
-      <li>Os modelos ONNX são carregados uma vez, quando o container sobe; cada pedido usa o modelo que já está na memória.</li>
-      <li><code>/health</code> é a única rota sem token, usada pelo Render para saber se o serviço está no ar.</li>
-      <li>O backend recusa imagens acima de 10 MB antes de chamar a IA e envia o cabeçalho <code>X-Internal-Token</code>. Token inválido: 401; modelo desconhecido: 404; imagem ilegível: 422.</li>
-    </ul>
-    <ul>
-      <li>O pré-processamento repete o do treino: Oral e Cérebro com OpenCV (BGR para RGB, 128×128, divisão por 255); Pele com PIL (224×224, normalização ImageNet).</li>
-      <li>A IA só devolve probabilidades. Ela não decide a classe, não acessa o banco e não guarda a imagem.</li>
-      <li>O backend espera até 120 s, porque no plano gratuito a IA pode estar dormindo; sem resposta, mostra "serviço de IA indisponível" (503).</li>
-    </ul>
-  </div>
-</section>
+    <section class="wide">
+      <h3>2.2 Microsserviço de IA</h3>
+      <img
+        src="../bpmn/2_ai_service.png"
+        alt="Diagrama BPMN do microsserviço de IA do PixoraMed"
+      />
+      <div class="cols">
+        <ul>
+          <li>
+            Os modelos ONNX são carregados uma vez, quando o container sobe;
+            cada pedido usa o modelo que já está na memória.
+          </li>
+          <li>
+            <code>/health</code> é a única rota sem token, usada pelo Render
+            para saber se o serviço está no ar.
+          </li>
+          <li>
+            O backend recusa imagens acima de 10 MB antes de chamar a IA e envia
+            o cabeçalho <code>X-Internal-Token</code>. Token inválido: 401;
+            modelo desconhecido: 404; imagem ilegível: 422.
+          </li>
+        </ul>
+        <ul>
+          <li>
+            O pré-processamento repete o do treino: Oral e Cérebro com OpenCV
+            (BGR para RGB, 128×128, divisão por 255); Pele com PIL (224×224,
+            normalização ImageNet).
+          </li>
+          <li>
+            A IA só devolve probabilidades. Ela não decide a classe, não acessa
+            o banco e não guarda a imagem.
+          </li>
+          <li>
+            O backend espera até 120 s, porque no plano gratuito a IA pode estar
+            dormindo; sem resposta, mostra "serviço de IA indisponível" (503).
+          </li>
+        </ul>
+      </div>
+    </section>
 
-<section class="wide">
-  <h3>2.3 Uso do sistema: análise de uma imagem</h3>
-  <img src="../bpmn/3_system_usage.png" alt="Diagrama BPMN de uma análise completa no PixoraMed">
-  <div class="cols">
-    <ul>
-      <li>O navegador aceita PNG, JPG ou WEBP de até 10 MB.</li>
-      <li>O usuário confirma que o material é autorizado e desidentificado; sem marcar, a análise não é liberada.</li>
-      <li>Oral e Cérebro: abaixo de 80% de confiança, o resultado é "inconclusivo".</li>
-    </ul>
-    <ul>
-      <li>Pele: não há inconclusivo. A classe é "maligno" a partir de 18% de probabilidade calibrada; se nenhuma classe chega a 80%, a tela mantém a classe e mostra "baixa certeza".</li>
-      <li>O banco registra só usuário, modelo, classe, confiança e horário; a imagem é descartada.</li>
-      <li>A tela de resultado mostra os avisos: modelo experimental, baixa certeza (Pele) e o que o resultado não informa (Cérebro não detecta ausência de tumor).</li>
-    </ul>
-  </div>
-</section>
+    <section class="wide">
+      <h3>2.3 Uso do sistema: análise de uma imagem</h3>
+      <img
+        src="../bpmn/3_system_usage.png"
+        alt="Diagrama BPMN de uma análise completa no PixoraMed"
+      />
+      <div class="cols">
+        <ul>
+          <li>O navegador aceita PNG, JPG ou WEBP de até 10 MB.</li>
+          <li>
+            O usuário confirma que o material é autorizado e desidentificado;
+            sem marcar, a análise não é liberada.
+          </li>
+          <li>
+            Oral e Cérebro: abaixo de 80% de confiança, o resultado é
+            "inconclusivo".
+          </li>
+        </ul>
+        <ul>
+          <li>
+            Pele: não há inconclusivo. A classe é "maligno" a partir de 18% de
+            probabilidade calibrada; se nenhuma classe chega a 80%, a tela
+            mantém a classe e mostra "baixa certeza".
+          </li>
+          <li>
+            O banco registra só usuário, modelo, classe, confiança e horário; a
+            imagem é descartada.
+          </li>
+          <li>
+            A tela de resultado mostra os avisos: modelo experimental, baixa
+            certeza (Pele) e o que o resultado não informa (Cérebro não detecta
+            ausência de tumor).
+          </li>
+        </ul>
+      </div>
+    </section>
 
-<!-- 3. JUSTIFICATIVA TÉCNICA -->
-<section class="section">
-  <h2>3. Justificativa técnica</h2>
-  <h3>3.1 Arquitetura</h3>
-  <p>O sistema tem três serviços independentes, cada um na própria pasta do repositório, com Dockerfile, README, arquivo <code>.env.example</code> e documentação de arquitetura:</p>
-  <div class="arch">
-    <div class="box"><b>Navegador</b>: frontend React servido pela Vercel. Chama sempre <code>/api</code> no próprio domínio.</div>
-    <div class="arrow">↓ rewrite <code>/api/*</code> configurado no <code>vercel.json</code></div>
-    <div class="row">
-      <div class="box"><b>backend</b> (Spring Boot, Render): login JWT, histórico, importação dos treinos e decisão da classe final.</div>
-      <div class="arrow">SQL →</div>
-      <div class="box"><b>PostgreSQL</b> (Neon): tabelas <code>users</code>, <code>trainings</code> e <code>predictions</code>.</div>
-    </div>
-    <div class="arrow">↓ HTTP com o cabeçalho <code>X-Internal-Token</code></div>
-    <div class="box"><b>ai-service</b> (FastAPI + ONNX Runtime, Render): pré-processa, executa o modelo e devolve as probabilidades. Sem banco e sem guardar imagem.</div>
-  </div>
-  <p><b>Por que separar a IA do backend.</b> Os modelos e as bibliotecas de visão (OpenCV, ONNX Runtime) somam quase toda a memória e o tamanho da imagem Docker. Num serviço próprio, a IA pode ser atualizada, escalada ou trocada sem mexer no login nem no banco, e não tem acesso a nenhum dado de usuário: recebe uma imagem e devolve números.</p>
-  <p><b>Por que a regra de decisão fica no backend.</b> Limiar de inconclusivo, limiar da Pele e o que é gravado são regras de negócio, que mudam com mais frequência que o modelo. Ficando no backend, elas são configuráveis por variável de ambiente (<code>INCONCLUSIVE_THRESHOLD</code>) e cobertas por testes automatizados, e o frontend não tem regra nenhuma nem segredo nenhum.</p>
-  <p><b>Por que o site chama <code>/api</code> no próprio domínio.</b> O rewrite da Vercel repassa as chamadas ao backend. O navegador não precisa saber onde o backend está, não há variável de ambiente com endereço no frontend, e o mesmo código funciona no desenvolvimento local, onde o Vite faz o repasse.</p>
+    <!-- 3. JUSTIFICATIVA TÉCNICA -->
+    <section class="section">
+      <h2>3. Justificativa técnica</h2>
+      <h3>3.1 Arquitetura</h3>
+      <p>
+        O sistema tem três serviços independentes, cada um na própria pasta do
+        repositório, com Dockerfile, README, arquivo <code>.env.example</code> e
+        documentação de arquitetura:
+      </p>
+      <div class="arch">
+        <div class="box">
+          <b>Navegador</b>: frontend React servido pela Vercel. Chama sempre
+          <code>/api</code> no próprio domínio.
+        </div>
+        <div class="arrow">
+          ↓ rewrite <code>/api/*</code> configurado no <code>vercel.json</code>
+        </div>
+        <div class="row">
+          <div class="box">
+            <b>backend</b> (Spring Boot, Render): login JWT, histórico,
+            importação dos treinos e decisão da classe final.
+          </div>
+          <div class="arrow">SQL →</div>
+          <div class="box">
+            <b>PostgreSQL</b> (Neon): tabelas <code>users</code>,
+            <code>trainings</code> e <code>predictions</code>.
+          </div>
+        </div>
+        <div class="arrow">
+          ↓ HTTP com o cabeçalho <code>X-Internal-Token</code>
+        </div>
+        <div class="box">
+          <b>ai-service</b> (FastAPI + ONNX Runtime, Render): pré-processa,
+          executa o modelo e devolve as probabilidades. Sem banco e sem guardar
+          imagem.
+        </div>
+      </div>
+      <p>
+        <b>Por que separar a IA do backend.</b> Os modelos e as bibliotecas de
+        visão (OpenCV, ONNX Runtime) somam quase toda a memória e o tamanho da
+        imagem Docker. Num serviço próprio, a IA pode ser atualizada, escalada
+        ou trocada sem mexer no login nem no banco, e não tem acesso a nenhum
+        dado de usuário: recebe uma imagem e devolve números.
+      </p>
+      <p>
+        <b>Por que a regra de decisão fica no backend.</b> Limiar de
+        inconclusivo, limiar da Pele e o que é gravado são regras de negócio,
+        que mudam com mais frequência que o modelo. Ficando no backend, elas são
+        configuráveis por variável de ambiente
+        (<code>INCONCLUSIVE_THRESHOLD</code>) e cobertas por testes
+        automatizados, e o frontend não tem regra nenhuma nem segredo nenhum.
+      </p>
+      <p>
+        <b>Por que o site chama <code>/api</code> no próprio domínio.</b> O
+        rewrite da Vercel repassa as chamadas ao backend. O navegador não
+        precisa saber onde o backend está, não há variável de ambiente com
+        endereço no frontend, e o mesmo código funciona no desenvolvimento
+        local, onde o Vite faz o repasse.
+      </p>
 
-  <h3>3.2 Escolha das tecnologias</h3>
-  <table>
-    <tr><th style="width:22%">Camada</th><th style="width:30%">Tecnologia</th><th>Motivo</th></tr>
-    <tr><td>Frontend</td><td>React 19, Vite, React Router, TanStack Query, Recharts</td><td>Componentes reaproveitados entre as telas; TanStack Query cuida de cache, carregamento e erro das chamadas; telas internas carregadas sob demanda (pacote principal de 774 KB para 320 KB).</td></tr>
-    <tr><td>Backend</td><td>Java 21, Spring Boot 4, Spring Data JPA, Spring Security, Maven</td><td>Padrão de mercado para APIs com camadas (controller, service, repository); Spring Security já traz BCrypt e validação de JWT, sem código de criptografia próprio.</td></tr>
-    <tr><td>IA</td><td>Python 3.12, FastAPI, ONNX Runtime, OpenCV, Pillow</td><td>Os modelos foram treinados em PyTorch e exportados para ONNX: o serviço roda sem o PyTorch, com imagem menor e inferência rápida em CPU.</td></tr>
-    <tr><td>Banco</td><td>PostgreSQL (Neon na nuvem, container no local)</td><td>Banco relacional para dados estruturados (usuários, treinos, análises); Neon tem plano gratuito sem cartão.</td></tr>
-    <tr><td>Infra</td><td>Docker Compose, Terraform</td><td>Compose sobe os quatro serviços no notebook com um comando; Terraform descreve a nuvem como código (seção 3.6).</td></tr>
-    <tr><td>Hospedagem</td><td>Vercel, Render, Neon</td><td>Planos gratuitos que aceitam Docker e deploy automático a cada push na branch <code>main</code>.</td></tr>
-  </table>
-</section>
+      <h3>3.2 Escolha das tecnologias</h3>
+      <table>
+        <tr>
+          <th style="width: 22%">Camada</th>
+          <th style="width: 30%">Tecnologia</th>
+          <th>Motivo</th>
+        </tr>
+        <tr>
+          <td>Frontend</td>
+          <td>React 19, Vite, React Router, TanStack Query, Recharts</td>
+          <td>
+            Componentes reaproveitados entre as telas; TanStack Query cuida de
+            cache, carregamento e erro das chamadas; telas internas carregadas
+            sob demanda (pacote principal de 774 KB para 320 KB).
+          </td>
+        </tr>
+        <tr>
+          <td>Backend</td>
+          <td>
+            Java 21, Spring Boot 4, Spring Data JPA, Spring Security, Maven
+          </td>
+          <td>
+            Padrão de mercado para APIs com camadas (controller, service,
+            repository); Spring Security já traz BCrypt e validação de JWT, sem
+            código de criptografia próprio.
+          </td>
+        </tr>
+        <tr>
+          <td>IA</td>
+          <td>Python 3.12, FastAPI, ONNX Runtime, OpenCV, Pillow</td>
+          <td>
+            Os modelos foram treinados em PyTorch e exportados para ONNX: o
+            serviço roda sem o PyTorch, com imagem menor e inferência rápida em
+            CPU.
+          </td>
+        </tr>
+        <tr>
+          <td>Banco</td>
+          <td>PostgreSQL (Neon na nuvem, container no local)</td>
+          <td>
+            Banco relacional para dados estruturados (usuários, treinos,
+            análises); Neon tem plano gratuito sem cartão.
+          </td>
+        </tr>
+        <tr>
+          <td>Infra</td>
+          <td>Docker Compose, Terraform</td>
+          <td>
+            Compose sobe os quatro serviços no notebook com um comando;
+            Terraform descreve a nuvem como código (seção 3.6).
+          </td>
+        </tr>
+        <tr>
+          <td>Hospedagem</td>
+          <td>Vercel, Render, Neon</td>
+          <td>
+            Planos gratuitos que aceitam Docker e deploy automático a cada push
+            na branch <code>main</code>.
+          </td>
+        </tr>
+      </table>
+    </section>
 
-<section>
-  <h3>3.3 Dados: Python, Pandas e SQL</h3>
-  <ul>
-    <li><b>Python e Pandas</b> ficam nos notebooks de treino (repositório Projeto-ML-Cancer): leitura dos metadados, separação estratificada em 5 folds, cálculo das métricas por fold e geração da tabela de resultados dos treinos. O sistema em produção não usa Pandas.</li>
-    <li><b>A tabela de resultados</b> (<code>training-results.csv</code>, 29 execuções) entra no backend e é importada para a tabela <code>trainings</code> toda vez que o backend sobe. A importação é idempotente: compara pela chave data/hora + dataset e insere só as linhas novas.</li>
-    <li><b>SQL</b>: o PostgreSQL guarda usuários, treinos e análises. O Spring Data JPA gera as consultas (por exemplo, o histórico do usuário ordenado por data, com limite de 100 linhas), e as tabelas são criadas pelo Hibernate a partir das entidades.</li>
-    <li><b>Visualização</b>: o site mostra gráficos de barras com o desvio entre folds na página de treinos, um gráfico de rosca com as probabilidades de cada classe no resultado e as figuras do treino da Pele (curva ROC, matriz de confusão, calibração).</li>
-  </ul>
+    <section>
+      <h3>3.3 Dados: Python, Pandas e SQL</h3>
+      <ul>
+        <li>
+          <b>Python e Pandas</b> ficam nos notebooks de treino (repositório
+          Projeto-ML-Cancer): leitura dos metadados, separação estratificada em
+          5 folds, cálculo das métricas por fold e geração da tabela de
+          resultados dos treinos. O sistema em produção não usa Pandas.
+        </li>
+        <li>
+          <b>A tabela de resultados</b> (<code>training-results.csv</code>, 29
+          execuções) entra no backend e é importada para a tabela
+          <code>trainings</code> toda vez que o backend sobe. A importação é
+          idempotente: compara pela chave data/hora + dataset e insere só as
+          linhas novas.
+        </li>
+        <li>
+          <b>SQL</b>: o PostgreSQL guarda usuários, treinos e análises. O Spring
+          Data JPA gera as consultas (por exemplo, o histórico do usuário
+          ordenado por data, com limite de 100 linhas), e as tabelas são criadas
+          pelo Hibernate a partir das entidades.
+        </li>
+        <li>
+          <b>Visualização</b>: o site mostra gráficos de barras com o desvio
+          entre folds na página de treinos, um gráfico de rosca com as
+          probabilidades de cada classe no resultado e as figuras do treino da
+          Pele (curva ROC, matriz de confusão, calibração).
+        </li>
+      </ul>
 
-  <h3>3.4 Modelos de machine learning</h3>
-  <table>
-    <tr><th>Módulo</th><th>Modelo</th><th>Entrada</th><th>Decisão</th></tr>
-    <tr><td>Pele</td><td>Ensemble de 5 EfficientNet-B0, calibração de Platt (~80 MB)</td><td>224×224, cor, normalização ImageNet</td><td>maligno a partir de 18%; aviso abaixo de 80%</td></tr>
-    <tr><td>Oral</td><td>CNN pequena, ~24 mil parâmetros (~110 KB)</td><td>128×128, cor, /255</td><td>inconclusivo abaixo de 80%</td></tr>
-    <tr><td>Cérebro</td><td>CNN pequena, ~24 mil parâmetros (~110 KB)</td><td>128×128, cinza, /255</td><td>inconclusivo abaixo de 80%</td></tr>
-  </table>
-  <p>A CNN de Oral e Cérebro tem 3 blocos convolucionais (16, 32 e 64 filtros), pooling adaptativo, dropout de 0,25 e uma camada linear; treino com Adam (taxa 0,001), lote 64 e validação cruzada estratificada em 5 folds com semente fixa. Uma rede pequena foi suficiente nesses dois datasets e roda em ~0,1 a 0,2 s numa fração de CPU.</p>
-  <p>Na Pele, o limiar baixo (18%) foi escolhido para errar menos casos malignos, ao custo de mais alarmes falsos, o que faz sentido numa triagem. Na Oral e no Cérebro, o limiar de 80% troca algumas respostas por "inconclusivo" para reduzir erros de baixa confiança.</p>
-  <div class="note">O pré-processamento precisa ser idêntico ao do treino. Num teste, ler a imagem em BGR ou tirar a divisão por 255 derrubou a acurácia da Oral de 96,5% para cerca de 52%. Por isso o ai-service repete exatamente as etapas dos notebooks, e o workflow 2 documenta essas etapas.</div>
-</section>
+      <h3>3.4 Modelos de machine learning</h3>
+      <table>
+        <tr>
+          <th>Módulo</th>
+          <th>Modelo</th>
+          <th>Entrada</th>
+          <th>Decisão</th>
+        </tr>
+        <tr>
+          <td>Pele</td>
+          <td>Ensemble de 5 EfficientNet-B0, calibração de Platt (~80 MB)</td>
+          <td>224×224, cor, normalização ImageNet</td>
+          <td>maligno a partir de 18%; aviso abaixo de 80%</td>
+        </tr>
+        <tr>
+          <td>Oral</td>
+          <td>CNN pequena, ~24 mil parâmetros (~110 KB)</td>
+          <td>128×128, cor, /255</td>
+          <td>inconclusivo abaixo de 80%</td>
+        </tr>
+        <tr>
+          <td>Cérebro</td>
+          <td>CNN pequena, ~24 mil parâmetros (~110 KB)</td>
+          <td>128×128, cinza, /255</td>
+          <td>inconclusivo abaixo de 80%</td>
+        </tr>
+      </table>
+      <p>
+        A CNN de Oral e Cérebro tem 3 blocos convolucionais (16, 32 e 64
+        filtros), pooling adaptativo, dropout de 0,25 e uma camada linear;
+        treino com Adam (taxa 0,001), lote 64 e validação cruzada estratificada
+        em 5 folds com semente fixa. Uma rede pequena foi suficiente nesses dois
+        datasets e roda em ~0,1 a 0,2 s numa fração de CPU.
+      </p>
+      <p>
+        Na Pele, o limiar baixo (18%) foi escolhido para errar menos casos
+        malignos, ao custo de mais alarmes falsos, o que faz sentido numa
+        triagem. Na Oral e no Cérebro, o limiar de 80% troca algumas respostas
+        por "inconclusivo" para reduzir erros de baixa confiança.
+      </p>
+      <div class="note">
+        O pré-processamento precisa ser idêntico ao do treino. Num teste, ler a
+        imagem em BGR ou tirar a divisão por 255 derrubou a acurácia da Oral de
+        96,5% para cerca de 52%. Por isso o ai-service repete exatamente as
+        etapas dos notebooks, e o workflow 2 documenta essas etapas.
+      </div>
+    </section>
 
-<section>
-  <h3>3.5 Resultados medidos</h3>
-  <table>
-    <tr><th>Módulo</th><th>Teste</th><th class="num">Resultado</th><th>Observação</th></tr>
-    <tr><td>Oral</td><td>200 imagens separadas, mesma fonte</td><td class="num">96,5% (193/200)</td><td>Com o limiar: 188 conclusivas, 98,4% de acerto</td></tr>
-    <tr><td>Cérebro</td><td>300 imagens separadas, mesma fonte</td><td class="num">98,3% (295/300)</td><td>Com o limiar: 297 conclusivas, 99,0% de acerto</td></tr>
-    <tr><td>Cérebro</td><td>5 folds, 1.000 imagens por classe</td><td class="num">95,17% ± 0,55</td><td>Cinza sem normalização (a melhor das 4 configurações)</td></tr>
-    <tr><td>Pele</td><td>Reprodução do treino, 1.915 imagens, divisão por lesão</td><td class="num">AUC 0,939</td><td>IC 0,922–0,954; sensibilidade 89,0%; especificidade 83,7%; VPP 51,2%</td></tr>
-    <tr><td>Pele</td><td>Modelo do app, 21 imagens internas</td><td class="num">8/8 malignos, 7/13 benignos</td><td>Os 6 alarmes falsos receberam aviso; amostra pequena</td></tr>
-  </table>
-  <h3>Como ler esses números</h3>
-  <ul>
-    <li><b>"Mesma fonte" não é teste externo.</b> As imagens separadas de Oral e Cérebro vêm do mesmo dataset do treino. Elas medem se o modelo aprendeu o dataset, não se funciona em outro hospital.</li>
-    <li><b>Evidência de mudança de domínio.</b> Um modelo de mama treinado no mesmo processo teve 96,6% na mesma fonte e 34,5% em 29 imagens de outra fonte, e 19 desses erros passaram pelo limiar de 80%. Por isso o módulo foi retirado do sistema.</li>
-    <li><b>Pele: reprodução não é o modelo do app.</b> O código original do ensemble foi perdido; os números de AUC, sensibilidade e especificidade vêm de uma reprodução do treino. Na reprodução, a acurácia (84,5%) quase empata com sempre responder "benigno" (83,9%), por isso a AUC e a sensibilidade são as métricas relevantes.</li>
-    <li><b>Confiança não calibrada.</b> Em Oral e Cérebro, a "confiança" é a saída softmax da rede, não uma probabilidade calibrada de doença.</li>
-  </ul>
-  <p class="small muted">Tempo por previsão no ai-service (container de 512 MB, 0,1 CPU): Cérebro 0,1 s, Oral 0,2 s, Pele 1,7 s.</p>
+    <section>
+      <h3>3.5 Resultados medidos</h3>
+      <table>
+        <tr>
+          <th>Módulo</th>
+          <th>Teste</th>
+          <th class="num">Resultado</th>
+          <th>Observação</th>
+        </tr>
+        <tr>
+          <td>Oral</td>
+          <td>200 imagens separadas, mesma fonte</td>
+          <td class="num">96,5% (193/200)</td>
+          <td>Com o limiar: 188 conclusivas, 98,4% de acerto</td>
+        </tr>
+        <tr>
+          <td>Cérebro</td>
+          <td>300 imagens separadas, mesma fonte</td>
+          <td class="num">98,3% (295/300)</td>
+          <td>Com o limiar: 297 conclusivas, 99,0% de acerto</td>
+        </tr>
+        <tr>
+          <td>Cérebro</td>
+          <td>5 folds, 1.000 imagens por classe</td>
+          <td class="num">95,17% ± 0,55</td>
+          <td>Cinza sem normalização (a melhor das 4 configurações)</td>
+        </tr>
+        <tr>
+          <td>Pele</td>
+          <td>Reprodução do treino, 1.915 imagens, divisão por lesão</td>
+          <td class="num">AUC 0,939</td>
+          <td>
+            IC 0,922–0,954; sensibilidade 89,0%; especificidade 83,7%; VPP 51,2%
+          </td>
+        </tr>
+        <tr>
+          <td>Pele</td>
+          <td>Modelo do app, 21 imagens internas</td>
+          <td class="num">8/8 malignos, 7/13 benignos</td>
+          <td>Os 6 alarmes falsos receberam aviso; amostra pequena</td>
+        </tr>
+      </table>
+      <h3>Como ler esses números</h3>
+      <ul>
+        <li>
+          <b>"Mesma fonte" não é teste externo.</b> As imagens separadas de Oral
+          e Cérebro vêm do mesmo dataset do treino. Elas medem se o modelo
+          aprendeu o dataset, não se funciona em outro hospital.
+        </li>
+        <li>
+          <b>Evidência de mudança de domínio.</b> Um modelo de mama treinado no
+          mesmo processo teve 96,6% na mesma fonte e 34,5% em 29 imagens de
+          outra fonte, e 19 desses erros passaram pelo limiar de 80%. Por isso o
+          módulo foi retirado do sistema.
+        </li>
+        <li>
+          <b>Pele: reprodução não é o modelo do app.</b> O código original do
+          ensemble foi perdido; os números de AUC, sensibilidade e
+          especificidade vêm de uma reprodução do treino. Na reprodução, a
+          acurácia (84,5%) quase empata com sempre responder "benigno" (83,9%),
+          por isso a AUC e a sensibilidade são as métricas relevantes.
+        </li>
+        <li>
+          <b>Confiança não calibrada.</b> Em Oral e Cérebro, a "confiança" é a
+          saída softmax da rede, não uma probabilidade calibrada de doença.
+        </li>
+      </ul>
+      <p class="small muted">
+        Tempo por previsão no ai-service (container de 512 MB, 0,1 CPU): Cérebro
+        0,1 s, Oral 0,2 s, Pele 1,7 s.
+      </p>
 
-  <h3>3.6 Infraestrutura: Docker e Terraform</h3>
-  <ul>
-    <li><b>Docker</b>: backend e ai-service têm Dockerfile próprio, rodam com usuário sem privilégios e têm health check. O backend usa build em duas etapas (Maven + JDK para compilar, só o JRE para rodar) e limita a memória da JVM a 70% do container.</li>
-    <li><b>Docker Compose</b> (<code>infra/docker-compose.yml</code>): ambiente local com banco, IA, backend e frontend numa rede interna. As portas abrem só em <code>127.0.0.1</code>, o ai-service não expõe porta e cada serviço espera o anterior ficar saudável. Serve também de plano B se a internet falhar na apresentação.</li>
-    <li><b>Terraform</b> (<code>infra/terraform</code>): descreve o projeto da Vercel, os dois serviços do Render com suas variáveis e o banco do Neon, com versões de provider fixas. O banco tem <code>prevent_destroy</code>, que impede apagá-lo por engano. O token interno e o segredo do JWT são gerados pelo próprio Terraform, e nenhum valor secreto está escrito nos arquivos <code>.tf</code>.</li>
-  </ul>
+      <h3>3.6 Infraestrutura: Docker e Terraform</h3>
+      <ul>
+        <li>
+          <b>Docker</b>: backend e ai-service têm Dockerfile próprio, rodam com
+          usuário sem privilégios e têm health check. O backend usa build em
+          duas etapas (Maven + JDK para compilar, só o JRE para rodar) e limita
+          a memória da JVM a 70% do container.
+        </li>
+        <li>
+          <b>Docker Compose</b> (<code>infra/docker-compose.yml</code>):
+          ambiente local com banco, IA, backend e frontend numa rede interna. As
+          portas abrem só em <code>127.0.0.1</code>, o ai-service não expõe
+          porta e cada serviço espera o anterior ficar saudável. Serve também de
+          plano B se a internet falhar na apresentação.
+        </li>
+        <li>
+          <b>Terraform</b> (<code>infra/terraform</code>): descreve o projeto da
+          Vercel, os dois serviços do Render com suas variáveis e o banco do
+          Neon, com versões de provider fixas. O banco tem
+          <code>prevent_destroy</code>, que impede apagá-lo por engano. O token
+          interno e o segredo do JWT são gerados pelo próprio Terraform, e
+          nenhum valor secreto está escrito nos arquivos <code>.tf</code>.
+        </li>
+      </ul>
 
-  <h3>3.7 Qualidade e testes</h3>
-  <ul>
-    <li>Backend: 5 testes automatizados (regra de decisão da classe e leitura do CSV real de treinos).</li>
-    <li>ai-service: 20 testes automatizados (rotas, token interno, pré-processamento e respostas de erro).</li>
-    <li>Frontend: ESLint sem erros nem avisos e build de produção conferido.</li>
-    <li>Terraform: <code>fmt</code>, <code>validate</code> e <code>plan</code> sem mudanças pendentes depois do deploy.</li>
-    <li>Código, nomes de arquivos e rotas em inglês, com glossário PT→EN em <code>docs/glossary.md</code>; README e documentação de arquitetura em cada pasta.</li>
-  </ul>
-</section>
+      <h3>3.7 Qualidade e testes</h3>
+      <ul>
+        <li>
+          Backend: 5 testes automatizados (regra de decisão da classe e leitura
+          do CSV real de treinos).
+        </li>
+        <li>
+          ai-service: 20 testes automatizados (rotas, token interno,
+          pré-processamento e respostas de erro).
+        </li>
+        <li>
+          Frontend: ESLint sem erros nem avisos e build de produção conferido.
+        </li>
+        <li>
+          Terraform: <code>fmt</code>, <code>validate</code> e
+          <code>plan</code> sem mudanças pendentes depois do deploy.
+        </li>
+        <li>
+          Código, nomes de arquivos e rotas em inglês, com glossário PT→EN em
+          <code>docs/glossary.md</code>; README e documentação de arquitetura em
+          cada pasta.
+        </li>
+      </ul>
+    </section>
 
-<!-- 4. ÉTICA -->
-<section class="section">
-  <h2>4. Ética, governança e segurança</h2>
-  <h3>4.1 Uso responsável e limites do protótipo</h3>
-  <ul>
-    <li>O sistema não faz diagnóstico. Todas as telas de análise mostram que o modelo é experimental, e existe uma página própria de limitações no site.</li>
-    <li>Não há filtro que recuse imagens sem relação: uma foto qualquer também recebe uma das classes do treino, com qualquer confiança. O protótipo pressupõe um usuário que escolhe o módulo e o exame corretos. Essa limitação está documentada no site e no README.</li>
-    <li>O Cérebro sempre responde um dos três tipos de tumor: ele não detecta ausência de tumor, e a tela de resultado diz isso.</li>
-    <li>Na Pele, a queratose actínica ficou fora do treino; o modelo só vale para imagens dermatoscópicas, não para fotos comuns de celular.</li>
-    <li>O resultado mostra todas as probabilidades, e não só a classe vencedora, para que o usuário veja quando o modelo está em dúvida.</li>
-  </ul>
+    <!-- 4. ÉTICA -->
+    <section class="section">
+      <h2>4. Ética, governança e segurança</h2>
+      <h3>4.1 Uso responsável e limites do protótipo</h3>
+      <ul>
+        <li>
+          O sistema não faz diagnóstico. Todas as telas de análise mostram que o
+          modelo é experimental, e existe uma página própria de limitações no
+          site.
+        </li>
+        <li>
+          Não há filtro que recuse imagens sem relação: uma foto qualquer também
+          recebe uma das classes do treino, com qualquer confiança. O protótipo
+          pressupõe um usuário que escolhe o módulo e o exame corretos. Essa
+          limitação está documentada no site e no README.
+        </li>
+        <li>
+          O Cérebro sempre responde um dos três tipos de tumor: ele não detecta
+          ausência de tumor, e a tela de resultado diz isso.
+        </li>
+        <li>
+          Na Pele, a queratose actínica ficou fora do treino; o modelo só vale
+          para imagens dermatoscópicas, não para fotos comuns de celular.
+        </li>
+        <li>
+          O resultado mostra todas as probabilidades, e não só a classe
+          vencedora, para que o usuário veja quando o modelo está em dúvida.
+        </li>
+      </ul>
 
-  <h3>4.2 Viés e vazamento de dados</h3>
-  <ul>
-    <li><b>Possível vazamento no Multi Cancer.</b> O dataset de Oral e Cérebro já vem aumentado (rotação, zoom, espelhamento, brilho) e não é dividido por paciente. Variações da mesma imagem podem cair no treino e no teste, e a acurácia alta pode medir memorização.</li>
-    <li><b>Divisão por lesão na Pele.</b> O treino separou os dados por <code>lesion_id</code>, para que fotos da mesma lesão não fiquem no treino e no teste. A separação não é por paciente.</li>
-    <li><b>Desbalanceamento.</b> No HAM10000, nevo é cerca de 67% das imagens e dermatofibroma cerca de 1%.</li>
-    <li><b>Tons de pele.</b> O desempenho em tons de pele pouco representados no dataset é desconhecido.</li>
-    <li><b>Atalhos.</b> Quando classes vêm de aparelhos ou fontes diferentes, a rede pode aprender o aparelho e não a doença.</li>
-  </ul>
+      <h3>4.2 Viés e vazamento de dados</h3>
+      <ul>
+        <li>
+          <b>Possível vazamento no Multi Cancer.</b> O dataset de Oral e Cérebro
+          já vem aumentado (rotação, zoom, espelhamento, brilho) e não é
+          dividido por paciente. Variações da mesma imagem podem cair no treino
+          e no teste, e a acurácia alta pode medir memorização.
+        </li>
+        <li>
+          <b>Divisão por lesão na Pele.</b> O treino separou os dados por
+          <code>lesion_id</code>, para que fotos da mesma lesão não fiquem no
+          treino e no teste. A separação não é por paciente.
+        </li>
+        <li>
+          <b>Desbalanceamento.</b> No HAM10000, nevo é cerca de 67% das imagens
+          e dermatofibroma cerca de 1%.
+        </li>
+        <li>
+          <b>Tons de pele.</b> O desempenho em tons de pele pouco representados
+          no dataset é desconhecido.
+        </li>
+        <li>
+          <b>Atalhos.</b> Quando classes vêm de aparelhos ou fontes diferentes,
+          a rede pode aprender o aparelho e não a doença.
+        </li>
+      </ul>
 
-  <h3>4.3 Privacidade (LGPD)</h3>
-  <ul>
-    <li><b>Minimização:</b> a imagem é processada em memória e descartada. A tabela <code>predictions</code> guarda só usuário, modelo, classe, confiança, tempo e horário.</li>
-    <li><b>Consentimento:</b> antes de cada análise, o usuário confirma que o material é autorizado e desidentificado; sem isso, a análise não é liberada.</li>
-    <li><b>Isolamento:</b> cada usuário vê só o próprio histórico, porque o backend filtra pelo id do token, nunca por um parâmetro enviado pelo navegador.</li>
-    <li><b>Dados de cadastro:</b> só nome, e-mail e hash da senha. Não há dados de pacientes no banco nem seed com dados pessoais.</li>
-  </ul>
-</section>
+      <h3>4.3 Privacidade (LGPD)</h3>
+      <ul>
+        <li>
+          <b>Minimização:</b> a imagem é processada em memória e descartada. A
+          tabela <code>predictions</code> guarda só usuário, modelo, classe,
+          confiança, tempo e horário.
+        </li>
+        <li>
+          <b>Consentimento:</b> antes de cada análise, o usuário confirma que o
+          material é autorizado e desidentificado; sem isso, a análise não é
+          liberada.
+        </li>
+        <li>
+          <b>Isolamento:</b> cada usuário vê só o próprio histórico, porque o
+          backend filtra pelo id do token, nunca por um parâmetro enviado pelo
+          navegador.
+        </li>
+        <li>
+          <b>Dados de cadastro:</b> só nome, e-mail e hash da senha. Não há
+          dados de pacientes no banco nem seed com dados pessoais.
+        </li>
+      </ul>
+    </section>
 
-<section>
-  <h3>4.4 Segurança da aplicação</h3>
-  <table>
-    <tr><th style="width:26%">Ponto</th><th>Como foi tratado</th></tr>
-    <tr><td>Senhas</td><td>Hash BCrypt (Spring Security); a senha em texto não é gravada nem registrada em log.</td></tr>
-    <tr><td>Sessão</td><td>JWT assinado (HS256) com validade de 8 horas; segredo de pelo menos 32 caracteres, sem o qual o backend não sobe.</td></tr>
-    <tr><td>Enumeração de contas</td><td>Mesma mensagem de erro para e-mail inexistente e senha errada.</td></tr>
-    <tr><td>Comunicação entre serviços</td><td>O ai-service só aceita pedidos com o <code>X-Internal-Token</code>, comparado em tempo constante; o token é obrigatório para o serviço subir.</td></tr>
-    <tr><td>CORS</td><td>O backend aceita só a origem do site configurada em <code>CORS_ALLOWED_ORIGINS</code>.</td></tr>
-    <tr><td>Uploads</td><td>Limite de 10 MB no navegador, no backend e no ai-service; imagem ilegível é recusada antes de rodar o modelo e, na Pele, também a imagem com lado menor que 100 px.</td></tr>
-    <tr><td>Segredos</td><td>Nenhuma senha no código: tudo vem de variáveis de ambiente. Os arquivos <code>.env</code>, <code>terraform.tfvars</code> e <code>terraform.tfstate</code> ficam fora do git; variáveis do Terraform marcadas como <code>sensitive</code>.</td></tr>
-    <tr><td>Erros</td><td>Toda resposta de erro sai como <code>{"message": "..."}</code>, sem rastro de pilha nem detalhes internos.</td></tr>
-    <tr><td>Log e rastreabilidade</td><td>O backend registra cadastros, logins aceitos e recusados e cada análise (concluída ou não). O usuário aparece só pelo id: e-mail, senha, token e imagem nunca vão para o log.</td></tr>
-    <tr><td>Containers</td><td>Usuário sem privilégios; no compose, portas só em <code>127.0.0.1</code> e o ai-service sem porta exposta.</td></tr>
-  </table>
+    <section>
+      <h3>4.4 Segurança da aplicação</h3>
+      <table>
+        <tr>
+          <th style="width: 26%">Ponto</th>
+          <th>Como foi tratado</th>
+        </tr>
+        <tr>
+          <td>Senhas</td>
+          <td>
+            Hash BCrypt (Spring Security); a senha em texto não é gravada nem
+            registrada em log.
+          </td>
+        </tr>
+        <tr>
+          <td>Sessão</td>
+          <td>
+            JWT assinado (HS256) com validade de 8 horas; segredo de pelo menos
+            32 caracteres, sem o qual o backend não sobe.
+          </td>
+        </tr>
+        <tr>
+          <td>Enumeração de contas</td>
+          <td>
+            Mesma mensagem de erro para e-mail inexistente e senha errada.
+          </td>
+        </tr>
+        <tr>
+          <td>Comunicação entre serviços</td>
+          <td>
+            O ai-service só aceita pedidos com o <code>X-Internal-Token</code>,
+            comparado em tempo constante; o token é obrigatório para o serviço
+            subir.
+          </td>
+        </tr>
+        <tr>
+          <td>CORS</td>
+          <td>
+            O backend aceita só a origem do site configurada em
+            <code>CORS_ALLOWED_ORIGINS</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>Uploads</td>
+          <td>
+            Limite de 10 MB no navegador, no backend e no ai-service; imagem
+            ilegível é recusada antes de rodar o modelo e, na Pele, também a
+            imagem com lado menor que 100 px.
+          </td>
+        </tr>
+        <tr>
+          <td>Segredos</td>
+          <td>
+            Nenhuma senha no código: tudo vem de variáveis de ambiente. Os
+            arquivos <code>.env</code>, <code>terraform.tfvars</code> e
+            <code>terraform.tfstate</code> ficam fora do git; variáveis do
+            Terraform marcadas como <code>sensitive</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>Erros</td>
+          <td>
+            Toda resposta de erro sai como <code>{"message": "..."}</code>, sem
+            rastro de pilha nem detalhes internos.
+          </td>
+        </tr>
+        <tr>
+          <td>Log e rastreabilidade</td>
+          <td>
+            O backend registra cadastros, logins aceitos e recusados e cada
+            análise (concluída ou não). O usuário aparece só pelo id: e-mail,
+            senha, token e imagem nunca vão para o log.
+          </td>
+        </tr>
+        <tr>
+          <td>Containers</td>
+          <td>
+            Usuário sem privilégios; no compose, portas só em
+            <code>127.0.0.1</code> e o ai-service sem porta exposta.
+          </td>
+        </tr>
+      </table>
 
-  <h3>4.5 Licenças e créditos dos dados</h3>
-  <p>Os dois datasets usam a licença CC BY-NC-SA 4.0: crédito obrigatório, sem uso comercial e mesma licença para derivados. O crédito aparece no site, no README e neste documento (seção 6). As imagens não estão no repositório. A licença é também o motivo de o projeto não estimar retorno comercial.</p>
+      <h3>4.5 Licenças e créditos dos dados</h3>
+      <p>
+        Os dois datasets usam a licença CC BY-NC-SA 4.0: crédito obrigatório,
+        sem uso comercial e mesma licença para derivados. O crédito aparece no
+        site, no README e neste documento (seção 6). As imagens não estão no
+        repositório. A licença é também o motivo de o projeto não estimar
+        retorno comercial.
+      </p>
 
-  <h3>4.6 Riscos e mitigações</h3>
-  <table>
-    <tr><th style="width:30%">Risco</th><th style="width:38%">Mitigação atual</th><th>O que ainda falta</th></tr>
-    <tr><td>Usuário tratar o resultado como diagnóstico</td><td>Avisos em todas as telas de análise, página de limitações, inconclusivo e baixa certeza</td><td>Validação clínica antes de qualquer uso real</td></tr>
-    <tr><td>Imagem fora do domínio recebe classe com confiança alta</td><td>Limitação documentada; limiar de 80% em Oral e Cérebro</td><td>Filtro que recuse imagens incompatíveis</td></tr>
-    <tr><td>Acurácia inflada por vazamento</td><td>"Possível vazamento" escrito no site; divisão por lesão na Pele</td><td>Teste com imagens de outra fonte</td></tr>
-    <tr><td>Tentativas repetidas de login</td><td>Senhas com hash BCrypt, que torna cada tentativa mais lenta; logins recusados ficam registrados no log</td><td>Limite de tentativas por IP ou conta</td></tr>
-    <tr><td>Token roubado no navegador</td><td>Validade de 8 horas; React escapa os textos exibidos</td><td>Revogação de token e cookies <code>HttpOnly</code></td></tr>
-    <tr><td>Perda do state do Terraform</td><td>Backup fora do repositório</td><td>State remoto com criptografia</td></tr>
-  </table>
-</section>
+      <h3>4.6 Riscos e mitigações</h3>
+      <table>
+        <tr>
+          <th style="width: 30%">Risco</th>
+          <th style="width: 38%">Mitigação atual</th>
+          <th>O que ainda falta</th>
+        </tr>
+        <tr>
+          <td>Usuário tratar o resultado como diagnóstico</td>
+          <td>
+            Avisos em todas as telas de análise, página de limitações,
+            inconclusivo e baixa certeza
+          </td>
+          <td>Validação clínica antes de qualquer uso real</td>
+        </tr>
+        <tr>
+          <td>Imagem fora do domínio recebe classe com confiança alta</td>
+          <td>Limitação documentada; limiar de 80% em Oral e Cérebro</td>
+          <td>Filtro que recuse imagens incompatíveis</td>
+        </tr>
+        <tr>
+          <td>Acurácia inflada por vazamento</td>
+          <td>
+            "Possível vazamento" escrito no site; divisão por lesão na Pele
+          </td>
+          <td>Teste com imagens de outra fonte</td>
+        </tr>
+        <tr>
+          <td>Tentativas repetidas de login</td>
+          <td>
+            Senhas com hash BCrypt, que torna cada tentativa mais lenta; logins
+            recusados ficam registrados no log
+          </td>
+          <td>Limite de tentativas por IP ou conta</td>
+        </tr>
+        <tr>
+          <td>Token roubado no navegador</td>
+          <td>Validade de 8 horas; React escapa os textos exibidos</td>
+          <td>Revogação de token e cookies <code>HttpOnly</code></td>
+        </tr>
+        <tr>
+          <td>Perda do state do Terraform</td>
+          <td>Backup fora do repositório</td>
+          <td>State remoto com criptografia</td>
+        </tr>
+      </table>
+    </section>
 
-<!-- 5. CONCLUSÃO -->
-<section class="section">
-  <h2>5. Conclusão e trabalhos futuros</h2>
-  <p>O PixoraMed entrega o caminho completo de um sistema de IA aplicado a imagens médicas: modelos treinados e avaliados com validação cruzada, um microsserviço de inferência em Docker, um backend com login seguro e regras de decisão testadas, uma interface que mostra resultado, histórico e métricas, e a infraestrutura descrita como código. Os três processos principais estão modelados em BPMN 2.0 e batem com o que o código faz.</p>
-  <p>O principal resultado, além do protótipo funcionando, é a leitura honesta dos números: acurácias acima de 95% na mesma fonte convivem com quedas fortes em imagens de outra origem, e o sistema foi desenhado para mostrar essa incerteza em vez de escondê-la.</p>
-  <h3>Trabalhos futuros</h3>
-  <ul>
-    <li>Testar Oral e Cérebro com imagens de outras fontes e publicar o resultado na página de treinos.</li>
-    <li>Filtro que identifique o tipo de exame e recuse imagens sem relação antes da classificação.</li>
-    <li>Calibrar as probabilidades de Oral e Cérebro, como já é feito na Pele.</li>
-    <li>Dividir os dados por paciente e avaliar o desempenho por subgrupo (por exemplo, tom de pele).</li>
-    <li>Limite de tentativas de login, revogação de token e state remoto do Terraform.</li>
-  </ul>
-</section>
+    <!-- 5. CONCLUSÃO -->
+    <section class="section">
+      <h2>5. Conclusão e trabalhos futuros</h2>
+      <p>
+        O PixoraMed entrega o caminho completo de um sistema de IA aplicado a
+        imagens médicas: modelos treinados e avaliados com validação cruzada, um
+        microsserviço de inferência em Docker, um backend com login seguro e
+        regras de decisão testadas, uma interface que mostra resultado,
+        histórico e métricas, e a infraestrutura descrita como código. Os três
+        processos principais estão modelados em BPMN 2.0 e batem com o que o
+        código faz.
+      </p>
+      <p>
+        O principal resultado, além do protótipo funcionando, é a leitura
+        honesta dos números: acurácias acima de 95% na mesma fonte convivem com
+        quedas fortes em imagens de outra origem, e o sistema foi desenhado para
+        mostrar essa incerteza em vez de escondê-la.
+      </p>
+      <h3>Trabalhos futuros</h3>
+      <ul>
+        <li>
+          Testar Oral e Cérebro com imagens de outras fontes e publicar o
+          resultado na página de treinos.
+        </li>
+        <li>
+          Filtro que identifique o tipo de exame e recuse imagens sem relação
+          antes da classificação.
+        </li>
+        <li>
+          Calibrar as probabilidades de Oral e Cérebro, como já é feito na Pele.
+        </li>
+        <li>
+          Dividir os dados por paciente e avaliar o desempenho por subgrupo (por
+          exemplo, tom de pele).
+        </li>
+        <li>
+          Limite de tentativas de login, revogação de token e state remoto do
+          Terraform.
+        </li>
+      </ul>
+    </section>
 
-<!-- 6. REFERÊNCIAS -->
-<section>
-  <h2 style="margin-top:18pt">6. Referências</h2>
-  <ul>
-    <li>Obuli Sai Naren. (2022). <i>Multi Cancer Dataset</i> [Data set]. Kaggle. https://doi.org/10.34740/KAGGLE/DSV/3415848</li>
-    <li>Tschandl, P., Rosendahl, C. &amp; Kittler, H. (2018). The HAM10000 dataset, a large collection of multi-source dermatoscopic images of common pigmented skin lesions. <i>Scientific Data</i>, 5, 180161. https://doi.org/10.1038/sdata.2018.161</li>
-    <li>Creative Commons. Atribuição-NãoComercial-CompartilhaIgual 4.0 Internacional (CC BY-NC-SA 4.0). https://creativecommons.org/licenses/by-nc-sa/4.0/</li>
-    <li>Object Management Group. Business Process Model and Notation (BPMN), versão 2.0. https://www.omg.org/spec/BPMN/2.0/</li>
-    <li>Brasil. Lei nº 13.709, de 14 de agosto de 2018 (Lei Geral de Proteção de Dados Pessoais).</li>
-  </ul>
-  <p class="small muted" style="margin-top:12pt">Repositório do sistema: github.com/joaopgf/PixoraMed. Notebooks de treino: github.com/joaopgf/Projeto-ML-Cancer.</p>
-</section>
-
-</body>
+    <!-- 6. REFERÊNCIAS -->
+    <section>
+      <h2 style="margin-top: 18pt">6. Referências</h2>
+      <ul>
+        <li>
+          Obuli Sai Naren. (2022). <i>Multi Cancer Dataset</i> [Data set].
+          Kaggle. https://doi.org/10.34740/KAGGLE/DSV/3415848
+        </li>
+        <li>
+          Tschandl, P., Rosendahl, C. &amp; Kittler, H. (2018). The HAM10000
+          dataset, a large collection of multi-source dermatoscopic images of
+          common pigmented skin lesions. <i>Scientific Data</i>, 5, 180161.
+          https://doi.org/10.1038/sdata.2018.161
+        </li>
+        <li>
+          Creative Commons. Atribuição-NãoComercial-CompartilhaIgual 4.0
+          Internacional (CC BY-NC-SA 4.0).
+          https://creativecommons.org/licenses/by-nc-sa/4.0/
+        </li>
+        <li>
+          Object Management Group. Business Process Model and Notation (BPMN),
+          versão 2.0. https://www.omg.org/spec/BPMN/2.0/
+        </li>
+        <li>
+          Brasil. Lei nº 13.709, de 14 de agosto de 2018 (Lei Geral de Proteção
+          de Dados Pessoais).
+        </li>
+      </ul>
+      <p class="small muted" style="margin-top: 12pt">
+        Repositório do sistema: github.com/joaopgf/PixoraMed. Notebooks de
+        treino: github.com/joaopgf/Projeto-ML-Cancer.
+      </p>
+    </section>
+  </body>
 </html>

@@ -17,7 +17,11 @@ export default function NewAnalysis() {
         title="Módulos de análise"
         description="Cada módulo envia a imagem para o modelo treinado só para aquele tipo de exame."
         actions={
-          <button type="button" className="btn secondary" onClick={() => navigate("/models")}>
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={() => navigate("/models")}
+          >
             <Icon name="layers" /> Ver status técnico
           </button>
         }
@@ -40,7 +44,9 @@ export default function NewAnalysis() {
       )}
       {models.isError && (
         <div style={{ marginBottom: 16 }}>
-          <Alert>Não foi possível falar com a API: {models.error.message}</Alert>
+          <Alert>
+            Não foi possível falar com a API: {models.error.message}
+          </Alert>
         </div>
       )}
       <div className="module-list-grid">
@@ -62,7 +68,11 @@ export default function NewAnalysis() {
                   {module.exam} · {module.area}
                 </small>
                 <span className={`status-mini${connected ? " on" : ""}`}>
-                  {models.isLoading ? "CONECTANDO..." : connected ? "MODELO CONECTADO" : "MODELO NÃO CONECTADO"}
+                  {models.isLoading
+                    ? "CONECTANDO..."
+                    : connected
+                      ? "MODELO CONECTADO"
+                      : "MODELO NÃO CONECTADO"}
                 </span>
               </span>
               <Icon name="chevron" />

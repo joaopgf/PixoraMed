@@ -18,7 +18,9 @@ export async function request(path, options = {}) {
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     if (response.status === 401 && currentToken) onUnauthorized?.();
-    throw new Error(body?.message ?? `Erro ${response.status} ao acessar a API`);
+    throw new Error(
+      body?.message ?? `Erro ${response.status} ao acessar a API`,
+    );
   }
   return response.json();
 }

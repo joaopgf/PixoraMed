@@ -7,14 +7,30 @@ import Icon from "../components/Icon";
 import LowConfidenceTag from "../components/LowConfidenceTag";
 import { useModels, usePredictionHistory } from "../hooks/useApiData";
 import { downloadCsv } from "../utils/exportCsv";
-import { className, formatDate, formatPercent, modeName, MODULES, parseModelId, recordCode } from "../utils/modules";
+import {
+  className,
+  formatDate,
+  formatPercent,
+  modeName,
+  MODULES,
+  parseModelId,
+  recordCode,
+} from "../utils/modules";
 import { isLowConfidence } from "../utils/resultView";
 
 const ITEMS_PER_PAGE = 10;
 
 function exportCsv(records) {
   const rows = [
-    ["Identificador", "Modulo", "Modelo", "Classe prevista", "Confianca (%)", "Data", "Tempo (ms)"],
+    [
+      "Identificador",
+      "Modulo",
+      "Modelo",
+      "Classe prevista",
+      "Confianca (%)",
+      "Data",
+      "Tempo (ms)",
+    ],
     ...records.map((record) => [
       recordCode(record.id),
       parseModelId(record.modelId).module?.name ?? "",
@@ -60,10 +76,19 @@ export default function History() {
         description="Previsões registradas no banco. A imagem nunca é guardada: só o modelo, a classe, a confiança e o horário."
         actions={
           <>
-            <button type="button" className="btn secondary" disabled={!visible.length} onClick={() => exportCsv(visible)}>
+            <button
+              type="button"
+              className="btn secondary"
+              disabled={!visible.length}
+              onClick={() => exportCsv(visible)}
+            >
               <Icon name="file" /> Exportar CSV
             </button>
-            <button type="button" className="btn primary" onClick={() => navigate("/new-analysis")}>
+            <button
+              type="button"
+              className="btn primary"
+              onClick={() => navigate("/new-analysis")}
+            >
               <Icon name="plusfile" /> Nova análise
             </button>
           </>
@@ -135,13 +160,23 @@ export default function History() {
                       <span className="tiny muted">{modeName(mode)}</span>
                     </td>
                     <td>
-                      <span className="table-status neutral">{className(record.predictedClass)}</span>
-                      {isLowConfidence(record, models.data) && <LowConfidenceTag />}
+                      <span className="table-status neutral">
+                        {className(record.predictedClass)}
+                      </span>
+                      {isLowConfidence(record, models.data) && (
+                        <LowConfidenceTag />
+                      )}
                     </td>
-                    <td className="mono">{formatPercent(record.confidence * 100)}</td>
+                    <td className="mono">
+                      {formatPercent(record.confidence * 100)}
+                    </td>
                     <td>{formatDate(record.createdAt)}</td>
                     <td>
-                      <button type="button" className="table-action" onClick={() => navigate(`/result/${record.id}`)}>
+                      <button
+                        type="button"
+                        className="table-action"
+                        onClick={() => navigate(`/result/${record.id}`)}
+                      >
                         Abrir →
                       </button>
                     </td>
@@ -167,7 +202,8 @@ export default function History() {
         {totalPages > 1 && (
           <nav className="pagination" aria-label="Paginação do histórico">
             <span className="pagination-summary">
-              Mostrando {start + 1}–{start + pageRecords.length} de {visible.length}
+              Mostrando {start + 1}–{start + pageRecords.length} de{" "}
+              {visible.length}
             </span>
             <div className="pagination-controls">
               <button

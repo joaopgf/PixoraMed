@@ -13,7 +13,11 @@ export default function Account() {
 
   return (
     <>
-      <PageHeader label="PREFERÊNCIAS" title="Conta e segurança" description="Dados da sua conta na PixoraMed." />
+      <PageHeader
+        label="PREFERÊNCIAS"
+        title="Conta e segurança"
+        description="Dados da sua conta na PixoraMed."
+      />
       <section className="profile-card" style={{ maxWidth: 560 }}>
         <div className="profile-hero">
           <span className="avatar large">{initials(user?.name ?? "")}</span>
@@ -23,7 +27,9 @@ export default function Account() {
           </div>
         </div>
         <InfoPair label="E-mail">{user?.email}</InfoPair>
-        <InfoPair label="Conta criada em">{user ? formatDate(user.createdAt) : ""}</InfoPair>
+        <InfoPair label="Conta criada em">
+          {user ? formatDate(user.createdAt) : ""}
+        </InfoPair>
         <InfoPair label="Permissão">Análises e histórico próprio</InfoPair>
         <button
           type="button"

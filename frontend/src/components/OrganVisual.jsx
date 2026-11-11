@@ -12,11 +12,18 @@ export default function OrganVisual({ controls = false }) {
       >
         <div className="visual-grid" aria-hidden="true" />
         <div className="art active" aria-hidden="true">
-          <img src="/organs/brain.webp" alt="Representação holográfica estilizada de cérebro" />
+          <img
+            src="/organs/brain.webp"
+            alt="Representação holográfica estilizada de cérebro"
+          />
         </div>
         <div className="scan-line" aria-hidden="true" />
         {["tl", "tr", "bl", "br"].map((corner) => (
-          <span key={corner} className={`visual-corner ${corner}`} aria-hidden="true" />
+          <span
+            key={corner}
+            className={`visual-corner ${corner}`}
+            aria-hidden="true"
+          />
         ))}
         <div className="visual-status">
           <span className="pill-dot" /> VISUALIZAÇÃO ILUSTRATIVA
@@ -29,7 +36,11 @@ export default function OrganVisual({ controls = false }) {
 
       {controls && (
         <div className="visual-controls">
-          <button type="button" className="control-btn" onClick={() => setPaused((current) => !current)}>
+          <button
+            type="button"
+            className="control-btn"
+            onClick={() => setPaused((current) => !current)}
+          >
             {paused ? "Reproduzir animação" : "Pausar animação"}
           </button>
         </div>

@@ -23,13 +23,23 @@ export default [
       ...js.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       // O ESLint puro não entende JSX: sem esta regra, componentes usados só no JSX parecem não usados
-      "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]", argsIgnorePattern: "^[A-Z_]" }],
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      "no-unused-vars": [
+        "error",
+        { varsIgnorePattern: "^[A-Z_]", argsIgnorePattern: "^[A-Z_]" },
+      ],
+      "react-refresh/only-export-components": [
+        "warn",
+        { allowConstantExport: true },
+      ],
     },
   },
   {
     files: ["vite.config.js", "eslint.config.js"],
-    languageOptions: { ecmaVersion: "latest", sourceType: "module", globals: globals.node },
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: globals.node,
+    },
     rules: js.configs.recommended.rules,
   },
 ];

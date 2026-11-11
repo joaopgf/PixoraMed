@@ -5,12 +5,23 @@ import { Alert, PageHeader } from "../components/common";
 import Icon from "../components/Icon";
 import { useModels } from "../hooks/useApiData";
 import { LEAKAGE_SUSPICION } from "../utils/datasetNotes";
-import { formatPercent, modeName, MODULES, modelsForModule } from "../utils/modules";
+import {
+  formatPercent,
+  modeName,
+  MODULES,
+  modelsForModule,
+} from "../utils/modules";
 import Panel from "../components/Panel";
 
 const CHECKLIST = [
-  { title: "Contrato da API", text: "Formato de entrada, validação do arquivo e erros (feito em /api/predictions)." },
-  { title: "Pré-processamento", text: "Tamanho, cor e escala iguais aos do treino (lidos do .json de cada modelo)." },
+  {
+    title: "Contrato da API",
+    text: "Formato de entrada, validação do arquivo e erros (feito em /api/predictions).",
+  },
+  {
+    title: "Pré-processamento",
+    text: "Tamanho, cor e escala iguais aos do treino (lidos do .json de cada modelo).",
+  },
   {
     title: "Modelo versionado",
     text: "Pesos em ONNX, com classes e métricas no .json. Falta registrar o dataset e a versão.",
@@ -32,7 +43,11 @@ export default function Models() {
         title="Módulos e modelos"
         description="Situação de cada módulo: quais modelos a API carregou e como foram avaliados."
         actions={
-          <button type="button" className="btn secondary" onClick={() => navigate("/new-analysis")}>
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={() => navigate("/new-analysis")}
+          >
             Abrir catálogo
           </button>
         }
@@ -49,7 +64,9 @@ export default function Models() {
       </div>
       {models.isError && (
         <div style={{ marginBottom: 16 }}>
-          <Alert>Não foi possível falar com a API: {models.error.message}</Alert>
+          <Alert>
+            Não foi possível falar com a API: {models.error.message}
+          </Alert>
         </div>
       )}
 
@@ -63,13 +80,20 @@ export default function Models() {
                   <Icon name={module.icon} />
                 </span>
                 <span className={`model-status${list.length ? " on" : ""}`}>
-                  {models.isLoading ? "Conectando..." : list.length ? "Conectado" : "Não conectado"}
+                  {models.isLoading
+                    ? "Conectando..."
+                    : list.length
+                      ? "Conectado"
+                      : "Não conectado"}
                 </span>
               </div>
               <h3>
                 {module.name}
                 {LEAKAGE_SUSPICION[module.id] && (
-                  <span className="tag-warn" title={LEAKAGE_SUSPICION[module.id]}>
+                  <span
+                    className="tag-warn"
+                    title={LEAKAGE_SUSPICION[module.id]}
+                  >
                     possível vazamento
                   </span>
                 )}
@@ -99,7 +123,10 @@ export default function Models() {
                   {model.inconclusiveThreshold !== null && (
                     <div className="model-spec">
                       <span>Inconclusivo abaixo de</span>
-                      <strong>{Math.round(model.inconclusiveThreshold * 100)}% de confiança</strong>
+                      <strong>
+                        {Math.round(model.inconclusiveThreshold * 100)}% de
+                        confiança
+                      </strong>
                     </div>
                   )}
                   {model.threshold !== null && (
@@ -128,7 +155,13 @@ export default function Models() {
         description="Itens técnicos para cada modelo."
         style={{ marginTop: 16 }}
       >
-        <div className="workflow" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))" }}>
+        <div
+          className="workflow"
+          style={{
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(min(260px, 100%), 1fr))",
+          }}
+        >
           {CHECKLIST.map((item, i) => (
             <div key={item.title} className="workflow-step">
               <span className="step-num">{i + 1}</span>

@@ -28,12 +28,22 @@ export default function DatasetCredits() {
           <li key={dataset.name}>
             <strong>{dataset.name}</strong> ({dataset.author}). Usado em:{" "}
             {dataset.usedIn}.{" "}
-            <a className="text-link" href={dataset.kaggle} target="_blank" rel="noreferrer">
+            <a
+              className="text-link"
+              href={dataset.kaggle}
+              target="_blank"
+              rel="noreferrer"
+            >
               Ver no Kaggle
             </a>
             <div className="citation">
               {dataset.citation}{" "}
-              <a className="text-link" href={dataset.doi} target="_blank" rel="noreferrer">
+              <a
+                className="text-link"
+                href={dataset.doi}
+                target="_blank"
+                rel="noreferrer"
+              >
                 {dataset.doi}
               </a>
             </div>

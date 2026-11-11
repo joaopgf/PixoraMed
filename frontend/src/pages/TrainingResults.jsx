@@ -11,7 +11,12 @@ import { useTrainings } from "../hooks/useApiData";
 import { DATASET_NOTES, LEAKAGE_SUSPICION } from "../utils/datasetNotes";
 import { findModule, formatPercent } from "../utils/modules";
 
-const COLORS = { color: "#238bb2", gray: "#a9bfcc", normalized: "#17698f", raw: "#e2a94d" };
+const COLORS = {
+  color: "#238bb2",
+  gray: "#a9bfcc",
+  normalized: "#17698f",
+  raw: "#e2a94d",
+};
 
 const cancerName = (cancerType) => findModule(cancerType)?.name ?? cancerType;
 const shortMode = (mode) => (mode === "color" ? "cor" : "cinza");
@@ -19,8 +24,16 @@ const shortMode = (mode) => (mode === "color" ? "cor" : "cinza");
 // Média das execuções repetidas da mesma configuração (ex.: Oral cinza rodou duas vezes)
 function average(trainings, metric) {
   if (!trainings.length) return undefined;
-  const value = trainings.reduce((sum, t) => sum + (metric === "acc" ? t.accuracyMean : t.f1Mean), 0) / trainings.length;
-  const std = trainings.reduce((sum, t) => sum + (metric === "acc" ? t.accuracyStd : t.f1Std), 0) / trainings.length;
+  const value =
+    trainings.reduce(
+      (sum, t) => sum + (metric === "acc" ? t.accuracyMean : t.f1Mean),
+      0,
+    ) / trainings.length;
+  const std =
+    trainings.reduce(
+      (sum, t) => sum + (metric === "acc" ? t.accuracyStd : t.f1Std),
+      0,
+    ) / trainings.length;
   return { value: +value.toFixed(2), std: +std.toFixed(2) };
 }
 
@@ -46,8 +59,14 @@ export default function TrainingResults() {
         const ofCancer = standardRuns.filter(
           (t) => t.cancerType === cancerType && t.normalized === normalized,
         );
-        const color = average(ofCancer.filter((t) => t.mode === "color"), metric);
-        const gray = average(ofCancer.filter((t) => t.mode === "gray"), metric);
+        const color = average(
+          ofCancer.filter((t) => t.mode === "color"),
+          metric,
+        );
+        const gray = average(
+          ofCancer.filter((t) => t.mode === "gray"),
+          metric,
+        );
         return {
           label: cancerName(cancerType),
           color: color?.value,
@@ -64,9 +83,17 @@ export default function TrainingResults() {
       cancerTypes
         .flatMap((cancerType) =>
           ["color", "gray"].map((mode) => {
-            const group = standardRuns.filter((t) => t.cancerType === cancerType && t.mode === mode);
-            const yes = average(group.filter((t) => t.normalized), metric);
-            const no = average(group.filter((t) => !t.normalized), metric);
+            const group = standardRuns.filter(
+              (t) => t.cancerType === cancerType && t.mode === mode,
+            );
+            const yes = average(
+              group.filter((t) => t.normalized),
+              metric,
+            );
+            const no = average(
+              group.filter((t) => !t.normalized),
+              metric,
+            );
             return {
               label: `${cancerName(cancerType)} ${shortMode(mode)}`,
               normalized: yes?.value,
@@ -102,7 +129,11 @@ export default function TrainingResults() {
 
       <SkinReproduction />
 
-      <QueryState query={trainings} className="panel empty" errorPrefix="Não foi possível carregar os treinos" />
+      <QueryState
+        query={trainings}
+        className="panel empty"
+        errorPrefix="Não foi possível carregar os treinos"
+      />
 
       {trainings.data && (
         <div className="stack">
@@ -136,7 +167,11 @@ export default function TrainingResults() {
             <BarChartWithError
               data={normalization}
               series={[
-                { key: "normalized", name: "Normalizado (/255)", color: COLORS.normalized },
+                {
+                  key: "normalized",
+                  name: "Normalizado (/255)",
+                  color: COLORS.normalized,
+                },
                 { key: "raw", name: "Sem normalizar", color: COLORS.raw },
               ]}
             />
@@ -165,9 +200,14 @@ export default function TrainingResults() {
                     <tr key={t.id}>
                       <td>
                         <strong>{cancerName(t.cancerType)}</strong>
-                        {t.variant && <span className="tiny muted"> ({t.variant})</span>}
+                        {t.variant && (
+                          <span className="tiny muted"> ({t.variant})</span>
+                        )}
                         {LEAKAGE_SUSPICION[t.cancerType] && (
-                          <span className="tag-warn" title={LEAKAGE_SUSPICION[t.cancerType]}>
+                          <span
+                            className="tag-warn"
+                            title={LEAKAGE_SUSPICION[t.cancerType]}
+                          >
                             possível vazamento
                           </span>
                         )}
@@ -178,10 +218,14 @@ export default function TrainingResults() {
                       <td>{t.gpu.replace("NVIDIA ", "")}</td>
                       <td className="mono">{t.totalTime}</td>
                       <td className="mono">
-                        {formatPercent(t.accuracyMean)} <span className="muted">± {t.accuracyStd.toFixed(2)}</span>
+                        {formatPercent(t.accuracyMean)}{" "}
+                        <span className="muted">
+                          ± {t.accuracyStd.toFixed(2)}
+                        </span>
                       </td>
                       <td className="mono">
-                        {formatPercent(t.f1Mean)} <span className="muted">± {t.f1Std.toFixed(2)}</span>
+                        {formatPercent(t.f1Mean)}{" "}
+                        <span className="muted">± {t.f1Std.toFixed(2)}</span>
                       </td>
                     </tr>
                   ))}
@@ -194,7 +238,8 @@ export default function TrainingResults() {
             <ul className="notes">
               {Object.entries(DATASET_NOTES).map(([cancerType, note]) => (
                 <li key={cancerType}>
-                  <strong>{cancerName(cancerType)}:</strong> {note} {LEAKAGE_SUSPICION[cancerType]}
+                  <strong>{cancerName(cancerType)}:</strong> {note}{" "}
+                  {LEAKAGE_SUSPICION[cancerType]}
                 </li>
               ))}
             </ul>

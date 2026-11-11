@@ -10,8 +10,10 @@ export default function ImageDropzone({ id, maxMb = 10, onFile, onError }) {
 
   function choose(file) {
     if (!file) return;
-    if (!ACCEPTED_TYPES.includes(file.type)) return onError("Formato não suportado. Selecione PNG, JPG ou WEBP.");
-    if (file.size > maxMb * 1024 * 1024) return onError(`O arquivo passa do limite de ${maxMb} MB.`);
+    if (!ACCEPTED_TYPES.includes(file.type))
+      return onError("Formato não suportado. Selecione PNG, JPG ou WEBP.");
+    if (file.size > maxMb * 1024 * 1024)
+      return onError(`O arquivo passa do limite de ${maxMb} MB.`);
     onError("");
     onFile(file);
   }

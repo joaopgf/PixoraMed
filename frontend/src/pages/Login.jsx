@@ -34,7 +34,8 @@ export default function Login() {
 
   async function submit(event) {
     event.preventDefault();
-    if (isRegister && password !== confirmation) return setError("As senhas não conferem.");
+    if (isRegister && password !== confirmation)
+      return setError("As senhas não conferem.");
     setError("");
     setSending(true);
     try {
@@ -72,7 +73,12 @@ export default function Login() {
       </section>
 
       <section className="auth-card">
-        <div className="seg" role="tablist" aria-label="Entrar ou criar conta" style={{ marginBottom: 18 }}>
+        <div
+          className="seg"
+          role="tablist"
+          aria-label="Entrar ou criar conta"
+          style={{ marginBottom: 18 }}
+        >
           <button
             type="button"
             role="tab"
@@ -92,7 +98,9 @@ export default function Login() {
             Criar conta
           </button>
         </div>
-        <h2>{isRegister ? "Criar conta na PixoraMed" : "Acessar a PixoraMed"}</h2>
+        <h2>
+          {isRegister ? "Criar conta na PixoraMed" : "Acessar a PixoraMed"}
+        </h2>
         <p>
           {isRegister
             ? "Cadastre-se para fazer análises e manter o seu histórico."
@@ -153,7 +161,9 @@ export default function Login() {
                 onChange={(event) => setPassword(event.target.value)}
               />
             </div>
-            {isRegister && <span className="hint">Pelo menos 8 caracteres.</span>}
+            {isRegister && (
+              <span className="hint">Pelo menos 8 caracteres.</span>
+            )}
           </div>
           {isRegister && (
             <div className="field">
@@ -184,11 +194,16 @@ export default function Login() {
             {error}
           </div>
           <button type="submit" className="btn primary" disabled={sending}>
-            {sending ? "Aguarde..." : isRegister ? "Criar conta" : "Entrar"} <Icon name="arrow" />
+            {sending ? "Aguarde..." : isRegister ? "Criar conta" : "Entrar"}{" "}
+            <Icon name="arrow" />
           </button>
         </form>
         <div className="auth-divider">OU</div>
-        <button type="button" className="btn secondary" onClick={() => navigate("/")}>
+        <button
+          type="button"
+          className="btn secondary"
+          onClick={() => navigate("/")}
+        >
           Voltar à página inicial
         </button>
         <p className="auth-foot">

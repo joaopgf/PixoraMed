@@ -7,7 +7,13 @@ import Icon from "../components/Icon";
 import ImageDropzone from "../components/ImageDropzone";
 import { useAnalysis } from "../context/AnalysisContext";
 import { useModels } from "../hooks/useApiData";
-import { className, findModule, formatSize, modeName, modelsForModule } from "../utils/modules";
+import {
+  className,
+  findModule,
+  formatSize,
+  modeName,
+  modelsForModule,
+} from "../utils/modules";
 
 const MAX_MB = 10;
 
@@ -27,8 +33,13 @@ export default function PrepareExam() {
 
   // Escolhe o modelo do módulo assim que a lista chega (o colorido, se houver)
   useEffect(() => {
-    if (!available.length || available.some((model) => model.id === analysis.modelId)) return;
-    const preferred = available.find((model) => model.mode === "color") ?? available[0];
+    if (
+      !available.length ||
+      available.some((model) => model.id === analysis.modelId)
+    )
+      return;
+    const preferred =
+      available.find((model) => model.mode === "color") ?? available[0];
     updateAnalysis({ modelId: preferred.id });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [models.data, moduleId, analysis.modelId]);
@@ -52,7 +63,11 @@ export default function PrepareExam() {
         title="Preparar exame"
         description={`Módulo selecionado: ${module.name}. Confira os dados antes de avançar.`}
         actions={
-          <button type="button" className="btn secondary" onClick={() => navigate("/new-analysis")}>
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={() => navigate("/new-analysis")}
+          >
             Trocar módulo
           </button>
         }
@@ -69,7 +84,11 @@ export default function PrepareExam() {
           </small>
         </div>
         <span className={`pill ${available.length ? "success" : "demo"}`}>
-          {models.isLoading ? "Verificando modelo" : available.length ? "Modelo conectado" : "Modelo não conectado"}
+          {models.isLoading
+            ? "Verificando modelo"
+            : available.length
+              ? "Modelo conectado"
+              : "Modelo não conectado"}
         </span>
       </div>
 
@@ -82,16 +101,22 @@ export default function PrepareExam() {
           </p>
           <div className="form-grid">
             <div className="field">
-              <label htmlFor="caseCode">Código do caso (não identificável)</label>
+              <label htmlFor="caseCode">
+                Código do caso (não identificável)
+              </label>
               <input
                 id="caseCode"
                 type="text"
                 maxLength={32}
                 placeholder="Ex.: CASO-001"
                 value={analysis.caseCode}
-                onChange={(event) => updateAnalysis({ caseCode: event.target.value })}
+                onChange={(event) =>
+                  updateAnalysis({ caseCode: event.target.value })
+                }
               />
-              <span className="hint">Opcional. Fica só nesta sessão; não é gravado no banco.</span>
+              <span className="hint">
+                Opcional. Fica só nesta sessão; não é gravado no banco.
+              </span>
             </div>
             <div className="field">
               <label htmlFor="model">Modelo</label>
@@ -99,22 +124,35 @@ export default function PrepareExam() {
                 id="model"
                 value={analysis.modelId}
                 disabled={!available.length}
-                onChange={(event) => updateAnalysis({ modelId: event.target.value })}
+                onChange={(event) =>
+                  updateAnalysis({ modelId: event.target.value })
+                }
               >
-                {!available.length && <option value="">Nenhum modelo disponível</option>}
+                {!available.length && (
+                  <option value="">Nenhum modelo disponível</option>
+                )}
                 {available.map((item) => (
                   <option key={item.id} value={item.id}>
                     {module.name} · {modeName(item.mode)}
                   </option>
                 ))}
               </select>
-              {model && <span className="hint">Classes: {model.classes.map(className).join(", ")}</span>}
+              {model && (
+                <span className="hint">
+                  Classes: {model.classes.map(className).join(", ")}
+                </span>
+              )}
             </div>
           </div>
 
           <div className="field">
             <label htmlFor="imageInput">Imagem do exame</label>
-            <ImageDropzone id="imageInput" maxMb={MAX_MB} onFile={setFile} onError={setError} />
+            <ImageDropzone
+              id="imageInput"
+              maxMb={MAX_MB}
+              onFile={setFile}
+              onError={setError}
+            />
           </div>
 
           {analysis.moduleId === module.id && analysis.fileUrl && (
@@ -130,7 +168,10 @@ export default function PrepareExam() {
                   Remover
                 </button>
               </div>
-              <img src={analysis.fileUrl} alt="Pré-visualização do arquivo selecionado" />
+              <img
+                src={analysis.fileUrl}
+                alt="Pré-visualização do arquivo selecionado"
+              />
               <div className="file-details">
                 <span>{analysis.file.name}</span>
                 <span>{formatSize(analysis.file.size)}</span>
@@ -142,7 +183,9 @@ export default function PrepareExam() {
             <input
               type="checkbox"
               checked={analysis.consent}
-              onChange={(event) => updateAnalysis({ consent: event.target.checked })}
+              onChange={(event) =>
+                updateAnalysis({ consent: event.target.checked })
+              }
             />
             <span>
               Confirmo que estou usando material autorizado e desidentificado.
@@ -152,10 +195,18 @@ export default function PrepareExam() {
           </label>
 
           <div className="upload-footer">
-            <span className={`form-error${error ? "" : " neutral"}`} aria-live="polite">
+            <span
+              className={`form-error${error ? "" : " neutral"}`}
+              aria-live="polite"
+            >
               {error || pending || "Tudo certo para revisar."}
             </span>
-            <button type="button" className="btn primary" disabled={!!pending} onClick={() => navigate("/review")}>
+            <button
+              type="button"
+              className="btn primary"
+              disabled={!!pending}
+              onClick={() => navigate("/review")}
+            >
               Revisar caso <Icon name="arrow" />
             </button>
           </div>
@@ -173,7 +224,10 @@ export default function PrepareExam() {
             <ul>
               <li>Não use imagens reais de pacientes.</li>
               <li>O arquivo deve ser compatível com o módulo escolhido.</li>
-              <li>Selecionar o arquivo ainda não o envia: o envio acontece na revisão.</li>
+              <li>
+                Selecionar o arquivo ainda não o envia: o envio acontece na
+                revisão.
+              </li>
             </ul>
           </div>
           <div className="side-info">
@@ -188,8 +242,9 @@ export default function PrepareExam() {
             <Alert>
               <strong>Sem modelo neste módulo</strong>
               <br />
-              Salve o modelo no notebook e converta para ONNX (veja <code>docs/save_model.md</code>).
-              Depois, reinicie o serviço de IA.
+              Salve o modelo no notebook e converta para ONNX (veja{" "}
+              <code>docs/save_model.md</code>). Depois, reinicie o serviço de
+              IA.
             </Alert>
           )}
         </aside>

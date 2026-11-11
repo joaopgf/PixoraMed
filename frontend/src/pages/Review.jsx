@@ -45,7 +45,11 @@ export default function Review() {
         title="Revisar caso"
         description="Confirme o modelo e a imagem antes de executar a análise."
         actions={
-          <button type="button" className="btn secondary" onClick={() => navigate(`/analysis/${module.id}`)}>
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={() => navigate(`/analysis/${module.id}`)}
+          >
             Voltar e editar
           </button>
         }
@@ -58,15 +62,24 @@ export default function Review() {
           actions={<span className="pill neutral">Ainda não enviada</span>}
         >
           <div className="review-image">
-            {analysis.fileUrl && <img src={analysis.fileUrl} alt="Imagem selecionada" />}
+            {analysis.fileUrl && (
+              <img src={analysis.fileUrl} alt="Imagem selecionada" />
+            )}
           </div>
         </Panel>
 
-        <Panel title="Resumo do caso" description="Dados informados nesta sessão">
+        <Panel
+          title="Resumo do caso"
+          description="Dados informados nesta sessão"
+        >
           <InfoPair label="Módulo">{module.name}</InfoPair>
           <InfoPair label="Exame">{module.exam}</InfoPair>
-          <InfoPair label="Modelo">{model ? `${model.id} (${modeName(model.mode)})` : analysis.modelId}</InfoPair>
-          <InfoPair label="Código do caso">{analysis.caseCode.trim() || "Não informado"}</InfoPair>
+          <InfoPair label="Modelo">
+            {model ? `${model.id} (${modeName(model.mode)})` : analysis.modelId}
+          </InfoPair>
+          <InfoPair label="Código do caso">
+            {analysis.caseCode.trim() || "Não informado"}
+          </InfoPair>
           <InfoPair label="Arquivo">{analysis.file.name}</InfoPair>
           <InfoPair label="Tamanho">{formatSize(analysis.file.size)}</InfoPair>
           <div style={{ marginTop: 15 }}>
@@ -91,7 +104,8 @@ export default function Review() {
             disabled={prediction.isPending}
             onClick={() => prediction.mutate()}
           >
-            {prediction.isPending ? "Analisando..." : "Executar análise"} <Icon name="arrow" />
+            {prediction.isPending ? "Analisando..." : "Executar análise"}{" "}
+            <Icon name="arrow" />
           </button>
         </Panel>
       </div>

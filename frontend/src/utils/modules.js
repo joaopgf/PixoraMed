@@ -83,6 +83,9 @@ export const formatPercent = (value) =>
 export function initials(name) {
   const parts = name.trim().split(/\s+/);
   return (
-    ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase() || "?"
+    (
+      (parts[0]?.[0] ?? "") +
+      (parts.length > 1 ? parts[parts.length - 1][0] : "")
+    ).toUpperCase() || "?"
   );
 }

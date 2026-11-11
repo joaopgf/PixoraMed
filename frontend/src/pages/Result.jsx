@@ -39,7 +39,11 @@ export default function Result() {
   if (!data) {
     return (
       <>
-        <PageHeader label="DETALHE DA ANÁLISE" title="Resultado da análise" description={`Registro ${recordCode(id || 0)}`} />
+        <PageHeader
+          label="DETALHE DA ANÁLISE"
+          title="Resultado da análise"
+          description={`Registro ${recordCode(id || 0)}`}
+        />
         <div className="panel empty">
           {history.isLoading
             ? "Carregando..."
@@ -73,7 +77,11 @@ export default function Result() {
         title="Resultado da análise"
         description={`Registro ${recordCode(data.id)}: ${moduleName}.`}
         actions={
-          <button type="button" className="btn secondary" onClick={() => navigate("/history")}>
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={() => navigate("/history")}
+          >
             <Icon name="clock" /> Histórico
           </button>
         }
@@ -83,7 +91,9 @@ export default function Result() {
       <div className="result-banner">
         <Icon name="info" />
         <div>
-          <strong>MODELO EXPERIMENTAL: ESTE RESULTADO NÃO É UM DIAGNÓSTICO</strong>
+          <strong>
+            MODELO EXPERIMENTAL: ESTE RESULTADO NÃO É UM DIAGNÓSTICO
+          </strong>
           <p>{current?.warning ?? DEFAULT_WARNING}</p>
         </div>
       </div>
@@ -91,7 +101,9 @@ export default function Result() {
       <div className="result-grid">
         <article className="result-metric">
           <small>{inconclusive ? "Resultado" : "Classe prevista"}</small>
-          <strong>{inconclusive ? "Inconclusivo" : className(data.predictedClass)}</strong>
+          <strong>
+            {inconclusive ? "Inconclusivo" : className(data.predictedClass)}
+          </strong>
           <p>
             {inconclusive
               ? "O sistema não indica uma classe quando a confiança fica abaixo do limiar."
@@ -103,14 +115,23 @@ export default function Result() {
         {threshold !== null ? (
           <article className="result-metric">
             <small>Probabilidade estimada de {className(positiveClass)}</small>
-            <strong className="mono">{formatPercent(positiveProbability * 100)}</strong>
-            <p>Média calibrada de 5 modelos no dataset de treino. Não é o risco clínico deste paciente.</p>
+            <strong className="mono">
+              {formatPercent(positiveProbability * 100)}
+            </strong>
+            <p>
+              Média calibrada de 5 modelos no dataset de treino. Não é o risco
+              clínico deste paciente.
+            </p>
           </article>
         ) : (
           <article className="result-metric">
             <small>Confiança do modelo</small>
-            <strong className="mono">{formatPercent(data.confidence * 100)}</strong>
-            <p>Saída softmax da rede, não uma probabilidade calibrada de doença.</p>
+            <strong className="mono">
+              {formatPercent(data.confidence * 100)}
+            </strong>
+            <p>
+              Saída softmax da rede, não uma probabilidade calibrada de doença.
+            </p>
           </article>
         )}
         <article className="result-metric">
@@ -134,10 +155,12 @@ export default function Result() {
         <div style={{ marginBottom: 15 }}>
           <Alert icon="warning">
             <strong>
-              Baixa certeza: nenhuma classe atingiu {Math.round(lowConfidenceThreshold * 100)}% de probabilidade.
+              Baixa certeza: nenhuma classe atingiu{" "}
+              {Math.round(lowConfidenceThreshold * 100)}% de probabilidade.
             </strong>
-            <br />O resultado "{className(data.predictedClass)}" indica um caso suspeito pelo limiar de{" "}
-            {Math.round(threshold * 100)}%, não uma confirmação.
+            <br />O resultado "{className(data.predictedClass)}" indica um caso
+            suspeito pelo limiar de {Math.round(threshold * 100)}%, não uma
+            confirmação.
           </Alert>
         </div>
       )}
@@ -174,21 +197,36 @@ export default function Result() {
               formatValue={(value) => formatPercent(value * 100)}
             />
           ) : (
-            <p>Disponível só logo após a análise. O histórico guarda apenas a classe prevista e a confiança.</p>
+            <p>
+              Disponível só logo após a análise. O histórico guarda apenas a
+              classe prevista e a confiança.
+            </p>
           )}
         </div>
         <div className="placeholder-box">
           <h4>Imagem analisada</h4>
-          <p>{current ? current.fileName : "A imagem não fica guardada depois da análise."}</p>
+          <p>
+            {current
+              ? current.fileName
+              : "A imagem não fica guardada depois da análise."}
+          </p>
           {current?.fileUrl ? (
-            <img className="result-preview-image" src={current.fileUrl} alt="Imagem enviada para a análise" />
+            <img
+              className="result-preview-image"
+              src={current.fileUrl}
+              alt="Imagem enviada para a análise"
+            />
           ) : (
             <div className="placeholder-graphic">Imagem descartada</div>
           )}
         </div>
       </div>
 
-      <Panel title="Identificação" description="Metadados da análise" style={{ marginTop: 15 }}>
+      <Panel
+        title="Identificação"
+        description="Metadados da análise"
+        style={{ marginTop: 15 }}
+      >
         <InfoPair label="Identificador">{recordCode(data.id)}</InfoPair>
         {current?.caseCode && (
           <InfoPair label="Código do caso">{current.caseCode}</InfoPair>
@@ -196,14 +234,19 @@ export default function Result() {
         <InfoPair label="Módulo">{moduleName}</InfoPair>
         <InfoPair label="Data">{formatDate(data.createdAt)}</InfoPair>
         {metrics?.accuracyMean != null && (
-          <InfoPair label="Desempenho na validação (5 folds)" mono>Acurácia {formatPercent(metrics.accuracyMean)}
-              {metrics.f1Mean != null && ` · F1 ${formatPercent(metrics.f1Mean)}`}</InfoPair>
+          <InfoPair label="Desempenho na validação (5 folds)" mono>
+            Acurácia {formatPercent(metrics.accuracyMean)}
+            {metrics.f1Mean != null && ` · F1 ${formatPercent(metrics.f1Mean)}`}
+          </InfoPair>
         )}
       </Panel>
 
       <div className="placeholder-box" style={{ marginTop: 15, minHeight: 0 }}>
         <h4>Explicabilidade / mapa de atenção</h4>
-        <p>Ainda não implementado. Este espaço é reservado para o Grad-CAM, caso o grupo decida incluir.</p>
+        <p>
+          Ainda não implementado. Este espaço é reservado para o Grad-CAM, caso
+          o grupo decida incluir.
+        </p>
       </div>
 
       <div style={{ marginTop: 15 }}>
@@ -216,10 +259,18 @@ export default function Result() {
       </div>
 
       <div className="head-actions" style={{ marginTop: 17 }}>
-        <button type="button" className="btn primary" onClick={() => navigate("/new-analysis")}>
+        <button
+          type="button"
+          className="btn primary"
+          onClick={() => navigate("/new-analysis")}
+        >
           Iniciar outra análise <Icon name="arrow" />
         </button>
-        <button type="button" className="btn secondary" onClick={() => navigate("/limitations")}>
+        <button
+          type="button"
+          className="btn secondary"
+          onClick={() => navigate("/limitations")}
+        >
           Ver limitações
         </button>
       </div>
