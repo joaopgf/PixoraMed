@@ -2,10 +2,12 @@
 HANDOFF -- PixoraMed -- REFATORAÇÃO PEDIDA PELO PROFESSOR (JAVA, REACT JS, INFRA)
 ================================================================================
 
-Documento de continuidade, data de referência 10/11/2026. SUBSTITUI os resumos 3, 4
-e 5, que foram apagados: tudo o que ainda vale deles está aqui. Feito para outra
-instância do Claude, sem acesso à conversa anterior. Leia este arquivo e depois o
-README.md da raiz e o README.md de cada pasta (backend, frontend, ai-service, infra).
+Documento de continuidade, data de referência 11/11/2026. SUBSTITUI o resumo_6 (e,
+antes dele, os resumos 3, 4 e 5), que foram apagados: tudo o que ainda vale deles está
+aqui. Existe só UM resumo no projeto. Feito para outra instância do Claude, sem acesso à
+conversa anterior. Leia este arquivo e depois o README.md da raiz, o README.md e o
+CLAUDE.md de cada pasta (backend, frontend, ai-service, infra) e as skills em
+<pasta>/.claude/skills.
 
 Marcação: NÃO CONFERIDO = não verifiquei diretamente.
 
@@ -26,7 +28,7 @@ NA NUVEM (versão nova no ar desde 10/11/2026)
 ÍNDICE
  1. Contexto do projeto e da banca
  2. Estado atual em uma tela
- 3. O que foi feito nesta sessão (refatoração)
+ 3. O que foi feito nesta sessão (refatoração e melhorias do frontend)
  4. Arquitetura atual
  5. Backend (Spring Boot)
  6. Frontend (React JS)
@@ -64,26 +66,35 @@ NA NUVEM (versão nova no ar desde 10/11/2026)
 
 2. ESTADO ATUAL EM UMA TELA
 ---------------------------
-- main local = GitHub. Último commit de código/docs antes deste resumo: ed41c74.
-  Branches refactor/professor-feedback e feat/paginacao-historico foram APAGADAS
-  (local e remoto) depois do merge; tudo está na main.
+- main local = GitHub. Último commit antes deste resumo: 88128a5. Só existe a branch
+  main (refactor/professor-feedback e feat/paginacao-historico foram APAGADAS, local e
+  remoto, depois do merge).
 - Produção: Vercel + Render + Neon funcionando com a versão nova. João testou: criou a
   conta no site novo e a análise funcionou.
 - Neon: só as tabelas novas users, trainings e predictions. As antigas (usuarios,
   sessoes, treinos, previsoes) foram apagadas pelo João depois da migração. Usuários
   antigos não existem mais: todos precisam se cadastrar de novo.
 - Testes: backend 5 passando (mvn test); ai-service 20 passando (pytest, conferido num
-  Python 3.12 limpo em Docker); frontend compila (npm run build). Terraform:
-  fmt -check e validate ok; plan = "No changes".
-- Docker compose local: parado no momento (estava rodando durante a sessão).
+  Python 3.12 limpo em Docker); frontend: npm run lint sem erros nem avisos e npm run
+  build ok. Terraform: fmt -check e validate ok; plan = "No changes".
+- Vercel publicou o último commit (deploy READY de 88128a5); site respondendo.
+- Docker compose local: RODANDO ao fim da sessão (db, ai-service, backend, frontend).
+  Para parar: docker compose down em infra/. O Docker Desktop pode estar fechado ao
+  reabrir o PC (abrir antes de usar o compose).
+- Arquivos .env locais (fora do git): infra/.env (valores aleatórios que eu gerei,
+  usados pelo compose) e backend/.env, frontend/.env, ai-service/.env, criados a pedido
+  do João como cópia do .env.example de cada pasta; ele vai preencher os valores.
+  Só são lidos ao rodar o serviço fora do Docker.
+- O banco local do compose tem uma conta de teste (teste@pixoramed.test) que criei só
+  para conferir telas, e algumas análises de teste. Nada disso existe em produção.
 - Limpeza local feita: apagados backend/.venv (~1 GB), backend/app (sobras Python) e
   data/pixoramed.db. A pasta skills/ vazia sumiu.
 - ATENÇÃO: a pasta C:\c (criada por engano numa sessão antiga, com cópias de .bpmn)
   AINDA EXISTE. Remoção bloqueada pela checagem de segurança; João apaga à mão.
 
 
-3. O QUE FOI FEITO NESTA SESSÃO (REFATORAÇÃO)
----------------------------------------------
+3. O QUE FOI FEITO NESTA SESSÃO (REFATORAÇÃO E MELHORIAS DO FRONTEND)
+---------------------------------------------------------------------
 João trouxe um prompt (prompt-refatoracao-tcs.md, no Desktop) com a lista de 19
 correções do professor. Fase 0 (auditoria) revelou que o backend era Python/FastAPI.
 João DECIDIU reescrever o backend em Spring Boot Java, frontend em React JS (sem
@@ -122,7 +133,34 @@ Depois da refatoração, também nesta sessão:
 - Diagramas BPMN atualizados (BCrypt, JWT, /health, X-Internal-Token) e PNGs
   exportados de novo com bpmn-js.
 - Deck atualizado (slides 4 a 7, 9, 15 e notas).
-- Limpeza local; branches apagadas; resumos 3, 4 e 5 substituídos por este.
+- Limpeza local; branches apagadas; resumos 3, 4 e 5 substituídos pelo resumo_6.
+
+Melhorias do frontend, em 11/11 (pedidas pelo João depois de uma análise de
+modularização):
+- Componentes novos: Panel (19 blocos repetidos), InfoPair (14 pares rótulo/valor),
+  Toggle, BarChartWithError, ImageDropzone, QueryState, LowConfidenceTag.
+- utils/resultView.js (buildResultView e isLowConfidence: interpretação do resultado
+  que estava dentro da página Result) e utils/exportCsv.js (downloadCsv).
+- Correções de conteúdo: etiqueta "possível vazamento" (era "vazamento"); aviso da
+  Nova análise reescrito (o modelo não reconhece outro tipo de exame; em Oral e Cérebro
+  vira "inconclusivo" abaixo de 80%); etiqueta "baixa certeza" no Histórico e no Painel
+  (regra conferida com 6 casos, incluindo o maligno 34,64% da demo); gráficos de
+  Resultados dos treinos só com execuções sem variante (o CSV atual não tem variante,
+  então nada mudou na tela); animação da página inicial e do login só com o cérebro
+  (rins e pulmões removidos, imagens apagadas; ficou o botão "Pausar animação").
+- Desempenho: telas internas com React.lazy e Suspense dentro do Layout. Pacote
+  principal de 774 KB para 320 KB (gzip 228 -> 103 KB); Recharts só em Result e
+  TrainingResults.
+- ESLint 9 (eslint.config.js, npm run lint): 0 erros, 0 avisos. initials() foi para
+  utils/modules.js; os dois contextos têm eslint-disable de react-refresh com motivo.
+- CSS: app.css (2.395 linhas) dividido em 12 arquivos por área em src/styles, juntados
+  por index.css na mesma ordem; o CSS do build ficou byte a byte igual (mesmo hash).
+- Erro ERR_FILE_NOT_FOUND no console corrigido: o AnalysisContext liberava o endereço
+  blob: da prévia antes de a tela trocar de imagem (a prévia antiga aparecia por um
+  instante em outro módulo) e criava dois endereços por imagem no StrictMode. Agora
+  cria um por imagem fora do setState, libera no cleanup de um useEffect e a prévia de
+  outro módulo não aparece. Conferido numa aba limpa: console sem erros.
+- Skill frontend-architecture, README e CLAUDE.md do frontend atualizados com tudo isso.
 
 
 4. ARQUITETURA ATUAL
@@ -147,7 +185,7 @@ Estrutura do repositório:
   infra/       docker-compose.yml, .env.example, terraform/, README, CLAUDE.md,
                .claude/skills/infra-architecture
   docs/        bpmn/ (3 workflows + generator/), save_model.md, glossary.md, deck .pptx
-  resumo_6.txt (este arquivo)
+  resumo_7.txt (este arquivo; único resumo)
 
 
 5. BACKEND (SPRING BOOT)
@@ -196,13 +234,17 @@ Recharts. src/:
               conectado"; chave pixoramed_session), ProtectedRoute
   context/    AnalysisContext (análise em andamento, módulo pendente, último resultado)
   hooks/      useApiData (useModels, useTrainings, usePredictionHistory)
-  components/ Layout, common (PageHeader, Alert, Steps, TextLink, initials), Icon,
-              Brand, DatasetCredits, OrganVisual, SkinReproduction, ProbabilityPieChart
-  pages/      Landing, Login, Dashboard, NewAnalysis, PrepareExam, Review, Result,
-              History, TrainingResults, Models, Limitations, Account
+  components/ Layout (Suspense em volta do Outlet), common (PageHeader, Alert, Steps,
+              TextLink), Panel, InfoPair, Toggle, QueryState, ImageDropzone,
+              BarChartWithError, ProbabilityPieChart, LowConfidenceTag, Icon, Brand,
+              DatasetCredits, OrganVisual (só cérebro), SkinReproduction
+  pages/      Landing e Login (no pacote principal); Dashboard, NewAnalysis,
+              PrepareExam, Review, Result, History, TrainingResults, Models,
+              Limitations, Account (React.lazy, carregadas sob demanda)
   utils/      modules.js (MODULES com id skin/oral/brain, className traduz benign ->
               benigno, malignant -> maligno, inconclusive -> inconclusivo, tumor ->
-              hipofisário), datasetNotes.js
+              hipofisário; formatadores; initials), datasetNotes.js, resultView.js,
+              exportCsv.js
   styles/     index.css junta base, shared, layout, landing, login, dashboard,
               modules, upload, result, history, models-account, responsive e
               extras (classes PT renomeadas: notes, text, citation, pagination...)
@@ -213,10 +255,12 @@ Sem variáveis VITE_. vite.config.js repassa /api para BACKEND_URL (padrão
 Pizza: rosca do Recharts, paleta validada para daltonismo (skill dataviz), legenda em
   texto com %, classe prevista no centro e em negrito, role="img" com descrição,
   agrupa em "Outros" acima de 6 classes. Componente só recebe props.
-Fontes: tokens no :root de app.css (xs 0.875rem, sm 0.9375rem, base 1rem, lg
+Fontes: tokens no :root de styles/base.css (xs 0.875rem, sm 0.9375rem, base 1rem, lg
   1.125rem, xl 1.5rem, title 2.25rem). Sidebar alargada para 280px. Conferido no
   navegador: sem rolagem horizontal em 375 px nas telas principais.
-ESLint 9 com npm run lint. Textos da tela continuam em português.
+ESLint 9 com npm run lint (eslint.config.js; regras recomendadas, react-hooks e
+  react-refresh). Prettier não está instalado no projeto. Textos da tela continuam em
+  português.
 
 
 7. AI-SERVICE (PYTHON)
@@ -361,42 +405,34 @@ Datasets: Multi Cancer (Obuli Sai Naren, 2022, DOI 10.34740/KAGGLE/DSV/3415848) 
 
 13. LISTA DO QUE AINDA FALTA
 ----------------------------
+Concluído desde o resumo_6: itens antigos do app (vazamento, aviso do catálogo, baixa
+certeza nas listas, média de variantes, animação), ESLint, divisão do CSS, erro do
+console e modularização (seção 3).
+
 App
- Feito em 11/11 (commit da modularização e o seguinte): etiqueta "possível
-    vazamento"; aviso da Nova análise corrigido (cita o inconclusivo); etiqueta
-    "baixa certeza" no Histórico e no Painel (utils/resultView.isLowConfidence);
-    gráficos de Resultados só com execuções sem variante (o CSV atual não tem
-    variante, então não mudou nada visível); animação só com o cérebro (rins e
-    pulmões removidos); telas internas com React.lazy (pacote principal de 774 KB
-    para 320 KB). Também: componentes Panel, InfoPair, Toggle, QueryState,
-    ImageDropzone, BarChartWithError, LowConfidenceTag; utils resultView e exportCsv.
- a. docs/save_model.md: trocar o exemplo mama_cor.pt.
- Também feito: ESLint 9 (npm run lint, eslint.config.js, sem erros); CSS dividido
-    em 12 arquivos por área em src/styles (index.css junta na ordem; o CSS do build
-    ficou byte a byte igual); erro ERR_FILE_NOT_FOUND corrigido (o AnalysisContext
-    liberava o endereço blob da prévia antes da tela trocar de imagem e criava dois
-    endereços por imagem no StrictMode; agora libera no cleanup de um useEffect).
- b. Opcionais: testes de componentes; limite de tentativas de login (backend).
- c. Prettier: npx não conseguiu baixar o pacote (erro de rede do npm); formatação
-    dos arquivos novos foi ajustada à mão.
+ a. docs/save_model.md: trocar o exemplo mama_cor.pt (linha 16).
+ b. Opcionais: testes de componentes; limite de tentativas de login (backend);
+    Prettier no projeto (npx não conseguiu baixar o pacote: erro de rede do npm).
 Deploy e operação
- h. Fazer backup do infra/terraform/terraform.tfstate (só existe no PC; tem segredos).
- i. Token da Vercel vence em ~30 dias (criado em 10/11): gerar outro se for rodar o
+ c. Fazer backup do infra/terraform/terraform.tfstate (só existe no PC; tem segredos).
+ d. Token da Vercel vence em ~30 dias (criado em 10/11): gerar outro se for rodar o
     Terraform depois disso. O site não depende dele.
- j. Criar a conta do grupo para a demo no site novo (sem senha pessoal).
- k. Apagar a pasta C:\c à mão.
- l. Render gratuito: limite mensal de horas somado entre serviços do workspace
+ e. Criar a conta do grupo para a demo no site novo (sem senha pessoal).
+ f. Apagar a pasta C:\c à mão (ainda existe).
+ g. Render gratuito: limite mensal de horas somado entre serviços do workspace
     (3 serviços com o projeto da faculdade do João): NÃO CONFERIDO.
- m. Timeout do rewrite da Vercel enquanto o Render acorda: NÃO CONFERIDO na doc.
+ h. Timeout do rewrite da Vercel enquanto o Render acorda: NÃO CONFERIDO na doc.
+ i. Preencher backend/.env e ai-service/.env se for rodar fora do Docker.
 Modelos e testes
- n. Teste de Oral e Cérebro com imagens de outra fonte (maior valor para a banca).
- o. Confirmar com o colega a separação do Cérebro e os rótulos das 21 imagens da Pele.
- p. Mais imagens separadas para medir o skin_color.
+ j. Teste de Oral e Cérebro com imagens de outra fonte (maior valor para a banca).
+ k. Confirmar com o colega a separação do Cérebro e os rótulos das 21 imagens da Pele.
+ l. Mais imagens separadas para medir o skin_color.
 Entrega
- q. PDF com BPMN, justificativa técnica e ética: falta.
- r. Vídeo de backup da demo: falta.
- s. Dar acesso à banca ao repositório (privado).
- t. Ensaiar os 20 min; revisar o deck com o grupo.
+ m. PDF com BPMN, justificativa técnica e ética: falta.
+ n. Vídeo de backup da demo: falta.
+ o. Dar acesso à banca ao repositório (privado).
+ p. Ensaiar os 20 min; revisar o deck com o grupo (Pandas só nos notebooks agora;
+    memória do backend Java não medida).
 
 
 14. COMO RODAR
@@ -412,7 +448,9 @@ Sem Docker:
               AI_SERVICE_TOKEN; uvicorn app.main:app --reload --port 8001
   frontend:   npm ci; npm run dev
 Testes: backend "mvn test"; ai-service "pytest" (Python do PC é 3.14; testei em Docker
-  python:3.12-slim); frontend "npm run build".
+  python:3.12-slim); frontend "npm run lint" e "npm run build".
+Conferir telas: navegador do app em http://localhost:5173 com o compose rodando; o login
+  local usa a conta de teste do banco do compose ou uma nova criada pela tela.
 Terraform (infra/terraform): terraform plan; apply só com aprovação do João.
 BPMN: cd docs\bpmn\generator; python generate.py; exportar PNG (bpmn.io ou bpmn-js).
 Deck: python-pptx instalado no Python do sistema nesta sessão; LibreOffice NÃO existe;
@@ -450,6 +488,18 @@ Banca: abrir o site ~5 min antes para acordar backend e IA.
 - Porta 8000/8080: o Docker do João pode estar rodando; confira antes de escrever no
   banco. Não rodar "down -v" no projeto principal.
 - npm 11: aviso "allow-scripts" no esbuild; o build funciona.
+- npx pode falhar com "npm error network" (aconteceu com o Prettier); npm install
+  funcionou normalmente na mesma sessão.
+- Navegador do app: o console de uma aba acumula mensagens antigas; para conferir
+  erros, abra uma aba nova e repita o fluxo nela.
+- React StrictMode roda as funções de atualização de estado duas vezes: nada de efeito
+  colateral (createObjectURL, revokeObjectURL) dentro de setState(fn).
+- Falhas de imagens blob: não aparecem em performance.getEntriesByType; para investigar,
+  instrumente URL.createObjectURL e URL.revokeObjectURL na página.
+- Scripts Python longos via heredoc no Git Bash podem quebrar por causa de aspas: salve
+  o script no scratchpad e rode o arquivo.
+- Arquivos .txt em CRLF: ler com newline="" e regravar com newline="\r\n" (o git
+  guarda em LF por causa do .gitattributes).
 
 
 16. CONVENÇÕES DE TRABALHO
@@ -471,7 +521,7 @@ Banca: abrir o site ~5 min antes para acordar backend e IA.
 
 17. COMMITS
 -----------
-Desta sessão (todos na main e no GitHub):
+Desta sessão (todos na main e no GitHub, em ordem):
   aaa8e07 refactor: reorganize repository into backend, frontend, ai-service and infra
   9bd49d3 refactor: rewrite backend in Spring Boot with JWT login
   d398c55 refactor: translate ai-service to English and unify requirements
@@ -483,7 +533,11 @@ Desta sessão (todos na main e no GitHub):
   3822f0d chore: keep Claude skills out of the Docker images
   e5e1a84 docs: update BPMN workflows to the Spring Boot backend and JWT login
   ed41c74 docs: update presentation deck to the new architecture
-  (+ o commit deste resumo)
+  3c03ed5 docs: replace session summaries 3 to 5 with a complete summary 6
+  676eed2 refactor: extract shared frontend components and helpers
+  d34cae4 feat: frontend fixes, low confidence tag and lazy-loaded pages
+  88128a5 chore: add ESLint, split global CSS and fix image preview URL release
+  (+ o commit deste resumo, se o João pedir)
 Antes desta sessão: 10ecb56 (pequenas alterações, commit do João), a9c3eac
   ("Conectando..." enquanto a IA acorda), b7525d0 (paginação do histórico), 0ba2f1b
   (microsserviço de IA), f5fc483 (login com sessão), 98169bb e anteriores (modelos e
