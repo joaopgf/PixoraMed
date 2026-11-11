@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 
 import { PageHeader, TextLink } from "../components/common";
 import Icon from "../components/Icon";
+import QueryState from "../components/QueryState";
 import { useModels, usePredictionHistory, useTrainings } from "../hooks/useApiData";
 import { className, formatDate, formatPercent, MODULES, parseModelId, recordCode } from "../utils/modules";
+import Panel from "../components/Panel";
 
 const WORKFLOW = [
   { title: "Selecionar módulo", text: "Escolher o módulo compatível com a imagem." },
@@ -73,14 +75,11 @@ export default function Dashboard() {
       </section>
 
       <div className="dash-grid">
-        <section className="panel">
-          <div className="panel-head">
-            <div>
-              <h3>Acesso rápido aos módulos</h3>
-              <p>Selecione a área para iniciar uma análise.</p>
-            </div>
-            <TextLink to="/new-analysis">Ver todos →</TextLink>
-          </div>
+        <Panel
+          title="Acesso rápido aos módulos"
+          description="Selecione a área para iniciar uma análise."
+          actions={<TextLink to="/new-analysis">Ver todos →</TextLink>}
+        >
           <div className="quick-grid">
             {MODULES.map((module) => (
               <button
@@ -97,15 +96,9 @@ export default function Dashboard() {
               </button>
             ))}
           </div>
-        </section>
+        </Panel>
 
-        <aside className="panel">
-          <div className="panel-head">
-            <div>
-              <h3>Fluxo de trabalho</h3>
-              <p>Etapas de uma análise</p>
-            </div>
-          </div>
+        <Panel title="Fluxo de trabalho" description="Etapas de uma análise" as="aside">
           <div className="workflow">
             {WORKFLOW.map((step, i) => (
               <div key={step.title} style={{ display: "contents" }}>
@@ -120,21 +113,16 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-        </aside>
+        </Panel>
       </div>
 
-      <section className="panel" style={{ marginTop: 16 }}>
-        <div className="panel-head">
-          <div>
-            <h3>Atividade recente</h3>
-            <p>Últimas previsões registradas no banco.</p>
-          </div>
-          <TextLink to="/history">Abrir histórico →</TextLink>
-        </div>
-        {predictions.isError && (
-          <div className="empty">Não foi possível carregar: {predictions.error.message}</div>
-        )}
-        {predictions.data?.length === 0 && <div className="empty">Nenhuma análise feita ainda.</div>}
+      <Panel
+        title="Atividade recente"
+        description="Últimas previsões registradas no banco."
+        style={{ marginTop: 16 }}
+        actions={<TextLink to="/history">Abrir histórico →</TextLink>}
+      >
+        <QueryState query={predictions} emptyText="Nenhuma análise feita ainda." />
         <div className="activity-list">
           {predictions.data?.slice(0, 3).map((record) => {
             const { module } = parseModelId(record.modelId);
@@ -159,7 +147,7 @@ export default function Dashboard() {
             );
           })}
         </div>
-      </section>
+      </Panel>
     </>
   );
 }

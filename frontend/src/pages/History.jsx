@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/common";
 import Icon from "../components/Icon";
 import { usePredictionHistory } from "../hooks/useApiData";
+import { downloadCsv } from "../utils/exportCsv";
 import { className, formatDate, formatPercent, modeName, MODULES, parseModelId, recordCode } from "../utils/modules";
 
 const ITEMS_PER_PAGE = 10;
@@ -22,15 +23,7 @@ function exportCsv(records) {
       record.timeMs.toFixed(0),
     ]),
   ];
-  // BOM e ";" para abrir direto no Excel em português
-  const csv =
-    "﻿" + rows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(";")).join("\r\n");
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "pixoramed-historico.csv";
-  link.click();
-  URL.revokeObjectURL(url);
+  downloadCsv("pixoramed-historico.csv", rows);
 }
 
 export default function History() {

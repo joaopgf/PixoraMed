@@ -4,11 +4,11 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 
 import { Alert, PageHeader, Steps } from "../components/common";
 import Icon from "../components/Icon";
+import ImageDropzone from "../components/ImageDropzone";
 import { useAnalysis } from "../context/AnalysisContext";
 import { useModels } from "../hooks/useApiData";
 import { className, findModule, formatSize, modeName, modelsForModule } from "../utils/modules";
 
-const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const MAX_MB = 10;
 
 export default function PrepareExam() {
@@ -17,7 +17,6 @@ export default function PrepareExam() {
   const { analysis, startAnalysis, updateAnalysis, setFile } = useAnalysis();
   const models = useModels();
   const [error, setError] = useState("");
-  const [dragging, setDragging] = useState(false);
 
   const module = findModule(moduleId);
   const available = module ? modelsForModule(module, models.data) : [];
@@ -37,14 +36,6 @@ export default function PrepareExam() {
   if (!module) return <Navigate to="/new-analysis" replace />;
 
   const model = available.find((item) => item.id === analysis.modelId);
-
-  function chooseFile(file) {
-    if (!file) return;
-    if (!ACCEPTED_TYPES.includes(file.type)) return setError("Formato não suportado. Selecione PNG, JPG ou WEBP.");
-    if (file.size > MAX_MB * 1024 * 1024) return setError(`O arquivo passa do limite de ${MAX_MB} MB.`);
-    setError("");
-    setFile(file);
-  }
 
   const pending = !analysis.file
     ? "Selecione uma imagem para continuar."
@@ -123,37 +114,7 @@ export default function PrepareExam() {
 
           <div className="field">
             <label htmlFor="imageInput">Imagem do exame</label>
-            <label
-              className={`dropzone${dragging ? " dragover" : ""}`}
-              htmlFor="imageInput"
-              onDragOver={(event) => {
-                event.preventDefault();
-                setDragging(true);
-              }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(event) => {
-                event.preventDefault();
-                setDragging(false);
-                chooseFile(event.dataTransfer.files[0]);
-              }}
-            >
-              <input
-                id="imageInput"
-                type="file"
-                accept={ACCEPTED_TYPES.join(",")}
-                hidden
-                onChange={(event) => {
-                  chooseFile(event.target.files?.[0]);
-                  event.target.value = "";
-                }}
-              />
-              <span className="upload-symbol">
-                <Icon name="upload" />
-              </span>
-              <strong>Arraste sua imagem até aqui</strong>
-              <span>ou clique para selecionar um arquivo</span>
-              <small>PNG, JPG ou WEBP · até {MAX_MB} MB</small>
-            </label>
+            <ImageDropzone id="imageInput" maxMb={MAX_MB} onFile={setFile} onError={setError} />
           </div>
 
           {analysis.file && analysis.fileUrl && (

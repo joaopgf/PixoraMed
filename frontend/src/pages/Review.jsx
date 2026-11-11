@@ -5,9 +5,11 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { predictionsApi } from "../api/predictionsApi";
 import { Alert, PageHeader, Steps } from "../components/common";
 import Icon from "../components/Icon";
+import InfoPair from "../components/InfoPair";
 import { useAnalysis } from "../context/AnalysisContext";
 import { useModels } from "../hooks/useApiData";
 import { findModule, formatSize, modeName } from "../utils/modules";
+import Panel from "../components/Panel";
 
 export default function Review() {
   const navigate = useNavigate();
@@ -50,50 +52,23 @@ export default function Review() {
       />
       <Steps current={2} />
       <div className="review-grid">
-        <section className="panel">
-          <div className="panel-head">
-            <div>
-              <h3>Imagem selecionada</h3>
-              <p>Pré-visualização no navegador</p>
-            </div>
-            <span className="pill neutral">Ainda não enviada</span>
-          </div>
+        <Panel
+          title="Imagem selecionada"
+          description="Pré-visualização no navegador"
+          actions={<span className="pill neutral">Ainda não enviada</span>}
+        >
           <div className="review-image">
             {analysis.fileUrl && <img src={analysis.fileUrl} alt="Imagem selecionada" />}
           </div>
-        </section>
+        </Panel>
 
-        <section className="panel">
-          <div className="panel-head">
-            <div>
-              <h3>Resumo do caso</h3>
-              <p>Dados informados nesta sessão</p>
-            </div>
-          </div>
-          <div className="info-pair">
-            <span>Módulo</span>
-            <strong>{module.name}</strong>
-          </div>
-          <div className="info-pair">
-            <span>Exame</span>
-            <strong>{module.exam}</strong>
-          </div>
-          <div className="info-pair">
-            <span>Modelo</span>
-            <strong>{model ? `${model.id} (${modeName(model.mode)})` : analysis.modelId}</strong>
-          </div>
-          <div className="info-pair">
-            <span>Código do caso</span>
-            <strong>{analysis.caseCode.trim() || "Não informado"}</strong>
-          </div>
-          <div className="info-pair">
-            <span>Arquivo</span>
-            <strong>{analysis.file.name}</strong>
-          </div>
-          <div className="info-pair">
-            <span>Tamanho</span>
-            <strong>{formatSize(analysis.file.size)}</strong>
-          </div>
+        <Panel title="Resumo do caso" description="Dados informados nesta sessão">
+          <InfoPair label="Módulo">{module.name}</InfoPair>
+          <InfoPair label="Exame">{module.exam}</InfoPair>
+          <InfoPair label="Modelo">{model ? `${model.id} (${modeName(model.mode)})` : analysis.modelId}</InfoPair>
+          <InfoPair label="Código do caso">{analysis.caseCode.trim() || "Não informado"}</InfoPair>
+          <InfoPair label="Arquivo">{analysis.file.name}</InfoPair>
+          <InfoPair label="Tamanho">{formatSize(analysis.file.size)}</InfoPair>
           <div style={{ marginTop: 15 }}>
             {prediction.isError ? (
               <Alert icon="warning">
@@ -118,7 +93,7 @@ export default function Review() {
           >
             {prediction.isPending ? "Analisando..." : "Executar análise"} <Icon name="arrow" />
           </button>
-        </section>
+        </Panel>
       </div>
     </>
   );

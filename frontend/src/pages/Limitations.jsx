@@ -2,6 +2,7 @@
 import { PageHeader } from "../components/common";
 import DatasetCredits from "../components/DatasetCredits";
 import { DATASET_NOTES, SCOPE_WARNING } from "../utils/datasetNotes";
+import Panel from "../components/Panel";
 
 export default function Limitations() {
   return (
@@ -12,10 +13,7 @@ export default function Limitations() {
         description="O que os números da PixoraMed medem, o que eles não medem e por que este app não deve ser usado em pacientes."
       />
       <div className="stack">
-        <section className="panel">
-          <div className="panel-head">
-            <h3>Não é um diagnóstico</h3>
-          </div>
+        <Panel title="Não é um diagnóstico">
           <ul className="notes bullets">
             <li>
               Os modelos foram treinados com datasets públicos do Kaggle e nunca
@@ -45,12 +43,9 @@ export default function Limitations() {
               mantém a classe e mostra um aviso de baixa certeza.
             </li>
           </ul>
-        </section>
+        </Panel>
 
-        <section className="panel">
-          <div className="panel-head">
-            <h3>Vazamento entre treino e teste</h3>
-          </div>
+        <Panel title="Vazamento entre treino e teste">
           <p className="text" style={{ margin: 0 }}>
             A documentação do Multi Cancer, usado em Oral e Cérebro, informa que
             as imagens foram aumentadas (rotação, deslocamento, zoom,
@@ -58,12 +53,9 @@ export default function Limitations() {
             treino e no teste ao mesmo tempo, então a acurácia alta pode medir
             memorização, e não generalização para pacientes novos.
           </p>
-        </section>
+        </Panel>
 
-        <section className="panel">
-          <div className="panel-head">
-            <h3>O número honesto: pele</h3>
-          </div>
+        <Panel title="O número honesto: pele">
           <p className="text">{DATASET_NOTES.skin}</p>
           <p className="text">
             A divisão por lesão (StratifiedGroupKFold por <code>lesion_id</code>
@@ -87,12 +79,9 @@ export default function Limitations() {
             especificidade de 83,7%) são de uma reprodução do treino, não do
             modelo usado nas análises.
           </p>
-        </section>
+        </Panel>
 
-        <section className="panel">
-          <div className="panel-head">
-            <h3>Viés</h3>
-          </div>
+        <Panel title="Viés">
           <ul className="notes bullets">
             <li>
               O HAM10000 é muito desbalanceado (nevo ~67%, dermatofibroma ~1%).
@@ -107,12 +96,9 @@ export default function Limitations() {
               rede pode aprender o aparelho, não a doença.
             </li>
           </ul>
-        </section>
+        </Panel>
 
-        <section className="panel">
-          <div className="panel-head">
-            <h3>Privacidade (LGPD)</h3>
-          </div>
+        <Panel title="Privacidade (LGPD)">
           <ul className="notes bullets">
             <li>
               A imagem enviada é processada em memória e descartada. O banco
@@ -124,12 +110,9 @@ export default function Limitations() {
               identifique um paciente.
             </li>
           </ul>
-        </section>
+        </Panel>
 
-        <section className="panel">
-          <div className="panel-head">
-            <h3>Limitação técnica e trabalhos futuros</h3>
-          </div>
+        <Panel title="Limitação técnica e trabalhos futuros">
           <p className="text">
             O protótipo não verifica se a imagem é compatível com o módulo
             escolhido. Ele foi pensado para uso por médicos, que escolhem o
@@ -143,14 +126,11 @@ export default function Limitations() {
             da classificação, comparando-as com o padrão do treino ou usando um
             modelo que identifique o tipo de exame.
           </p>
-        </section>
+        </Panel>
 
-        <section className="panel">
-          <div className="panel-head">
-            <h3>Datasets e créditos</h3>
-          </div>
+        <Panel title="Datasets e créditos">
           <DatasetCredits />
-        </section>
+        </Panel>
       </div>
     </>
   );

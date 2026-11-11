@@ -4,11 +4,14 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { Alert, PageHeader, Steps } from "../components/common";
 import Icon from "../components/Icon";
+import InfoPair from "../components/InfoPair";
+import Panel from "../components/Panel";
 import ProbabilityPieChart from "../components/ProbabilityPieChart";
 import { useAnalysis } from "../context/AnalysisContext";
 import { useModels, usePredictionHistory } from "../hooks/useApiData";
 import { LEAKAGE_SUSPICION, SCOPE_WARNING } from "../utils/datasetNotes";
 import { className, formatDate, formatPercent, modeName, parseModelId, recordCode } from "../utils/modules";
+import { buildResultView } from "../utils/resultView";
 
 const DEFAULT_WARNING =
   "Resultado de um modelo experimental, feito para fins acadêmicos. Não é um diagnóstico e não substitui a avaliação de um profissional de saúde.";
@@ -45,21 +48,15 @@ export default function Result() {
   const usedModel = models.data?.find((model) => model.id === data.modelId);
   const metrics = usedModel?.metrics;
   const leakage = module && LEAKAGE_SUSPICION[module.id];
-  // Com limiar, a confiança é a probabilidade da classe prevista; o que importa é a probabilidade da classe positiva
-  const threshold = current?.threshold ?? usedModel?.threshold ?? null;
-  const positiveClass = usedModel?.classes[1] ?? "malignant";
-  const positiveProbability = data.predictedClass === positiveClass ? data.confidence : 1 - data.confidence;
-  // Só em modelos com limiar próprio: a classe é mantida, e a tela avisa se nenhuma classe alcançar o valor mínimo
-  const confidenceThreshold = current?.lowConfidenceThreshold ?? usedModel?.lowConfidenceThreshold ?? null;
-  const lowConfidence =
-    threshold !== null &&
-    confidenceThreshold !== null &&
-    Math.max(positiveProbability, 1 - positiveProbability) < confidenceThreshold;
-  const inconclusive = data.predictedClass === "inconclusive";
-  const inconclusiveThreshold = current?.inconclusiveThreshold ?? usedModel?.inconclusiveThreshold ?? null;
-  const inconclusiveText = `Resultado inconclusivo: o modelo não atingiu a confiança mínima${
-    inconclusiveThreshold !== null ? ` de ${Math.round(inconclusiveThreshold * 100)}%` : ""
-  } para indicar uma classe nesta imagem.`;
+  const {
+    threshold,
+    positiveClass,
+    positiveProbability,
+    lowConfidence,
+    lowConfidenceThreshold,
+    inconclusive,
+    inconclusiveText,
+  } = buildResultView(data, current, usedModel);
 
   return (
     <>
@@ -129,7 +126,7 @@ export default function Result() {
         <div style={{ marginBottom: 15 }}>
           <Alert icon="warning">
             <strong>
-              Baixa certeza: nenhuma classe atingiu {Math.round(confidenceThreshold * 100)}% de probabilidade.
+              Baixa certeza: nenhuma classe atingiu {Math.round(lowConfidenceThreshold * 100)}% de probabilidade.
             </strong>
             <br />O resultado "{className(data.predictedClass)}" indica um caso suspeito pelo limiar de{" "}
             {Math.round(threshold * 100)}%, não uma confirmação.
@@ -182,41 +179,18 @@ export default function Result() {
         </div>
       </div>
 
-      <section className="panel" style={{ marginTop: 15 }}>
-        <div className="panel-head">
-          <div>
-            <h3>Identificação</h3>
-            <p>Metadados da análise</p>
-          </div>
-        </div>
-        <div className="info-pair">
-          <span>Identificador</span>
-          <strong>{recordCode(data.id)}</strong>
-        </div>
+      <Panel title="Identificação" description="Metadados da análise" style={{ marginTop: 15 }}>
+        <InfoPair label="Identificador">{recordCode(data.id)}</InfoPair>
         {current?.caseCode && (
-          <div className="info-pair">
-            <span>Código do caso</span>
-            <strong>{current.caseCode}</strong>
-          </div>
+          <InfoPair label="Código do caso">{current.caseCode}</InfoPair>
         )}
-        <div className="info-pair">
-          <span>Módulo</span>
-          <strong>{moduleName}</strong>
-        </div>
-        <div className="info-pair">
-          <span>Data</span>
-          <strong>{formatDate(data.createdAt)}</strong>
-        </div>
+        <InfoPair label="Módulo">{moduleName}</InfoPair>
+        <InfoPair label="Data">{formatDate(data.createdAt)}</InfoPair>
         {metrics?.accuracyMean != null && (
-          <div className="info-pair">
-            <span>Desempenho na validação (5 folds)</span>
-            <strong className="mono">
-              Acurácia {formatPercent(metrics.accuracyMean)}
-              {metrics.f1Mean != null && ` · F1 ${formatPercent(metrics.f1Mean)}`}
-            </strong>
-          </div>
+          <InfoPair label="Desempenho na validação (5 folds)" mono>Acurácia {formatPercent(metrics.accuracyMean)}
+              {metrics.f1Mean != null && ` · F1 ${formatPercent(metrics.f1Mean)}`}</InfoPair>
         )}
-      </section>
+      </Panel>
 
       <div className="placeholder-box" style={{ marginTop: 15, minHeight: 0 }}>
         <h4>Explicabilidade / mapa de atenção</h4>

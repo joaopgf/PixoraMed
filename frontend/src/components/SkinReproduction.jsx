@@ -1,5 +1,6 @@
 // Seção da tela de resultados com as métricas e os gráficos da reprodução do treino da Pele (EfficientNet-B0).
 import { Alert } from "./common";
+import Panel from "./Panel";
 
 // Números do treino rodado em 06/11/2026 no Colab (Tesla T4) com rna_cor/rna_Pele_EfficientNet.ipynb, do Projeto-ML-Cancer.
 // Os intervalos de 95% vêm de bootstrap por lesão sobre as probabilidades salvas do conjunto de teste.
@@ -35,16 +36,11 @@ const CHARTS = [
 
 export default function SkinReproduction() {
   return (
-    <section className="panel" style={{ marginBottom: 16 }}>
-      <div className="panel-head">
-        <div>
-          <h3>Pele · EfficientNet-B0: reprodução do treino</h3>
-          <p>
-            Benigno x maligno (melanoma e carcinoma basocelular), em 1.915
-            imagens de teste separadas por lesão, com 5 folds no treino.
-          </p>
-        </div>
-      </div>
+    <Panel
+      title="Pele · EfficientNet-B0: reprodução do treino"
+      description="Benigno x maligno (melanoma e carcinoma basocelular), em 1.915 imagens de teste separadas por lesão, com 5 folds no treino."
+      style={{ marginBottom: 16 }}
+    >
 
       <div style={{ marginBottom: 15 }}>
         <Alert icon="warning">
@@ -91,6 +87,6 @@ export default function SkinReproduction() {
           </figure>
         ))}
       </div>
-    </section>
+    </Panel>
   );
 }

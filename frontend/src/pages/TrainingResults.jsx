@@ -1,9 +1,12 @@
 // Resultados dos treinos: reprodução da Pele, gráficos cor x cinza e normalização, tabela de execuções e observações.
 import { useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, ErrorBar, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+import BarChartWithError from "../components/BarChartWithError";
 import { PageHeader } from "../components/common";
+import Panel from "../components/Panel";
+import QueryState from "../components/QueryState";
 import SkinReproduction from "../components/SkinReproduction";
+import Toggle from "../components/Toggle";
 import { useTrainings } from "../hooks/useApiData";
 import { DATASET_NOTES, LEAKAGE_SUSPICION } from "../utils/datasetNotes";
 import { findModule, formatPercent } from "../utils/modules";
@@ -93,19 +96,14 @@ export default function TrainingResults() {
 
       <SkinReproduction />
 
-      {trainings.isLoading && <div className="panel empty">Carregando...</div>}
-      {trainings.isError && (
-        <div className="panel empty">Não foi possível carregar os treinos: {trainings.error.message}</div>
-      )}
+      <QueryState query={trainings} className="panel empty" errorPrefix="Não foi possível carregar os treinos" />
 
       {trainings.data && (
         <div className="stack">
-          <section className="panel">
-            <div className="panel-head">
-              <div>
-                <h3>Cor vs. tons de cinza · {metricName}</h3>
-                <p>Barras ausentes: configuração ainda não rodada com 5 folds.</p>
-              </div>
+          <Panel
+            title={`Cor vs. tons de cinza · ${metricName}`}
+            description="Barras ausentes: configuração ainda não rodada com 5 folds."
+            actions={
               <Toggle
                 options={[
                   { value: "yes", name: "Normalizado (/255)" },
@@ -114,39 +112,34 @@ export default function TrainingResults() {
                 current={normalized ? "yes" : "no"}
                 onChange={(value) => setNormalized(value === "yes")}
               />
-            </div>
-            <Chart
+            }
+          >
+            <BarChartWithError
               data={colorVsGray}
               series={[
                 { key: "color", name: "Colorido (RGB)", color: COLORS.color },
                 { key: "gray", name: "Tons de cinza", color: COLORS.gray },
               ]}
             />
-          </section>
+          </Panel>
 
-          <section className="panel">
-            <div className="panel-head">
-              <div>
-                <h3>Efeito da normalização · {metricName}</h3>
-                <p>Só as configurações rodadas das duas formas.</p>
-              </div>
-            </div>
-            <Chart
+          <Panel
+            title={`Efeito da normalização · ${metricName}`}
+            description="Só as configurações rodadas das duas formas."
+          >
+            <BarChartWithError
               data={normalization}
               series={[
                 { key: "normalized", name: "Normalizado (/255)", color: COLORS.normalized },
                 { key: "raw", name: "Sem normalizar", color: COLORS.raw },
               ]}
             />
-          </section>
+          </Panel>
 
-          <section className="panel">
-            <div className="panel-head">
-              <div>
-                <h3>Todas as execuções</h3>
-                <p>{trainings.data.length} treinos registrados no banco.</p>
-              </div>
-            </div>
+          <Panel
+            title="Todas as execuções"
+            description={`${trainings.data.length} treinos registrados no banco.`}
+          >
             <div className="table-wrap">
               <table className="data-table">
                 <thead>
@@ -189,12 +182,9 @@ export default function TrainingResults() {
                 </tbody>
               </table>
             </div>
-          </section>
+          </Panel>
 
-          <section className="panel">
-            <div className="panel-head">
-              <h3>Observações por dataset</h3>
-            </div>
+          <Panel title="Observações por dataset">
             <ul className="notes">
               {Object.entries(DATASET_NOTES).map(([cancerType, note]) => (
                 <li key={cancerType}>
@@ -202,64 +192,9 @@ export default function TrainingResults() {
                 </li>
               ))}
             </ul>
-          </section>
+          </Panel>
         </div>
       )}
     </>
-  );
-}
-
-// Gráfico de barras com média e desvio (barra de erro) de cada série
-function Chart({ data, series }) {
-  if (!data.length) return <div className="empty">Sem dados para comparar.</div>;
-  return (
-    <div className="chart-box">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 40, left: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4edf2" />
-          <XAxis
-            dataKey="label"
-            angle={-30}
-            textAnchor="end"
-            interval={0}
-            tick={{ fontSize: 14, fill: "#6f8798" }}
-            stroke="#d3e2eb"
-          />
-          <YAxis
-            domain={[40, 100]}
-            ticks={[40, 50, 60, 70, 80, 90, 100]}
-            tickFormatter={(value) => `${value}%`}
-            tick={{ fontSize: 14, fill: "#6f8798" }}
-            stroke="#d3e2eb"
-            allowDataOverflow
-          />
-          <Tooltip formatter={(value) => formatPercent(value)} />
-          <Legend verticalAlign="top" height={32} />
-          {series.map((serie) => (
-            <Bar key={serie.key} dataKey={serie.key} name={serie.name} fill={serie.color} radius={[4, 4, 0, 0]}>
-              <ErrorBar dataKey={`${serie.key}_std`} width={4} stroke="#24475f" />
-            </Bar>
-          ))}
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-// Botões de alternância (ex.: Acurácia / F1 macro)
-function Toggle({ options, current, onChange }) {
-  return (
-    <div className="seg">
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          className={current === option.value ? "active" : ""}
-          onClick={() => onChange(option.value)}
-        >
-          {option.name}
-        </button>
-      ))}
-    </div>
   );
 }

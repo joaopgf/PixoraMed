@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { initials, PageHeader } from "../components/common";
 import Icon from "../components/Icon";
+import InfoPair from "../components/InfoPair";
 import { formatDate } from "../utils/modules";
 
 export default function Account() {
@@ -21,18 +22,9 @@ export default function Account() {
             <p>Conta da PixoraMed</p>
           </div>
         </div>
-        <div className="info-pair">
-          <span>E-mail</span>
-          <strong>{user?.email}</strong>
-        </div>
-        <div className="info-pair">
-          <span>Conta criada em</span>
-          <strong>{user ? formatDate(user.createdAt) : ""}</strong>
-        </div>
-        <div className="info-pair">
-          <span>Permissão</span>
-          <strong>Análises e histórico próprio</strong>
-        </div>
+        <InfoPair label="E-mail">{user?.email}</InfoPair>
+        <InfoPair label="Conta criada em">{user ? formatDate(user.createdAt) : ""}</InfoPair>
+        <InfoPair label="Permissão">Análises e histórico próprio</InfoPair>
         <button
           type="button"
           className="btn danger"

@@ -6,6 +6,7 @@ import Icon from "../components/Icon";
 import { useModels } from "../hooks/useApiData";
 import { LEAKAGE_SUSPICION } from "../utils/datasetNotes";
 import { formatPercent, modeName, MODULES, modelsForModule } from "../utils/modules";
+import Panel from "../components/Panel";
 
 const CHECKLIST = [
   { title: "Contrato da API", text: "Formato de entrada, validação do arquivo e erros (feito em /api/predictions)." },
@@ -122,13 +123,11 @@ export default function Models() {
         })}
       </div>
 
-      <section className="panel" style={{ marginTop: 16 }}>
-        <div className="panel-head">
-          <div>
-            <h3>Checklist de integração</h3>
-            <p>Itens técnicos para cada modelo.</p>
-          </div>
-        </div>
+      <Panel
+        title="Checklist de integração"
+        description="Itens técnicos para cada modelo."
+        style={{ marginTop: 16 }}
+      >
         <div className="workflow" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))" }}>
           {CHECKLIST.map((item, i) => (
             <div key={item.title} className="workflow-step">
@@ -140,7 +139,7 @@ export default function Models() {
             </div>
           ))}
         </div>
-      </section>
+      </Panel>
     </>
   );
 }

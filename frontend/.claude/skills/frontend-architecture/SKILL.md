@@ -19,7 +19,7 @@ O frontend só apresenta dados e coleta a entrada do usuário. Toda regra de neg
 | `src/context/` | `AnalysisContext`: análise em andamento e último resultado, só nesta aba |
 | `src/pages/` | Uma tela por rota; junta hooks, contextos e componentes |
 | `src/components/` | Peças visuais reutilizáveis; recebem dados por props e não chamam a API |
-| `src/utils/` | Catálogo de módulos, textos dos datasets e formatação |
+| `src/utils/` | Catálogo de módulos, textos dos datasets, formatação, `resultView` (interpretação do resultado) e `exportCsv` |
 | `src/styles/` | CSS global com variáveis (cores e `--font-size-*`) |
 
 ## Fluxo de dados
@@ -32,6 +32,22 @@ page --> useMutation(api/<recurso>.js) para escritas (ex.: nova análise)
 - Leitura passa por um hook de `hooks/`, para o cache ser compartilhado entre telas (mesma `queryKey`).
 - Depois de uma escrita, invalide a consulta afetada (`invalidateQueries({ queryKey: ["predictions"] })`).
 - Os dados da API chegam em camelCase e em inglês (`predictedClass: "malignant"`); a tradução para a tela fica em `utils/modules.js` (`className`, `modeName`).
+
+## Componentes compartilhados
+
+Antes de escrever marcação repetida numa página, use o componente que já existe:
+
+| Componente | Para quê |
+|---|---|
+| `Panel` | Cartão com título, descrição e ações (`as="aside"` quando for lateral) |
+| `InfoPair` | Linha rótulo e valor (`mono` para números) |
+| `Toggle` | Alternância entre opções (ex.: Acurácia / F1 macro) |
+| `QueryState` | Carregando, erro e lista vazia de uma consulta |
+| `ImageDropzone` | Envio de imagem com validação de tipo e tamanho |
+| `BarChartWithError`, `ProbabilityPieChart` | Gráficos (dados por props) |
+| `common.jsx` | `PageHeader`, `Alert`, `Steps`, `TextLink` |
+
+Lógica de interpretação para a tela fica em `utils/` (ex.: `buildResultView`), não dentro da página.
 
 ## Rotas
 
