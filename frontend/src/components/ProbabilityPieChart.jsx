@@ -2,21 +2,33 @@
 // Acessível: legenda em texto com nome e porcentagem de cada fatia, e descrição completa para leitores de tela.
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
-// Cores seguras para daltonismo, em ordem fixa (validadas com o validador de paleta da skill dataviz)
-const COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300"];
+// Cores seguras para daltonismo (validadas com o validador de paleta da skill dataviz).
+// Classes de alerta (malignas) usam sempre o vermelho; as demais seguem a ordem fixa da paleta, sem
+// vermelho nem laranja, para não parecerem alerta.
+const ALERT_COLOR = "#d03b3b";
+const COLORS = ["#2a78d6", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6"];
 const OTHERS_COLOR = "#8a8a8a";
 // Com mais classes que isso, as menores viram uma fatia "Outros"
 const MAX_SLICES = 6;
 
-// probabilities: [{ className, probability }] · predictedClass: classe decidida pelo backend
-// formatName: nome da classe na tela · formatValue: probabilidade (0 a 1) em texto
-export default function ProbabilityPieChart({ probabilities, predictedClass, formatName, formatValue }) {
+// probabilities: [{ className, probability }] na ordem das classes do modelo · predictedClass: classe decidida
+// pelo backend · alertClasses: classes pintadas de vermelho · formatName: nome da classe na tela
+// formatValue: probabilidade (0 a 1) em texto
+export default function ProbabilityPieChart({ probabilities, predictedClass, alertClasses = [], formatName, formatValue }) {
+  // A cor segue a classe (ordem do modelo), não a posição no ranking: a mesma classe tem sempre a mesma cor
+  let nextColor = 0;
+  const colorOf = new Map(
+    probabilities.map((item) => [
+      item.className,
+      alertClasses.includes(item.className) ? ALERT_COLOR : COLORS[nextColor++ % COLORS.length],
+    ]),
+  );
   const sorted = [...probabilities].sort((a, b) => b.probability - a.probability);
-  let slices = sorted.map((item, i) => ({
+  let slices = sorted.map((item) => ({
     key: item.className,
     name: formatName(item.className),
     value: item.probability,
-    color: COLORS[i],
+    color: colorOf.get(item.className),
   }));
   if (sorted.length > MAX_SLICES) {
     const kept = slices.slice(0, MAX_SLICES - 1);

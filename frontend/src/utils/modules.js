@@ -54,6 +54,10 @@ const CLASS_NAMES = {
 };
 export const className = (value) => CLASS_NAMES[value] ?? value;
 
+// Classes malignas, que os gráficos mostram em vermelho: maligno (Pele) e carcinoma espinocelular (Oral).
+// Cérebro fica de fora: o módulo não indica se o tumor é benigno ou maligno.
+export const MALIGNANT_CLASSES = ["malignant", "scc"];
+
 export const modeName = (mode) =>
   mode === "color" ? "colorido" : mode === "gray" ? "tons de cinza" : "";
 

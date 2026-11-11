@@ -10,7 +10,15 @@ import ProbabilityPieChart from "../components/ProbabilityPieChart";
 import { useAnalysis } from "../context/AnalysisContext";
 import { useModels, usePredictionHistory } from "../hooks/useApiData";
 import { LEAKAGE_SUSPICION, SCOPE_WARNING } from "../utils/datasetNotes";
-import { className, formatDate, formatPercent, modeName, parseModelId, recordCode } from "../utils/modules";
+import {
+  MALIGNANT_CLASSES,
+  className,
+  formatDate,
+  formatPercent,
+  modeName,
+  parseModelId,
+  recordCode,
+} from "../utils/modules";
 import { buildResultView } from "../utils/resultView";
 
 const DEFAULT_WARNING =
@@ -161,6 +169,7 @@ export default function Result() {
             <ProbabilityPieChart
               probabilities={current.probabilities}
               predictedClass={current.predictedClass}
+              alertClasses={MALIGNANT_CLASSES}
               formatName={className}
               formatValue={(value) => formatPercent(value * 100)}
             />

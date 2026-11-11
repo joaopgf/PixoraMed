@@ -48,4 +48,4 @@ npm run build     # gera dist/
 ## Acessibilidade e fontes
 
 - Corpo do texto em 16 px e rótulos em no mínimo 14 px, definidos em variáveis no início de `styles/app.css`.
-- O gráfico de pizza das probabilidades usa cores seguras para daltonismo, legenda em texto com a porcentagem de cada classe e uma descrição completa para leitores de tela.
+- O gráfico de pizza das probabilidades usa cores seguras para daltonismo, legenda em texto com a porcentagem de cada classe e uma descrição completa para leitores de tela. As classes malignas (`MALIGNANT_CLASSES` em `utils/modules.js`: maligno na Pele e carcinoma na Oral) ficam sempre em vermelho, e cada classe mantém a mesma cor em todas as análises. O Cérebro não tem vermelho, porque o módulo não indica se o tumor é benigno ou maligno.
