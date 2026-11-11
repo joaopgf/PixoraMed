@@ -70,4 +70,19 @@ Tudo por variável de ambiente (`application.properties` só tem `${VAR}`). Vari
 
 ## Observabilidade
 
-Hoje: log do Spring no console (o Render guarda) e `/api/health` para o health check. Logs nunca incluem senha, token ou a imagem.
+Hoje: log do Spring no console (o Render guarda) e `/api/health` para o health check. Logs nunca incluem senha, token, e-mail ou a imagem; o usuário aparece só pelo id.
+
+Eventos registrados:
+
+| Onde | Evento | Nível |
+|---|---|---|
+| `AuthService` | cadastro (id do usuário) e cadastro recusado por e-mail repetido | INFO |
+| `AuthService` | login aceito (id) | INFO |
+| `AuthService` | login recusado: e-mail não cadastrado, ou senha incorreta (id) | WARN |
+| `PredictionService` | análise concluída: id, usuário, modelo, classe, confiança e tempo da IA | INFO |
+| `PredictionService` | análise não concluída: usuário, modelo e status (404, 413, 422, 503) | WARN |
+| `AiServiceClient` | IA sem resposta, IA recusou o token | WARN / ERROR |
+| `TrainingService` | quantidade de treinos importados | INFO |
+| `GlobalExceptionHandler` | erro inesperado, com o rastro da pilha | ERROR |
+
+Texto que vem do navegador (como o `modelId`) passa por limpeza antes de ir ao log, para não criar linhas falsas.

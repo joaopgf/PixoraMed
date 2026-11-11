@@ -28,6 +28,20 @@ exception   → ApiException e GlobalExceptionHandler (todo erro sai como {"mess
 
 As rotas com login recebem `Authorization: Bearer <token>`. O token é um JWT assinado com `JWT_SECRET` (HS256) e vale `JWT_EXPIRATION_HOURS` horas. A senha fica só como hash BCrypt. Não há rota de logout: o JWT não fica no banco, então o site só apaga o token.
 
+## Log
+
+O backend registra no console (no Render, aba Logs do serviço) os cadastros, os logins aceitos e recusados e cada análise, concluída ou não. O usuário aparece só pelo id: e-mail, senha, token e imagem nunca vão para o log. A lista completa de eventos está na skill `backend-architecture`.
+
+Exemplo (Docker local):
+
+```
+INFO  AuthService       : Login do usuário 4
+WARN  AuthService       : Login recusado: senha incorreta para o usuário 4
+WARN  AuthService       : Login recusado: e-mail não cadastrado
+INFO  PredictionService : Análise 17 concluída: usuário 5, modelo skin_color, classe malignant, confiança 0.7947, IA em 147 ms
+WARN  PredictionService : Análise não concluída: usuário 4, modelo oral_color, status 422
+```
+
 ## Configuração
 
 Tudo vem de variáveis de ambiente (`src/main/resources/application.properties` usa `${VAR}`). No desenvolvimento, o Spring lê também o `backend/.env`. Variável obrigatória que faltar impede a aplicação de subir. Lista completa, com explicação, em [`.env.example`](.env.example).

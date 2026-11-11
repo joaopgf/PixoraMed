@@ -362,6 +362,7 @@
     <tr><td>Uploads</td><td>Limite de 10 MB no navegador, no backend e no ai-service; imagem ilegível é recusada antes de rodar o modelo e, na Pele, também a imagem com lado menor que 100 px.</td></tr>
     <tr><td>Segredos</td><td>Nenhuma senha no código: tudo vem de variáveis de ambiente. Os arquivos <code>.env</code>, <code>terraform.tfvars</code> e <code>terraform.tfstate</code> ficam fora do git; variáveis do Terraform marcadas como <code>sensitive</code>.</td></tr>
     <tr><td>Erros</td><td>Toda resposta de erro sai como <code>{"message": "..."}</code>, sem rastro de pilha nem detalhes internos.</td></tr>
+    <tr><td>Log e rastreabilidade</td><td>O backend registra cadastros, logins aceitos e recusados e cada análise (concluída ou não). O usuário aparece só pelo id: e-mail, senha, token e imagem nunca vão para o log.</td></tr>
     <tr><td>Containers</td><td>Usuário sem privilégios; no compose, portas só em <code>127.0.0.1</code> e o ai-service sem porta exposta.</td></tr>
   </table>
 
@@ -374,7 +375,7 @@
     <tr><td>Usuário tratar o resultado como diagnóstico</td><td>Avisos em todas as telas de análise, página de limitações, inconclusivo e baixa certeza</td><td>Validação clínica antes de qualquer uso real</td></tr>
     <tr><td>Imagem fora do domínio recebe classe com confiança alta</td><td>Limitação documentada; limiar de 80% em Oral e Cérebro</td><td>Filtro que recuse imagens incompatíveis</td></tr>
     <tr><td>Acurácia inflada por vazamento</td><td>"Possível vazamento" escrito no site; divisão por lesão na Pele</td><td>Teste com imagens de outra fonte</td></tr>
-    <tr><td>Tentativas repetidas de login</td><td>Senhas com hash BCrypt, que torna cada tentativa mais lenta</td><td>Limite de tentativas por IP ou conta</td></tr>
+    <tr><td>Tentativas repetidas de login</td><td>Senhas com hash BCrypt, que torna cada tentativa mais lenta; logins recusados ficam registrados no log</td><td>Limite de tentativas por IP ou conta</td></tr>
     <tr><td>Token roubado no navegador</td><td>Validade de 8 horas; React escapa os textos exibidos</td><td>Revogação de token e cookies <code>HttpOnly</code></td></tr>
     <tr><td>Perda do state do Terraform</td><td>Backup fora do repositório</td><td>State remoto com criptografia</td></tr>
   </table>

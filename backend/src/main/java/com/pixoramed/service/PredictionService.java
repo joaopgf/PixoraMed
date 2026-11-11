@@ -1,4 +1,4 @@
-// Análises: lista os modelos da IA, envia a imagem, decide a classe, grava o resultado e monta o histórico.
+// Análises: lista os modelos da IA, envia a imagem, decide a classe, grava e registra no log o resultado e monta o histórico.
 package com.pixoramed.service;
 
 import com.pixoramed.dto.AiModel;
@@ -7,11 +7,15 @@ import com.pixoramed.dto.ModelResponse;
 import com.pixoramed.dto.PredictionHistoryResponse;
 import com.pixoramed.dto.PredictionResponse;
 import com.pixoramed.dto.PredictionResponse.ClassProbability;
+import com.pixoramed.exception.ApiException;
 import com.pixoramed.model.Prediction;
 import com.pixoramed.repository.PredictionRepository;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +23,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class PredictionService {
 
+    // O log registra id do usuário, modelo e resultado: nunca a imagem nem o nome do arquivo
+    private static final Logger log = LoggerFactory.getLogger(PredictionService.class);
     private static final String WARNING = "Resultado de um modelo experimental, feito para fins acadêmicos. "
             + "Não é um diagnóstico e não substitui a avaliação de um profissional de saúde.";
 
@@ -45,13 +51,24 @@ public class PredictionService {
 
     public PredictionResponse predict(Long userId, String modelId, MultipartFile file) {
         // A IA pré-processa, roda o modelo e devolve as probabilidades; a imagem não fica guardada
-        AiPrediction result = aiService.predict(modelId, file);
+        AiPrediction result;
+        try {
+            result = aiService.predict(modelId, file);
+        } catch (ApiException e) {
+            log.warn("Análise não concluída: usuário {}, modelo {}, status {}",
+                    userId, safeModelId(modelId), e.getStatus().value());
+            throw e;
+        }
         DecisionService.Decision decision =
                 decisionService.decide(result.probabilities(), result.classes(), result.threshold());
 
         // Só o resultado vai para o banco
         Prediction saved = predictions.save(new Prediction(
                 userId, result.modelId(), decision.predictedClass(), decision.confidence(), result.timeMs()));
+        log.info("Análise {} concluída: usuário {}, modelo {}, classe {}, confiança {}, IA em {} ms",
+                saved.getId(), userId, result.modelId(), decision.predictedClass(),
+                String.format(Locale.ROOT, "%.4f", decision.confidence()),
+                String.format(Locale.ROOT, "%.0f", result.timeMs()));
 
         List<ClassProbability> probabilities = new ArrayList<>();
         for (int i = 0; i < result.classes().size(); i++) {
@@ -63,6 +80,11 @@ public class PredictionService {
                 decision.predictedClass(), decision.confidence(), probabilities, result.threshold(),
                 decisionService.inconclusiveThresholdFor(result.threshold()),
                 decisionService.lowConfidenceThresholdFor(result.threshold()), result.timeMs(), WARNING);
+    }
+
+    // O modelId vem do navegador: no log, só letras, números e "_" (evita linhas falsas no log)
+    private static String safeModelId(String modelId) {
+        return modelId == null ? "-" : modelId.replaceAll("[^A-Za-z0-9_]", "?");
     }
 
     // Cada usuário vê só as próprias análises
