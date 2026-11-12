@@ -78,15 +78,6 @@ export default function Dashboard() {
         label="VISÃO GERAL"
         title="Painel de trabalho"
         description="Acompanhe o ambiente, acesse módulos e inicie uma nova análise."
-        actions={
-          <button
-            type="button"
-            className="btn primary"
-            onClick={() => navigate("/new-analysis")}
-          >
-            <Icon name="plusfile" /> Nova análise
-          </button>
-        }
       />
 
       <section className="welcome-panel">
@@ -102,7 +93,7 @@ export default function Dashboard() {
             className="btn primary"
             onClick={() => navigate("/new-analysis")}
           >
-            Começar uma análise <Icon name="arrow" />
+            <Icon name="plusfile" /> Nova análise
           </button>
         </div>
         <div className="welcome-art">
