@@ -567,6 +567,10 @@ No Cérebro, a entrada tem 1 canal (cinza) e a saída tem 3 classes (glioma, men
 
 ![CNN da Oral em blocos 3D: a imagem encolhe e ganha filtros a cada bloco](model_diagrams/cnn_oral_layers.png)
 
+A versão anotada (pedido do professor) traz os dados no próprio desenho: o formato do tensor e os parâmetros de cada camada, as duas etapas da rede (extração de características e classificação), onde estão os 23.714 parâmetros, como foi o treino e o resultado. A altura de cada bloco mostra o tamanho da imagem, e a largura, o número de filtros.
+
+![CNN da Oral em blocos 3D com o formato, os parâmetros de cada camada, o treino e o resultado](model_diagrams/cnn_oral_annotated.png)
+
 O grafo mostra a mesma rede camada por camada, com o formato do tensor na entrada e na saída de cada uma, no padrão do PyTorch `(lote, canais, altura, largura)`:
 
 <img src="model_diagrams/cnn_oral_graph.png" alt="Grafo da CNN da Oral com o formato do tensor em cada camada" width="320">
@@ -732,6 +736,7 @@ Os passos 2 a 4 estão todos dentro do `skin_color.onnx`. O script de exportaç�
 | **torchview** | Grafo das camadas com o formato do tensor de entrada e saída de cada uma. Precisa do Graphviz | Sim: grafo da CNN, visão geral da EfficientNet e bloco MBConv |
 | **VisualTorch** | Blocos 3D coloridos (estilo do visualkeras), em que o tamanho do bloco mostra o tamanho do tensor | Sim: CNN em blocos |
 | **Graphviz** (pacote `graphviz`) | Diagrama livre, desenhado à mão no código | Sim: fluxo do ensemble da Pele |
+| **Pillow** | Desenho livre de imagens; usado para refazer os blocos 3D com dados escritos em cada camada | Sim: CNN anotada ([`annotated_cnn.py`](model_diagrams/annotated_cnn.py)) |
 | **Netron** | Visualizador interativo de arquivos de modelo, inclusive `.onnx` | Não no script; serve para abrir os modelos reais do ai-service |
 | **torchinfo** | Tabela em texto com camadas, formatos e número de parâmetros | Não |
 | **torchviz** | Grafo das operações do cálculo do gradiente, mais técnico | Não |
@@ -743,7 +748,10 @@ Os passos 2 a 4 estão todos dentro do `skin_color.onnx`. O script de exportaç�
 ```bash
 pip install torch torchvision torchview visualtorch
 python docs/model_diagrams/generate.py
+python docs/model_diagrams/annotated_cnn.py
 ```
+
+A VisualTorch não escreve dados dentro do desenho. Por isso a versão anotada da CNN é desenhada com o Pillow, no mesmo estilo de blocos.
 
 **Para ver os modelos reais do sistema**, o Netron abre o arquivo `.onnx` no navegador e mostra cada camada com os pesos:
 
