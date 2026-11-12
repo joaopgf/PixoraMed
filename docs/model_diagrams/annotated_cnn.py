@@ -155,7 +155,7 @@ def main():
     draw.text(
         (margin + 20 * S, 782 * S),
         "PyTorch  ·  otimizador Adam (taxa 0,001)  ·  lote 64  ·  450 épocas  ·  perda CrossEntropyLoss  ·  "
-        "validação cruzada estratificada em 5 folds (semente 42)  ·  2.000 imagens (1.000 por classe)",
+        "4.901 imagens por classe  ·  pixels / 255  ·  escolhida nos experimentos de 5 folds (85,25% ± 1,78)",
         font=font(14),
         fill="#333333",
     )

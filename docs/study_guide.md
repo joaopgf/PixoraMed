@@ -481,7 +481,7 @@ O grupo quis ter as duas experiências de deep learning, e cada uma ficou num m�
 | ---------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | O que é         | Rede pequena criada e treinada pelo grupo, com pesos aleatórios no início | EfficientNet-B0, uma rede já treinada no ImageNet, ajustada para pele (*transfer learning*) |
 | Tamanho          | ~24 mil parâmetros, ~110 KB                                                | Ensemble de 5 redes, ~80 MB                                                                    |
-| Entrada          | 128×128 (cor na Oral, cinza no Cérebro), pixels / 255                     | 224×224, cor, normalização ImageNet                                                         |
+| Entrada          | 128×128; Oral em cor com pixels / 255, Cérebro em cinza com pixels de 0 a 255 | 224×224, cor, normalização ImageNet                                                         |
 | Saída           | Softmax entre as classes                                                    | Probabilidade de maligno, calibrada                                                            |
 | Decisão         | Classe mais provável; "inconclusivo" abaixo de 80%                         | Maligno a partir de 18%; aviso de baixa certeza abaixo de 80%                                  |
 | Tempo por imagem | 0,1 s (Cérebro) e 0,2 s (Oral)                                             | 1,7 s                                                                                          |
@@ -589,7 +589,17 @@ Repare que a ReLU e o Dropout não mudam o formato; quem encolhe a imagem é o M
 
 ReLU, MaxPool, pooling adaptativo e Dropout não têm parâmetros. Sem o pooling adaptativo, a camada linear receberia 64 × 16 × 16 = 16.384 valores e teria mais pesos que o resto da rede inteira.
 
-**Treino.** PyTorch, otimizador Adam (taxa 0,001), lote de 64, perda *CrossEntropyLoss*, 450 épocas, validação cruzada estratificada em 5 folds e semente 42. Os pesos começam aleatórios: a rede foi treinada **do zero**.
+**Treino.** PyTorch, otimizador Adam (taxa 0,001), lote de 64, perda *CrossEntropyLoss*, 450 épocas e semente 42. Os pesos começam aleatórios: a rede foi treinada **do zero**.
+
+**Dois treinos diferentes, não confunda.**
+
+| | Experimentos (CSV dos treinos) | Modelo do app |
+| --- | --- | --- |
+| Para quê | Comparar configurações: cor ou cinza, com ou sem divisão por 255 | O modelo que roda no sistema |
+| Imagens | 1.000 por classe, validação cruzada estratificada em 5 folds | Cerca de 4.900 por classe (Oral 4.901, Cérebro 4.900) |
+| Resultado | Média ± desvio dos 5 folds (Oral cor 85,25% ± 1,78; Cérebro cinza 95,17% ± 0,55) | Teste em imagens separadas da mesma fonte: Oral 96,5% (200 imagens), Cérebro 98,3% (300 imagens) |
+
+A configuração do app é a melhor dos experimentos: Oral em cor com divisão por 255 e Cérebro em cinza sem divisão.
 
 **Por que uma rede tão pequena.** Nesses datasets ela já passou de 95% na mesma fonte, e roda numa fração de CPU do Render gratuito. Rede maior seria mais lenta e mais cara sem ganho medido.
 
@@ -702,7 +712,7 @@ Os passos 2 a 4 estão todos dentro do `skin_color.onnx`. O script de exportaç�
 | Pesos iniciais | Aleatórios (do zero) | ImageNet (pré-treinada) |
 | Profundidade | 3 blocos convolucionais | 16 blocos MBConv |
 | Parâmetros | ~24 mil | ~4 milhões por rede, 5 redes |
-| Entrada | 128×128, pixels / 255 | 224×224, normalização ImageNet |
+| Entrada | 128×128; Oral / 255, Cérebro de 0 a 255 | 224×224, normalização ImageNet |
 | Saída | Softmax entre as classes | Sigmoid calibrada (Platt) de maligno |
 | Tempo por imagem | 0,1–0,2 s | 1,7 s |
 
@@ -777,7 +787,7 @@ netron ai-service/models/oral_color.onnx
 
 **Como funciona.**
 
-- **Oral e Cérebro** (`preprocess`): OpenCV lê a imagem, converte BGR → RGB, redimensiona para 128×128, reorganiza para (canais, altura, largura) e divide por 255.
+- **Oral e Cérebro** (`preprocess`): OpenCV lê a imagem (em cor na Oral, já em cinza no Cérebro), converte BGR → RGB na cor, redimensiona para 128×128, reorganiza para (canais, altura, largura) e divide pela `scale` do `.json` do modelo: **255 na Oral** e **1 no Cérebro**, que foi treinado com os pixels de 0 a 255.
 - **Pele** (`preprocess_pil`): PIL corrige a orientação EXIF, converte para RGB, redimensiona com bicúbico para 224×224 e aplica a normalização do ImageNet. Imagem com lado menor que 100 px é recusada.
 
 **Por que importa.** Num teste, ler em BGR ou tirar a divisão por 255 derrubou a acurácia da Oral de 96,5% para cerca de 52%. Mesmo modelo, mesma imagem: só o pré-processamento mudou.
@@ -813,7 +823,7 @@ if (cut != null && confidence < cut) {
 | -------- | ----------------------------------------------------------- | ------------------------------------------------------------------ |
 | Oral     | 200 imagens separadas, mesma fonte                          | 96,5% (193/200); com o limiar, 188 conclusivas e 98,4% de acerto   |
 | Cérebro | 300 imagens separadas, mesma fonte                          | 98,3% (295/300); com o limiar, 297 conclusivas e 99,0%             |
-| Cérebro | 5 folds, 1.000 imagens por classe                           | 95,17% ± 0,55 (cinza sem normalização, a melhor configuração) |
+| Cérebro | 5 folds, 1.000 imagens por classe                           | 95,17% ± 0,55 (cinza sem divisão por 255, a melhor configuração) |
 | Pele     | Reprodução do treino (1.915 imagens, divisão por lesão) | AUC 0,939; sensibilidade 89,0%; especificidade 83,7%               |
 | Pele     | Modelo do app, 21 imagens internas                          | 8/8 malignos; 7/13 benignos (os 6 alarmes falsos tiveram aviso)    |
 
@@ -927,7 +937,7 @@ Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenh
 **No PixoraMed.**
 
 - Exemplo base: 2 × (0,571 × 1,0) / (0,571 + 1,0) = **72,7%**. A média simples daria 78,6%: a harmônica pune a precisão baixa.
-- Treinos de Oral e Cérebro: a F1 ficou quase igual à acurácia (Cérebro cinza: acurácia 95,17%, F1 95,17%), porque as classes são **balanceadas** (1.000 imagens por classe). Com classes iguais, as duas métricas andam juntas.
+- Treinos de Oral e Cérebro: a F1 ficou quase igual à acurácia (Cérebro cinza: acurácia 95,17%, F1 95,17%), porque as classes são **balanceadas** (1.000 imagens por classe nos experimentos). Com classes iguais, as duas métricas andam juntas.
 - Reprodução da Pele: com VPP 51,2% e sensibilidade 89,0%, a F1 dá cerca de **65%** (conta nossa).
 - Na Pele, uma CNN pequena de 7 classes testada pelo grupo, que **não** é o modelo do app, ficou com F1 perto de 50% com a divisão por lesão. O site mostra esse número em Limitações.
 
@@ -974,7 +984,7 @@ Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenh
 
 **O que é.** Na validação cruzada, cada um dos 5 folds dá um resultado. A **média** é o desempenho esperado; o **desvio padrão** diz o quanto os resultados variaram entre os folds.
 
-**No PixoraMed.** Cérebro cinza sem normalização: **95,17% ± 0,55**. Os 5 folds ficaram próximos, então o resultado é estável.
+**No PixoraMed.** Cérebro cinza sem divisão por 255: **95,17% ± 0,55**. Os 5 folds ficaram próximos, então o resultado é estável.
 
 **Pergunta da banca:** "O que significa o ± 0,55?"
 **Resposta:** "É o desvio padrão entre os 5 folds. Quanto menor, menos o resultado depende de quais imagens caíram no teste."
@@ -1011,7 +1021,7 @@ Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenh
 
 **O que é.** **Treino**: dados que ajustam os pesos. **Validação**: dados para escolher configurações (hiperparâmetros). **Teste**: dados nunca vistos, que medem o desempenho final. Separar só treino e teste é o **hold-out**.
 
-**No PixoraMed.** Os treinos usaram validação cruzada em 5 folds. Depois, Oral (200 imagens) e Cérebro (300 imagens) foram testados com imagens separadas do treino, mas da **mesma fonte**.
+**No PixoraMed.** Os experimentos usaram validação cruzada em 5 folds com 1.000 imagens por classe. O modelo do app foi treinado com cerca de 4.900 imagens por classe e testado com imagens separadas do treino, mas da **mesma fonte**: 200 na Oral e 300 no Cérebro.
 
 **Pergunta da banca:** "Por que não testar com as imagens do treino?"
 **Resposta:** "Porque o modelo já viu essas imagens e pode tê-las decorado. O teste precisa de imagens novas para medir se ele generaliza."
@@ -1020,7 +1030,7 @@ Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenh
 
 **O que é.** A validação cruzada *k-fold* divide os dados em k partes, treina em k − 1 e testa na que sobrou, k vezes. **Estratificada**: cada parte mantém a proporção das classes. **Por grupo** (`StratifiedGroupKFold`): todas as imagens de um mesmo grupo ficam do mesmo lado.
 
-**No PixoraMed.** 5 folds estratificados com semente fixa (42) nos treinos da CNN. Na Pele, a divisão é **por lesão** (`lesion_id`): fotos da mesma lesão nunca ficam no treino e no teste ao mesmo tempo.
+**No PixoraMed.** 5 folds estratificados com semente fixa (42) nos experimentos da CNN. Na Pele, a divisão é **por lesão** (`lesion_id`): fotos da mesma lesão nunca ficam no treino e no teste ao mesmo tempo.
 
 **Pergunta da banca:** "Por que dividir a Pele por lesão?"
 **Resposta:** "O HAM10000 tem várias fotos da mesma lesão. Dividindo por imagem, o modelo veria quase a mesma foto no treino e no teste, e a métrica sairia inflada. Por isso artigos que dividem por imagem chegam a 95–98%."
@@ -1031,8 +1041,8 @@ Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenh
 
 **No PixoraMed.**
 
-- **Overfitting**: Oral em cinza sem normalização teve treino perto de 99% e teste perto de 75%.
-- **Underfitting**: Cérebro com normalização não convergiu em 450 épocas; sem normalizar, chegou a 95%.
+- **Overfitting**: Oral em cinza sem divisão por 255 teve treino perto de 99% e teste perto de 75%.
+- **Underfitting**: Cérebro em cinza com divisão por 255 não convergiu em 450 épocas e ficou em 88,90%; sem a divisão, chegou a 95,17%.
 - **O que a CNN tem contra overfitting**: rede pequena (~24 mil parâmetros), Dropout de 25% e validação cruzada para medir.
 
 **Pergunta da banca:** "O que é overfitting?"
@@ -1063,7 +1073,7 @@ Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenh
 
 **O que é.** Quando uma classe tem muito mais exemplos que outra. O modelo tende a favorecer a classe maior, e a acurácia fica enganosa.
 
-**No PixoraMed.** O HAM10000 (Pele) tem nevo em ~67% das imagens e dermatofibroma em ~1%. O treino da Pele usou **pesos por classe** (o erro na classe rara pesa mais), que, como avisa a página de Limitações, fazem a rede prever demais as classes raras. A avaliação usou AUC e sensibilidade. Oral e Cérebro foram montados balanceados: 1.000 imagens por classe. O desbalanceamento também gera **viés**: o desempenho em tons de pele pouco representados é desconhecido.
+**No PixoraMed.** O HAM10000 (Pele) tem nevo em ~67% das imagens e dermatofibroma em ~1%. O treino da Pele usou **pesos por classe** (o erro na classe rara pesa mais), que, como avisa a página de Limitações, fazem a rede prever demais as classes raras. A avaliação usou AUC e sensibilidade. Oral e Cérebro foram montados balanceados: o mesmo número de imagens por classe (1.000 nos experimentos e cerca de 4.900 no modelo do app). O desbalanceamento também gera **viés**: o desempenho em tons de pele pouco representados é desconhecido.
 
 **Pergunta da banca:** "Como trataram o desbalanceamento?"
 **Resposta:** "Na Pele, com pesos por classe no treino e com métricas que não se enganam com a classe maior, como AUC e sensibilidade. Em Oral e Cérebro, usamos o mesmo número de imagens por classe."
@@ -1087,7 +1097,7 @@ Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenh
 
 - **Mediu com métricas que não escondem o viés de classe**: AUC e sensibilidade na Pele, em vez de acurácia.
 - **Separou os dados por lesão** na Pele, para o modelo não reconhecer a mesma lesão no teste.
-- **Usou o mesmo número de imagens por classe** em Oral e Cérebro (1.000 cada).
+- **Usou o mesmo número de imagens por classe** em Oral e Cérebro.
 - **Declarou o que não sabe**: a página de Limitações e o relatório dizem que o desempenho em tons de pele pouco representados é desconhecido, que a Pele vale só para dermatoscopia e que o Cérebro não detecta ausência de tumor.
 - **Desenhou as telas contra o viés de automação**: "caso suspeito, não confirmação", "inconclusivo", aviso de baixa certeza e "não é diagnóstico".
 
@@ -1121,10 +1131,11 @@ Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenh
 
 **O que é.** Colocar os pixels numa escala que a rede aprende melhor.
 
-- **Divisão por 255** (Oral e Cérebro): pixels de 0–255 viram 0–1. É uma normalização *min-max*.
+- **Divisão por 255** (Oral): pixels de 0–255 viram 0–1. É uma normalização *min-max*.
+- **Sem normalização** (Cérebro): os pixels entram de 0 a 255, como no treino escolhido.
 - **Normalização ImageNet** (Pele): de cada canal de cor se subtrai a média e se divide pelo desvio do ImageNet (um *z-score* por canal), porque a EfficientNet foi pré-treinada assim.
 
-**No PixoraMed.** A normalização faz parte do pré-processamento e precisa ser idêntica à do treino: sem a divisão por 255 (ou lendo em BGR), a Oral caiu de 96,5% para cerca de 52%. A palavra "normalizado" no CSV dos treinos indica uma normalização extra testada como hiperparâmetro; no Cérebro, a versão sem ela foi a melhor.
+**No PixoraMed.** A normalização faz parte do pré-processamento e precisa ser idêntica à do treino: sem a divisão por 255 (ou lendo em BGR), a Oral caiu de 96,5% para cerca de 52%. No CSV dos treinos, "normalizado" quer dizer **com a divisão por 255**. Ela foi testada como hiperparâmetro: na Oral, a versão com divisão foi a melhor (85,25% contra 84,85%); no Cérebro, a versão sem divisão foi a melhor (95,17% contra 88,90%), e é a que o app usa. Por isso a divisão fica no `.json` de cada modelo (`scale`), e não fixa no código.
 
 **Pergunta da banca:** "Por que normalizar a imagem?"
 **Resposta:** "Para os valores ficarem numa escala pequena e parecida, o que deixa o treino mais estável. E, no uso, a imagem precisa da mesma normalização do treino, senão o modelo erra sem dar erro nenhum."
@@ -1146,7 +1157,7 @@ Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenh
 
 **O que é.** **Parâmetros** são aprendidos pelo modelo durante o treino: os pesos da rede. **Hiperparâmetros** são escolhidos por nós antes do treino.
 
-**No PixoraMed.** A CNN tem **~24 mil parâmetros**. Hiperparâmetros: 450 épocas, lote de 64, taxa de aprendizado 0,001, Dropout de 25%, 5 folds, cor ou cinza e com ou sem normalização (as configurações comparadas no CSV dos treinos).
+**No PixoraMed.** A CNN tem **~24 mil parâmetros**. Hiperparâmetros: 450 épocas, lote de 64, taxa de aprendizado 0,001, Dropout de 25%, 5 folds, cor ou cinza e com ou sem divisão por 255 (as configurações comparadas no CSV dos treinos).
 
 **Pergunta da banca:** "Qual a diferença entre parâmetro e hiperparâmetro?"
 **Resposta:** "Parâmetro o modelo aprende sozinho, como os pesos. Hiperparâmetro nós definimos antes, como o número de épocas e a taxa de aprendizado."
