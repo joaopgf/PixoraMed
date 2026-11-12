@@ -225,14 +225,6 @@ export default function PrepareExam() {
               </li>
             </ul>
           </div>
-          <div className="side-info">
-            <h3>O que acontece depois?</h3>
-            <p>
-              O serviço de IA repete o pré-processamento do treino (tamanho, cor
-              e escala) e executa o modelo ONNX. A API usa as probabilidades
-              para decidir a classe prevista.
-            </p>
-          </div>
           {!available.length && !models.isLoading && (
             <Alert>
               <strong>Sem modelo neste módulo</strong>
