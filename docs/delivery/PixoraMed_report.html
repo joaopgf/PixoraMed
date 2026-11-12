@@ -348,12 +348,11 @@
           as probabilidades de cada classe;
         </li>
         <li>
-          consultar o histórico das próprias análises e exportá-lo em CSV;
+          consultar o histórico das próprias análises, com um resumo (total,
+          suspeitas de câncer, inconclusivas e baixa certeza), e exportá-lo em
+          CSV;
         </li>
-        <li>
-          comparar os resultados dos treinos (acurácia, F1, desvio entre folds)
-          e ler as limitações de cada modelo.
-        </li>
+        <li>ler os modelos disponíveis e as limitações de cada um.</li>
       </ul>
       <h3>Público e valor</h3>
       <p>
@@ -683,10 +682,12 @@
           pelo Hibernate a partir das entidades.
         </li>
         <li>
-          <b>Visualização</b>: o site mostra gráficos de barras com o desvio
-          entre folds na página de treinos, um gráfico de rosca com as
-          probabilidades de cada classe no resultado e as figuras do treino da
-          Pele (curva ROC, matriz de confusão, calibração).
+          <b>Visualização</b>: nos notebooks, o Matplotlib gera os gráficos do
+          treino (curvas de treino, matriz de confusão e, na Pele, curva ROC e
+          calibração). No site, o médico vê um gráfico de rosca com as
+          probabilidades de cada classe no resultado e cards com o resumo do
+          próprio histórico. As métricas de treino ficaram fora das telas, que
+          mostram só o essencial para o uso.
         </li>
       </ul>
 
@@ -1088,8 +1089,9 @@
         O PixoraMed entrega o caminho completo de um sistema de IA aplicado a
         imagens médicas: modelos treinados e avaliados com validação cruzada, um
         microsserviço de inferência em Docker, um backend com login seguro e
-        regras de decisão testadas, uma interface que mostra resultado,
-        histórico e métricas, e a infraestrutura descrita como código. Os três
+        regras de decisão testadas, uma interface simples pensada para o
+        médico, com resultado, avisos e histórico, e a infraestrutura descrita
+        como código. Os três
         processos principais estão modelados em BPMN 2.0 e batem com o que o
         código faz.
       </p>
@@ -1102,8 +1104,8 @@
       <h3>Trabalhos futuros</h3>
       <ul>
         <li>
-          Testar Oral e Cérebro com imagens de outras fontes e publicar o
-          resultado na página de treinos.
+          Testar Oral e Cérebro com imagens de outras fontes e mostrar o
+          resultado na página de limitações de cada modelo.
         </li>
         <li>
           Filtro que identifique o tipo de exame e recuse imagens sem relação

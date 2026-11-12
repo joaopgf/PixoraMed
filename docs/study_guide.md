@@ -18,7 +18,7 @@ Os números deste guia são os medidos pelo grupo. Regra de ouro na banca: **nã
 
 ## Visão geral em uma tela
 
-**O que o sistema faz.** Classifica imagens de três tipos de câncer (Pele, Oral e Cérebro), mostra a classe prevista com a probabilidade de cada classe e guarda o histórico de cada usuário. Também mostra o resultado dos treinos e as limitações de cada modelo. É um protótipo acadêmico: não faz diagnóstico.
+**O que o sistema faz.** Classifica imagens de três tipos de câncer (Pele, Oral e Cérebro), mostra a classe prevista com a probabilidade de cada classe e guarda o histórico de cada usuário, com um resumo dos resultados. Também mostra os modelos e as limitações de cada um. As telas são pensadas para um médico: só o essencial, sem métricas técnicas de treino. É um protótipo acadêmico: não faz diagnóstico.
 
 **Como a requisição anda.**
 
@@ -32,11 +32,11 @@ Navegador ──► frontend (React + Vite, Vercel)
               ai-service (FastAPI + ONNX Runtime, Render)
 ```
 
-| Serviço | Faz | Não faz |
-| --- | --- | --- |
-| frontend | Mostra as telas e chama `/api` | Regra de negócio, guardar segredo |
-| backend | Login (JWT), histórico, importação dos treinos, **decide a classe final** | Rodar o modelo |
-| ai-service | Pré-processa a imagem, roda o modelo, devolve probabilidades | Acessar o banco, guardar a imagem, decidir a classe |
+| Serviço   | Faz                                                                                | Não faz                                            |
+| ---------- | ---------------------------------------------------------------------------------- | --------------------------------------------------- |
+| frontend   | Mostra as telas e chama `/api`                                                   | Regra de negócio, guardar segredo                  |
+| backend    | Login (JWT), histórico, importação dos treinos, **decide a classe final** | Rodar o modelo                                      |
+| ai-service | Pré-processa a imagem, roda o modelo, devolve probabilidades                      | Acessar o banco, guardar a imagem, decidir a classe |
 
 **Pergunta de banca.** *Resuma a arquitetura em 30 segundos.* Resposta: "São três serviços. O React na Vercel só mostra as telas e chama `/api`. A Vercel repassa para o backend Spring Boot no Render, que cuida do login, do histórico e da regra de decisão, e grava no PostgreSQL do Neon. Para classificar a imagem, o backend chama o ai-service em Python, que roda os modelos ONNX e devolve só as probabilidades. A IA não tem banco e não guarda imagem."
 
@@ -83,11 +83,11 @@ docs/         BPMN, documento de entrega, glossário, guia para salvar modelos e
 
 **O que é.** Cada camada tem uma responsabilidade:
 
-| Camada | Faz | Não faz |
-| --- | --- | --- |
-| Controller | Recebe o HTTP, valida o DTO (`@Valid`), devolve o status | Regra de negócio |
-| Service | Regras de negócio: login, decisão da classe, importação do CSV, chamada à IA | Conhecer HTTP |
-| Repository | Acesso ao banco (Spring Data JPA) | Decidir regra |
+| Camada     | Faz                                                                               | Não faz          |
+| ---------- | --------------------------------------------------------------------------------- | ----------------- |
+| Controller | Recebe o HTTP, valida o DTO (`@Valid`), devolve o status                        | Regra de negócio |
+| Service    | Regras de negócio: login, decisão da classe, importação do CSV, chamada à IA | Conhecer HTTP     |
+| Repository | Acesso ao banco (Spring Data JPA)                                                 | Decidir regra     |
 
 Além delas: `model` (entidades JPA), `dto` (entrada e saída da API), `security` (JWT, BCrypt, CORS) e `exception` (erros padronizados).
 
@@ -141,12 +141,12 @@ User user = users.findByEmail(email).orElse(null);
 
 **O que é.** O `GlobalExceptionHandler`, com `@RestControllerAdvice`, converte cada exceção numa resposta JSON `{"message": "..."}` com o status certo.
 
-| Exceção | Status |
-| --- | --- |
-| `ApiException` (lançada pelos services) | o status que ela carrega: 401, 404, 409, 413, 422, 503 |
-| Erro de `@Valid` no DTO | 400, com a mensagem do primeiro campo inválido |
-| Imagem maior que 10 MB | 413 |
-| Qualquer outra | 500 "Erro interno", e o rastro da pilha vai só para o log |
+| Exceção                                  | Status                                                     |
+| ------------------------------------------ | ---------------------------------------------------------- |
+| `ApiException` (lançada pelos services) | o status que ela carrega: 401, 404, 409, 413, 422, 503     |
+| Erro de `@Valid` no DTO                  | 400, com a mensagem do primeiro campo inválido            |
+| Imagem maior que 10 MB                     | 413                                                        |
+| Qualquer outra                             | 500 "Erro interno", e o rastro da pilha vai só para o log |
 
 **Por que o sistema usa.** Nenhum controller tem `try/catch`, e o frontend sempre recebe o mesmo formato de erro para mostrar ao usuário. Detalhe interno nunca sai na resposta.
 
@@ -158,10 +158,10 @@ User user = users.findByEmail(email).orElse(null);
 
 **Como funciona.** A classe `Prediction` com `@Entity` vira a tabela `predictions`. O método `findByUserIdOrderByCreatedAtDesc(userId, pageable)` vira `SELECT ... WHERE user_id = ? ORDER BY created_at DESC LIMIT ?`, sem SQL escrito à mão.
 
-| Tabela | Conteúdo |
-| --- | --- |
-| `users` | nome, e-mail (único) e hash BCrypt da senha |
-| `trainings` | uma linha por treino do `training-results.csv` |
+| Tabela          | Conteúdo                                                                      |
+| --------------- | ------------------------------------------------------------------------------ |
+| `users`       | nome, e-mail (único) e hash BCrypt da senha                                   |
+| `trainings`   | uma linha por treino do `training-results.csv`                               |
 | `predictions` | usuário, modelo, classe, confiança, tempo e horário. **Sem a imagem** |
 
 A tabela `predictions` tem índice em `userId`, que é a busca do histórico.
@@ -269,11 +269,11 @@ Só o `/health` é público, porque o Render precisa dele para saber se o servi�
 
 **São três ambientes, e cada um lê os próprios arquivos:**
 
-| Ambiente | Como sobe | De onde vêm as variáveis |
-| --- | --- | --- |
-| Local com Docker | `docker compose up` em `infra/` | só do `infra/.env` |
+| Ambiente         | Como sobe                              | De onde vêm as variáveis                               |
+| ---------------- | -------------------------------------- | -------------------------------------------------------- |
+| Local com Docker | `docker compose up` em `infra/`    | só do `infra/.env`                                    |
 | Local sem Docker | IntelliJ, `uvicorn`, `npm run dev` | `backend/.env`, `ai-service/.env`, `frontend/.env` |
-| Produção | Terraform cria; Render e Vercel rodam | env groups do Render, preenchidos pelo Terraform |
+| Produção       | Terraform cria; Render e Vercel rodam  | env groups do Render, preenchidos pelo Terraform         |
 
 - **`infra/.env`**: o compose lê e distribui para cada container. A `POSTGRES_PASSWORD` vira o `DATABASE_PASSWORD` do backend, e o mesmo `AI_SERVICE_TOKEN` vai para backend e IA.
 - **`.env` de cada serviço**: só para rodar fora do Docker. O backend lê com `spring.config.import`, procurando `.env` (rodando dentro de `backend/`) e `backend/.env` (rodando da raiz, como no IntelliJ).
@@ -292,11 +292,11 @@ Só o `/health` é público, porque o Render precisa dele para saber se o servi�
 
 **Como funciona.** Cada mensagem tem um nível: `INFO` (fluxo normal), `WARN` (algo estranho que o sistema contornou) e `ERROR` (falha). O log vai para o **console**, sem arquivo:
 
-| Onde roda | Onde ver o log |
-| --- | --- |
-| Docker | `docker compose logs -f backend`, ou Docker Desktop → container → aba Logs |
-| IntelliJ | janela Run |
-| Produção | painel do Render → serviço → aba Logs |
+| Onde roda  | Onde ver o log                                                                 |
+| ---------- | ------------------------------------------------------------------------------ |
+| Docker     | `docker compose logs -f backend`, ou Docker Desktop → container → aba Logs |
+| IntelliJ   | janela Run                                                                     |
+| Produção | painel do Render → serviço → aba Logs                                       |
 
 **Onde está no código.** Eventos que o backend registra:
 
@@ -335,7 +335,9 @@ INFO  TrainingService   : training-results.csv: 0 treinos novos importados
 
 **O que é.** A tela é montada com componentes: funções que recebem dados (*props*) e devolvem JSX.
 
-**Onde está no código.** `pages/` tem as telas (`Dashboard`, `NewAnalysis`, `Result`, `History`, `TrainingResults`...). `components/` tem as peças reaproveitadas (`Panel`, `InfoPair`, `ImageDropzone`, `QueryState`, `ProbabilityPieChart`, `LowConfidenceTag`).
+**Onde está no código.** `pages/` tem as telas (`Dashboard`, `NewAnalysis`, `PrepareExam`, `Review`, `Result`, `History`, `Models`, `Limitations`...). `components/` tem as peças reaproveitadas (`Panel`, `InfoPair`, `ImageDropzone`, `QueryState`, `ProbabilityPieChart`, `HistorySummary`, `LowConfidenceTag`).
+
+**Por que não há página de resultados dos treinos.** Ela existia, com gráficos de acurácia, F1 e desvio entre folds. Foi removida porque o usuário do sistema é um médico, que precisa analisar uma imagem e acompanhar os próprios resultados, não comparar execuções de treino. Os números dos treinos continuam no banco, no documento de entrega e neste guia.
 
 **Por que o sistema usa.** Os 19 blocos de painel repetidos viraram um `Panel`, e as 14 duplas rótulo/valor viraram `InfoPair`. Componente de gráfico só recebe props, sem chamar a API: fica fácil de testar e reaproveitar.
 
@@ -376,7 +378,7 @@ export async function request(path, options = {}) {
 
 **Como funciona.** O React Router troca a tela pela URL sem recarregar a página (SPA). O `ProtectedRoute` mostra as telas internas só para quem está logado; os outros vão para `/login`. As telas internas são carregadas com `React.lazy`, só quando abertas.
 
-**Por que o sistema usa.** O pacote principal caiu de 774 KB para 320 KB (gzip 228 → 103 KB). O Recharts, que é pesado, só baixa nas telas de Resultado e Resultados dos treinos.
+**Por que o sistema usa.** O pacote principal caiu de 774 KB para 320 KB (gzip 228 → 103 KB). O Recharts, que é pesado, só baixa na tela de Resultado, onde fica o gráfico.
 
 **Pergunta de banca.** *Esconder a rota no front é segurança?* Resposta: "Não, é experiência de uso. A segurança está no backend: análise e histórico exigem token no Spring Security. Chamar a API direto sem token dá 401."
 
@@ -385,6 +387,13 @@ export async function request(path, options = {}) {
 **Como funciona.** O `ProbabilityPieChart` é um gráfico de rosca (Recharts) com a probabilidade de cada classe, a classe prevista no centro e uma legenda em texto com as porcentagens.
 
 - **Classes malignas em vermelho** (pedido do professor): `MALIGNANT_CLASSES` em `utils/modules.js` lista `malignant` (Pele) e `scc` (Oral). O Cérebro não tem vermelho, porque o módulo não diz se o tumor é benigno ou maligno.
+- **Nomes por extenso**: os ids das classes vêm do dataset (`scc`, `menin`, `tumor`), e a tela mostra o nome em português, conferido na descrição do Multi Cancer no Kaggle: `scc` = *Oral Squamous Cell Carcinoma* → **carcinoma espinocelular**; `menin` = *Meningioma* → **meningioma**; `tumor` = *Pituitary Tumor* → **hipofisário**. O id continua igual no modelo, na API e no banco; só a tela traduz (`className` em `utils/modules.js`).
+
+### Cards de resumo no Histórico
+
+**Como funciona.** Acima da tabela, o `HistorySummary` mostra quatro números das análises do usuário (até as 100 mais recentes): total, **suspeita de câncer** (maligno na Pele ou carcinoma espinocelular na Oral, com destaque vermelho), inconclusivas e baixa certeza. A conta fica em `summarizeHistory`, no `utils/resultView.js`; o componente só recebe os registros por props.
+
+**Por que o sistema usa.** É o que o médico quer ver ao abrir o histórico: quantos casos pedem atenção, sem precisar ler a tabela inteira. O painel inicial, ao contrário, perdeu os contadores técnicos (modelos conectados, treinos registrados), que não ajudavam nesse uso.
 - **A cor segue a classe, não a posição**: "benigno" é sempre azul, em qualquer análise.
 - **Acessibilidade**: a paleta passou num validador de daltonismo, e a identidade nunca depende só da cor (legenda com nome e porcentagem, descrição completa para leitor de tela).
 
@@ -408,14 +417,14 @@ export async function request(path, options = {}) {
 
 O grupo quis ter as duas experiências de deep learning, e cada uma ficou num módulo:
 
-| | CNN do zero (Oral e Cérebro) | Modelo pré-treinado (Pele) |
-| --- | --- | --- |
-| O que é | Rede pequena criada e treinada pelo grupo, com pesos aleatórios no início | EfficientNet-B0, uma rede já treinada no ImageNet, ajustada para pele (*transfer learning*) |
-| Tamanho | ~24 mil parâmetros, ~110 KB | Ensemble de 5 redes, ~80 MB |
-| Entrada | 128×128 (cor na Oral, cinza no Cérebro), pixels / 255 | 224×224, cor, normalização ImageNet |
-| Saída | Softmax entre as classes | Probabilidade de maligno, calibrada |
-| Decisão | Classe mais provável; "inconclusivo" abaixo de 80% | Maligno a partir de 18%; aviso de baixa certeza abaixo de 80% |
-| Tempo por imagem | 0,1 s (Cérebro) e 0,2 s (Oral) | 1,7 s |
+|                  | CNN do zero (Oral e Cérebro)                                               | Modelo pré-treinado (Pele)                                                                    |
+| ---------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| O que é         | Rede pequena criada e treinada pelo grupo, com pesos aleatórios no início | EfficientNet-B0, uma rede já treinada no ImageNet, ajustada para pele (*transfer learning*) |
+| Tamanho          | ~24 mil parâmetros, ~110 KB                                                | Ensemble de 5 redes, ~80 MB                                                                    |
+| Entrada          | 128×128 (cor na Oral, cinza no Cérebro), pixels / 255                     | 224×224, cor, normalização ImageNet                                                         |
+| Saída           | Softmax entre as classes                                                    | Probabilidade de maligno, calibrada                                                            |
+| Decisão         | Classe mais provável; "inconclusivo" abaixo de 80%                         | Maligno a partir de 18%; aviso de baixa certeza abaixo de 80%                                  |
+| Tempo por imagem | 0,1 s (Cérebro) e 0,2 s (Oral)                                             | 1,7 s                                                                                          |
 
 ### CNN (rede neural convolucional)
 
@@ -491,10 +500,10 @@ return torch.sigmoid(self.slopes * logits + self.intercepts).mean().reshape(1)
 
 ### Inconclusivo e baixa certeza
 
-| Módulo | Regra | O que a tela mostra |
-| --- | --- | --- |
-| Oral e Cérebro | confiança abaixo de 80% | "Inconclusivo" no lugar da classe |
-| Pele | maligno a partir de 18%; se nenhuma classe chega a 80% | mantém a classe e mostra "baixa certeza" |
+| Módulo         | Regra                                                  | O que a tela mostra                       |
+| --------------- | ------------------------------------------------------ | ----------------------------------------- |
+| Oral e Cérebro | confiança abaixo de 80%                               | "Inconclusivo" no lugar da classe         |
+| Pele            | maligno a partir de 18%; se nenhuma classe chega a 80% | mantém a classe e mostra "baixa certeza" |
 
 ```java
 // DecisionService.decide
@@ -514,13 +523,13 @@ if (cut != null && confidence < cut) {
 
 ### O que foi medido
 
-| Módulo | Teste | Resultado |
-| --- | --- | --- |
-| Oral | 200 imagens separadas, mesma fonte | 96,5% (193/200); com o limiar, 188 conclusivas e 98,4% de acerto |
-| Cérebro | 300 imagens separadas, mesma fonte | 98,3% (295/300); com o limiar, 297 conclusivas e 99,0% |
-| Cérebro | 5 folds, 1.000 imagens por classe | 95,17% ± 0,55 (cinza sem normalização, a melhor configuração) |
-| Pele | Reprodução do treino (1.915 imagens, divisão por lesão) | AUC 0,939; sensibilidade 89,0%; especificidade 83,7% |
-| Pele | Modelo do app, 21 imagens internas | 8/8 malignos; 7/13 benignos (os 6 alarmes falsos tiveram aviso) |
+| Módulo  | Teste                                                       | Resultado                                                          |
+| -------- | ----------------------------------------------------------- | ------------------------------------------------------------------ |
+| Oral     | 200 imagens separadas, mesma fonte                          | 96,5% (193/200); com o limiar, 188 conclusivas e 98,4% de acerto   |
+| Cérebro | 300 imagens separadas, mesma fonte                          | 98,3% (295/300); com o limiar, 297 conclusivas e 99,0%             |
+| Cérebro | 5 folds, 1.000 imagens por classe                           | 95,17% ± 0,55 (cinza sem normalização, a melhor configuração) |
+| Pele     | Reprodução do treino (1.915 imagens, divisão por lesão) | AUC 0,939; sensibilidade 89,0%; especificidade 83,7%               |
+| Pele     | Modelo do app, 21 imagens internas                          | 8/8 malignos; 7/13 benignos (os 6 alarmes falsos tiveram aviso)    |
 
 ### Como ler esses números
 
@@ -531,14 +540,14 @@ if (cut != null && confidence < cut) {
 
 ### Métricas que a banca pode pedir
 
-| Métrica | O que diz |
-| --- | --- |
-| Acurácia | Quantos acertos no total. Engana com classes desbalanceadas |
-| F1 | Equilíbrio entre precisão e sensibilidade. Melhor que a acurácia com classes desbalanceadas |
-| Sensibilidade (recall) | Dos doentes, quantos o modelo achou. É a que a triagem quer alta |
-| Especificidade | Dos saudáveis, quantos o modelo liberou corretamente |
-| VPP (precisão) | Dos que o modelo chamou de maligno, quantos eram mesmo. Na Pele, 51,2% |
-| AUC | Capacidade de separar as classes em todos os limiares; 0,5 é chute, 1,0 é perfeito |
+| Métrica               | O que diz                                                                                      |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| Acurácia              | Quantos acertos no total. Engana com classes desbalanceadas                                    |
+| F1                     | Equilíbrio entre precisão e sensibilidade. Melhor que a acurácia com classes desbalanceadas |
+| Sensibilidade (recall) | Dos doentes, quantos o modelo achou. É a que a triagem quer alta                              |
+| Especificidade         | Dos saudáveis, quantos o modelo liberou corretamente                                          |
+| VPP (precisão)        | Dos que o modelo chamou de maligno, quantos eram mesmo. Na Pele, 51,2%                         |
+| AUC                    | Capacidade de separar as classes em todos os limiares; 0,5 é chute, 1,0 é perfeito           |
 
 **Pergunta de banca.** *Com 98% de acurácia, por que não usar em hospital?* Resposta: "Porque os 98% são na mesma fonte do treino, com possível vazamento, e nunca houve validação clínica. Quando testamos o modelo de mama em imagens de outra fonte, a acurácia caiu para 34,5%. O sistema foi desenhado para mostrar essa incerteza, não para esconder."
 
@@ -599,11 +608,11 @@ resource "render_env_group" "backend" {
 
 Três workflows em BPMN 2.0, em `docs/bpmn/`, gerados por código (`docs/bpmn/generator/generate.py`) para ficarem iguais ao sistema:
 
-| Workflow | O que mostra |
-| --- | --- |
-| 1. Login e cadastro | Validação, hash BCrypt, mensagem genérica, JWT de 8 horas, onde o token fica |
-| 2. Microsserviço de IA | Subida com os modelos, token interno, recusas 401/404/422, quem decide a classe |
-| 3. Uso do sistema | Começa com o usuário logado: módulo, imagem, consentimento, análise, decisão, resultado com avisos |
+| Workflow                | O que mostra                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| 1. Login e cadastro     | Validação, hash BCrypt, mensagem genérica, JWT de 8 horas, onde o token fica                         |
+| 2. Microsserviço de IA | Subida com os modelos, token interno, recusas 401/404/422, quem decide a classe                         |
+| 3. Uso do sistema       | Começa com o usuário logado: módulo, imagem, consentimento, análise, decisão, resultado com avisos |
 
 **Pergunta de banca.** *Por que o workflow 3 começa com o usuário logado?* Resposta: "Foi pedido do orientador: o login já está detalhado no workflow 1, e repetir deixaria o diagrama de uso poluído."
 
@@ -621,12 +630,12 @@ Três workflows em BPMN 2.0, em `docs/bpmn/`, gerados por código (`docs/bpmn/ge
 
 ## Testes e qualidade
 
-| Onde | O que | Como rodar |
-| --- | --- | --- |
-| Backend | 5 testes: regra de decisão e leitura do CSV real | `mvn test` |
-| ai-service | 20 testes: rotas, token, pré-processamento, modelos reais e erros | `pytest` |
-| Frontend | ESLint sem erros nem avisos; build de produção | `npm run lint` e `npm run build` |
-| Terraform | formatação, validação e plano sem mudanças | `terraform fmt -check`, `validate`, `plan` |
+| Onde       | O que                                                              | Como rodar                                       |
+| ---------- | ------------------------------------------------------------------ | ------------------------------------------------ |
+| Backend    | 5 testes: regra de decisão e leitura do CSV real                  | `mvn test`                                     |
+| ai-service | 20 testes: rotas, token, pré-processamento, modelos reais e erros | `pytest`                                       |
+| Frontend   | ESLint sem erros nem avisos; build de produção                   | `npm run lint` e `npm run build`             |
+| Terraform  | formatação, validação e plano sem mudanças                    | `terraform fmt -check`, `validate`, `plan` |
 
 **Pergunta de banca.** *O que os testes do backend garantem?* Resposta: "Que a regra de decisão está certa (inconclusivo abaixo de 80%, limiar da Pele) e que o CSV real dos notebooks é lido sem erro. São as duas partes que, se quebrarem, mostram um resultado errado sem dar erro nenhum."
 
@@ -634,46 +643,48 @@ Três workflows em BPMN 2.0, em `docs/bpmn/`, gerados por código (`docs/bpmn/ge
 
 Na banca, a pergunta costuma vir como "onde está a lógica de X?". Responda seguindo o caminho da requisição: o que a tela barra, qual método do backend valida e o que a IA confere.
 
-| Regra | Onde está |
-| --- | --- |
-| Imagem até 10 MB, PNG/JPG/WEBP | Tela (`ImageDropzone`), backend (`spring.servlet.multipart.max-file-size`) e ai-service (`MAX_UPLOAD_MB`) |
-| Imagem ilegível ou muito pequena (Pele < 100 px) | ai-service: `preprocess` e `preprocess_pil` → 422 |
-| Inconclusivo abaixo de 80% (Oral e Cérebro) | `DecisionService.decide` + `INCONCLUSIVE_THRESHOLD` |
-| Maligno a partir de 18% (Pele) | `threshold` no `skin_color.json`, aplicado no `DecisionService.decide` |
-| Etiqueta "baixa certeza" | `utils/resultView.js` (`isLowConfidence`) e `LowConfidenceTag` |
-| Cada usuário vê só o próprio histórico | `PredictionService.history(userId)`, com o id vindo do JWT |
-| E-mail único no cadastro | `AuthService.register` (409) + coluna única na tabela `users` |
-| Senha de 8 a 128 caracteres, nome de 2 a 80 | Validação do DTO `RegisterRequest` (`@Valid`) |
-| Só o backend chama a IA | `require_token` no ai-service + `AI_SERVICE_TOKEN` |
-| Classes malignas em vermelho | `MALIGNANT_CLASSES` em `utils/modules.js` e `ProbabilityPieChart` |
-| Importação dos treinos sem duplicar | `TrainingService.importCsv` (chave data/hora + dataset) |
+| Regra                                             | Onde está                                                                                                      |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Imagem até 10 MB, PNG/JPG/WEBP                   | Tela (`ImageDropzone`), backend (`spring.servlet.multipart.max-file-size`) e ai-service (`MAX_UPLOAD_MB`) |
+| Imagem ilegível ou muito pequena (Pele < 100 px) | ai-service: `preprocess` e `preprocess_pil` → 422                                                          |
+| Inconclusivo abaixo de 80% (Oral e Cérebro)      | `DecisionService.decide` + `INCONCLUSIVE_THRESHOLD`                                                         |
+| Maligno a partir de 18% (Pele)                    | `threshold` no `skin_color.json`, aplicado no `DecisionService.decide`                                    |
+| Etiqueta "baixa certeza"                          | `utils/resultView.js` (`isLowConfidence`) e `LowConfidenceTag`                                            |
+| Cada usuário vê só o próprio histórico       | `PredictionService.history(userId)`, com o id vindo do JWT                                                    |
+| E-mail único no cadastro                         | `AuthService.register` (409) + coluna única na tabela `users`                                              |
+| Senha de 8 a 128 caracteres, nome de 2 a 80       | Validação do DTO `RegisterRequest` (`@Valid`)                                                             |
+| Só o backend chama a IA                          | `require_token` no ai-service + `AI_SERVICE_TOKEN`                                                          |
+| Classes malignas em vermelho                      | `MALIGNANT_CLASSES` em `utils/modules.js` e `ProbabilityPieChart`                                         |
+| Nome por extenso das classes (scc, menin)         | `CLASS_NAMES` e `className` em `utils/modules.js`                                                         |
+| Cards de resumo do histórico                      | `summarizeHistory` em `utils/resultView.js` e `HistorySummary`                                            |
+| Importação dos treinos sem duplicar             | `TrainingService.importCsv` (chave data/hora + dataset)                                                       |
 
 ## Perguntas rápidas de banca
 
 Respostas de uma ou duas frases para revisar na véspera. O detalhe de cada uma está na seção do conceito.
 
-| Pergunta | Resposta curta |
-| --- | --- |
-| O que o PixoraMed faz? | Classifica imagens de Pele, Oral e Cérebro e mostra a probabilidade de cada classe, com histórico e limitações. Não é diagnóstico. |
-| Por que três serviços? | Cada um com a linguagem certa: React na tela, Java no login e nas regras, Python na IA. A IA fica isolada dos dados de usuário. |
-| Quem decide a classe? | O backend (`DecisionService`). A IA só devolve probabilidades. |
-| O que é stateless? | O servidor não guarda sessão; a identidade vem no JWT de cada requisição. |
-| Por que BCrypt? | Hash lento e com salt: se o banco vazar, as senhas não aparecem. |
-| Para que serve o X-Internal-Token? | Só o backend pode usar a IA, mesmo com a URL pública no Render. |
-| Onde ficam os segredos? | Em variáveis de ambiente: `.env` local (fora do git) e env groups do Render, preenchidos pelo Terraform. |
-| Qual `.env` o Docker usa? | Só o `infra/.env`. Os `.env` das pastas servem para rodar fora do Docker. |
-| Para que serve o log? | Saber o que aconteceu (login, análise, falha da IA) sem guardar e-mail, senha, token ou imagem. |
-| Onde vejo o log? | Docker Desktop ou `docker compose logs`, janela Run do IntelliJ, aba Logs do Render. |
-| O que é uma CNN? | Rede com filtros convolucionais que aprendem padrões da imagem, de bordas a formas. |
-| O que é transfer learning? | Partir de uma rede já treinada (EfficientNet-B0 no ImageNet) e ajustá-la para pele. |
-| Por que um ensemble? | A média de 5 redes é mais estável que uma só. |
-| Por que o limiar de 18% na Pele? | Na triagem, perder um câncer é pior que um alarme falso; o limiar aumenta a sensibilidade. |
-| Por que "inconclusivo"? | Em Oral e Cérebro, abaixo de 80% de confiança o sistema não afirma uma classe. |
-| O que é ONNX? | Formato aberto de rede neural; roda sem PyTorch, com imagem menor e inferência rápida. |
-| Por que a acurácia alta não basta? | É na mesma fonte, com possível vazamento; em outra fonte, o modelo de mama caiu de 96,6% para 34,5%. |
-| O que é validação cruzada? | Treinar e testar 5 vezes, trocando a parte de teste, para medir a média e a variação. |
-| Docker ou Terraform? | Docker empacota cada serviço; Terraform cria a infraestrutura na nuvem onde eles rodam. |
-| Por que `prevent_destroy`? | Impede que o Terraform apague o banco do Neon, que tem os dados. |
-| A imagem fica guardada? | Não. É processada em memória e descartada; o banco guarda só o resultado. |
-| Pode usar comercialmente? | Não: os datasets são CC BY-NC-SA 4.0, sem uso comercial. |
-| O que fariam a seguir? | Testar com imagens de outra fonte, filtro de tipo de exame, calibrar Oral e Cérebro, limite de tentativas de login. |
+| Pergunta                             | Resposta curta                                                                                                                            |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| O que o PixoraMed faz?               | Classifica imagens de Pele, Oral e Cérebro e mostra a probabilidade de cada classe, com histórico e limitações. Não é diagnóstico. |
+| Por que três serviços?             | Cada um com a linguagem certa: React na tela, Java no login e nas regras, Python na IA. A IA fica isolada dos dados de usuário.          |
+| Quem decide a classe?                | O backend (`DecisionService`). A IA só devolve probabilidades.                                                                         |
+| O que é stateless?                  | O servidor não guarda sessão; a identidade vem no JWT de cada requisição.                                                             |
+| Por que BCrypt?                      | Hash lento e com salt: se o banco vazar, as senhas não aparecem.                                                                         |
+| Para que serve o X-Internal-Token?   | Só o backend pode usar a IA, mesmo com a URL pública no Render.                                                                         |
+| Onde ficam os segredos?              | Em variáveis de ambiente: `.env` local (fora do git) e env groups do Render, preenchidos pelo Terraform.                               |
+| Qual `.env` o Docker usa?          | Só o `infra/.env`. Os `.env` das pastas servem para rodar fora do Docker.                                                            |
+| Para que serve o log?                | Saber o que aconteceu (login, análise, falha da IA) sem guardar e-mail, senha, token ou imagem.                                          |
+| Onde vejo o log?                     | Docker Desktop ou `docker compose logs`, janela Run do IntelliJ, aba Logs do Render.                                                    |
+| O que é uma CNN?                    | Rede com filtros convolucionais que aprendem padrões da imagem, de bordas a formas.                                                      |
+| O que é transfer learning?          | Partir de uma rede já treinada (EfficientNet-B0 no ImageNet) e ajustá-la para pele.                                                     |
+| Por que um ensemble?                 | A média de 5 redes é mais estável que uma só.                                                                                         |
+| Por que o limiar de 18% na Pele?     | Na triagem, perder um câncer é pior que um alarme falso; o limiar aumenta a sensibilidade.                                              |
+| Por que "inconclusivo"?              | Em Oral e Cérebro, abaixo de 80% de confiança o sistema não afirma uma classe.                                                         |
+| O que é ONNX?                       | Formato aberto de rede neural; roda sem PyTorch, com imagem menor e inferência rápida.                                                  |
+| Por que a acurácia alta não basta? | É na mesma fonte, com possível vazamento; em outra fonte, o modelo de mama caiu de 96,6% para 34,5%.                                    |
+| O que é validação cruzada?        | Treinar e testar 5 vezes, trocando a parte de teste, para medir a média e a variação.                                                  |
+| Docker ou Terraform?                 | Docker empacota cada serviço; Terraform cria a infraestrutura na nuvem onde eles rodam.                                                  |
+| Por que `prevent_destroy`?         | Impede que o Terraform apague o banco do Neon, que tem os dados.                                                                          |
+| A imagem fica guardada?              | Não. É processada em memória e descartada; o banco guarda só o resultado.                                                             |
+| Pode usar comercialmente?            | Não: os datasets são CC BY-NC-SA 4.0, sem uso comercial.                                                                                |
+| O que fariam a seguir?               | Testar com imagens de outra fonte, filtro de tipo de exame, calibrar Oral e Cérebro, limite de tentativas de login.                      |
