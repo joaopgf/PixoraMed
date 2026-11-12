@@ -1,6 +1,6 @@
 # Guia de estudo — conceitos do PixoraMed
 
-Nov 11, 2026 · Grupo PixoraMed (Bootcamp de IA II/2026, TCS e SENAI Londrina)
+Nov 12, 2026 · Grupo PixoraMed (Bootcamp de IA II/2026, TCS e SENAI Londrina)
 
 ## Como usar o guia
 
@@ -14,7 +14,7 @@ Cada conceito segue o mesmo roteiro, que é a ordem em que a banca costuma pergu
 
 A dica para a banca é responder nessa mesma ordem: definição, mecanismo, exemplo do próprio código, motivo.
 
-Os números deste guia são os medidos pelo grupo. Regra de ouro na banca: **não arredondar para cima e não chamar teste da mesma fonte de "teste externo"**. A seção [Resultados e honestidade](#resultados-e-honestidade) diz o que cada número mede e o que não mede.
+Os números deste guia são os medidos pelo grupo. Regra de ouro na banca: **não arredondar para cima e não chamar teste da mesma fonte de "teste externo"**. A seção [Resultados e honestidade](#resultados-e-honestidade) diz o que cada número mede e o que não mede, e a seção [Métricas e conceitos de IA](#métricas-e-conceitos-de-ia) traz a definição, a fórmula e as perguntas de banca de cada termo (acurácia, F1, matriz de confusão, AUC, overfitting, alucinação...).
 
 ## Visão geral em uma tela
 
@@ -598,18 +598,332 @@ if (cut != null && confidence < cut) {
 - **Evidência de mudança de domínio.** Um modelo de mama feito no mesmo processo teve 96,6% na mesma fonte e 34,5% em 29 imagens de outra fonte. Por isso ele saiu do sistema.
 - **Pele: reprodução não é o modelo do app.** O código original do ensemble foi perdido; os números de AUC vêm de uma reprodução do treino. Na reprodução, a acurácia (84,5%) quase empata com chutar sempre "benigno" (83,9%), então AUC e sensibilidade são as métricas que importam.
 
-### Métricas que a banca pode pedir
-
-| Métrica               | O que diz                                                                                      |
-| ---------------------- | ---------------------------------------------------------------------------------------------- |
-| Acurácia              | Quantos acertos no total. Engana com classes desbalanceadas                                    |
-| F1                     | Equilíbrio entre precisão e sensibilidade. Melhor que a acurácia com classes desbalanceadas |
-| Sensibilidade (recall) | Dos doentes, quantos o modelo achou. É a que a triagem quer alta                              |
-| Especificidade         | Dos saudáveis, quantos o modelo liberou corretamente                                          |
-| VPP (precisão)        | Dos que o modelo chamou de maligno, quantos eram mesmo. Na Pele, 51,2%                         |
-| AUC                    | Capacidade de separar as classes em todos os limiares; 0,5 é chute, 1,0 é perfeito           |
+A definição e a fórmula de cada métrica (acurácia, F1, sensibilidade, AUC...) estão na seção [Métricas e conceitos de IA](#métricas-e-conceitos-de-ia).
 
 **Pergunta de banca.** *Com 98% de acurácia, por que não usar em hospital?* Resposta: "Porque os 98% são na mesma fonte do treino, com possível vazamento, e nunca houve validação clínica. Quando testamos o modelo de mama em imagens de outra fonte, a acurácia caiu para 34,5%. O sistema foi desenhado para mostrar essa incerteza, não para esconder."
+
+## Métricas e conceitos de IA
+
+Cada termo traz a definição, a fórmula (quando há), o exemplo com os números do próprio projeto e as perguntas que a banca pode fazer, com a resposta curta para falar em voz alta.
+
+**Siglas.** VP = verdadeiro positivo, VN = verdadeiro negativo, FP = falso positivo (alarme falso), FN = falso negativo (caso que passou). "Positivo" é a classe que se quer achar: **maligno** na Pele e **carcinoma espinocelular** na Oral.
+
+**Números marcados com "conta nossa"** não estão no relatório: foram calculados a partir dos números medidos, para mostrar a fórmula. Na banca, diga que é uma conta feita a partir dos resultados.
+
+### Exemplo base: os 21 testes da Pele
+
+O teste do modelo do app com 21 imagens internas (8 malignas e 13 benignas) é uma matriz de confusão real e pequena, boa para fazer as contas de cabeça:
+
+|                       | Real: maligno | Real: benigno |
+| --------------------- | ------------- | ------------- |
+| **Previsto: maligno** | VP = 8        | FP = 6        |
+| **Previsto: benigno** | FN = 0        | VN = 7        |
+
+Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenho do modelo.
+
+### Matriz de confusão
+
+**O que é.** Uma tabela que cruza o que o modelo previu com o que era de verdade, classe por classe. Na diagonal ficam os acertos (VP e VN); fora dela, os erros (FP e FN). Todas as métricas abaixo saem dela.
+
+**Por que importa.** Mostra **que tipo** de erro o modelo comete, e não só quantos. Em Cérebro, com 3 classes, ela mostra quais tipos de tumor o modelo confunde entre si. Nos notebooks, o Matplotlib gera a matriz de cada treino.
+
+**Cuidado.** Confira os eixos antes de ler: o scikit-learn põe o real nas linhas e o previsto nas colunas; a tabela acima faz o contrário.
+
+**Pergunta da banca:** "O que é uma matriz de confusão?"
+**Resposta:** "É a tabela que cruza o previsto com o real. A diagonal são os acertos, e fora dela estão os falsos positivos e os falsos negativos. Ela mostra o tipo de erro, que a acurácia sozinha esconde."
+
+**Pergunta da banca:** "Qual erro é mais grave no projeto?"
+**Resposta:** "O falso negativo: dizer benigno para um câncer. O paciente vai para casa sem tratamento. O falso positivo gera um exame a mais. Por isso o limiar da Pele foi escolhido para errar menos falsos negativos."
+
+### Acurácia
+
+**O que é.** De todos os casos, quantos o modelo acertou, somando positivos e negativos.
+
+**Fórmula.** `Acurácia = (VP + VN) / (VP + VN + FP + FN)`
+
+**No PixoraMed.**
+
+- Exemplo base: (8 + 7) / 21 = **71,4%**.
+- Oral: 193 / 200 = **96,5%**. Cérebro: 295 / 300 = **98,3%** (mesma fonte do treino).
+- **Onde ela engana**: na reprodução da Pele, a acurácia foi 84,5%, e responder sempre "benigno" já daria 83,9%, porque a maioria das imagens é benigna. Um modelo inútil teria quase a mesma acurácia.
+
+**Pergunta da banca:** "O que é acurácia?"
+**Resposta:** "É a porcentagem de acertos no total: acertos divididos por todos os casos."
+
+**Pergunta da banca:** "Por que vocês não usam a acurácia na Pele?"
+**Resposta:** "Porque o dataset é desbalanceado: chutando sempre benigno, a acurácia já seria 83,9%. Ela esconde se o modelo acha os malignos. Na Pele olhamos a AUC e a sensibilidade."
+
+### Precisão (VPP)
+
+**O que é.** Dos casos que o modelo chamou de positivo, quantos eram positivos de verdade. Na medicina se chama **valor preditivo positivo (VPP)**. Responde "quando o modelo acusa, ele acerta?". Cai quando há muitos falsos positivos.
+
+**Fórmula.** `Precisão = VP / (VP + FP)`
+
+**No PixoraMed.** Exemplo base: 8 / (8 + 6) = **57,1%**. Na reprodução da Pele: **51,2%**.
+
+**Pergunta da banca:** "O que é precisão?"
+**Resposta:** "Dos casos que o modelo chamou de maligno, quantos eram malignos mesmo."
+
+**Pergunta da banca:** "VPP de 51% não é ruim?"
+**Resposta:** "É o preço do limiar de 18%: de cada dois alertas de maligno, cerca de um é alarme falso. Numa triagem, aceitamos isso para quase não deixar câncer passar. O alarme falso vira um exame a mais; o médico confirma."
+
+### Sensibilidade (recall)
+
+**O que é.** Dos casos positivos de verdade, quantos o modelo encontrou. Responde "deixei passar algum?". Cai quando há muitos falsos negativos. Também chamada de *recall* ou taxa de verdadeiros positivos.
+
+**Fórmula.** `Sensibilidade = VP / (VP + FN)`
+
+**No PixoraMed.** Exemplo base: 8 / (8 + 0) = **100%** (amostra pequena). Na reprodução da Pele: **89,0%**. É a métrica que o limiar de 18% quer alta.
+
+**Pergunta da banca:** "O que é sensibilidade?"
+**Resposta:** "Dos pacientes com câncer, quantos o modelo achou. É a métrica mais importante numa triagem."
+
+### Especificidade
+
+**O que é.** Dos casos negativos de verdade, quantos o modelo reconheceu como negativos. É a sensibilidade dos negativos. Cai quando há muitos falsos positivos.
+
+**Fórmula.** `Especificidade = VN / (VN + FP)`
+
+**No PixoraMed.** Exemplo base: 7 / (7 + 6) = **53,8%**. Na reprodução da Pele: **83,7%**.
+
+**Pergunta da banca:** "Qual a diferença entre sensibilidade e especificidade?"
+**Resposta:** "Sensibilidade é acertar os doentes; especificidade é acertar os saudáveis. Uma sobe quando a outra desce, e quem escolhe o equilíbrio é o limiar."
+
+**Pergunta da banca:** "E entre precisão e especificidade?"
+**Resposta:** "As duas caem com falso positivo, mas olham grupos diferentes. A especificidade olha os saudáveis: quantos foram liberados. A precisão olha os alertas do modelo: quantos estavam certos."
+
+### F1-score
+
+**O que é.** A média harmônica entre precisão e sensibilidade. Só fica alta quando as duas estão altas, por isso resume o equilíbrio entre elas.
+
+**Fórmula.** `F1 = 2 × (Precisão × Sensibilidade) / (Precisão + Sensibilidade)`
+
+**No PixoraMed.**
+
+- Exemplo base: 2 × (0,571 × 1,0) / (0,571 + 1,0) = **72,7%**. A média simples daria 78,6%: a harmônica pune a precisão baixa.
+- Treinos de Oral e Cérebro: a F1 ficou quase igual à acurácia (Cérebro cinza: acurácia 95,17%, F1 95,17%), porque as classes são **balanceadas** (1.000 imagens por classe). Com classes iguais, as duas métricas andam juntas.
+- Reprodução da Pele: com VPP 51,2% e sensibilidade 89,0%, a F1 dá cerca de **65%** (conta nossa).
+- Na Pele, uma CNN pequena de 7 classes testada pelo grupo, que **não** é o modelo do app, ficou com F1 perto de 50% com a divisão por lesão. O site mostra esse número em Limitações.
+
+**Pergunta da banca:** "O que é F1-score?"
+**Resposta:** "É a média harmônica entre precisão e sensibilidade. Resume num número só se o modelo acha os positivos sem dar alarme falso demais."
+
+**Pergunta da banca:** "Por que média harmônica e não média simples?"
+**Resposta:** "Porque ela é puxada para o menor valor. Um modelo com sensibilidade 100% e precisão 10% teria média simples de 55%, mas F1 de 18%. A harmônica não deixa uma métrica boa esconder uma ruim."
+
+**Pergunta da banca:** "Por que a F1 deu igual à acurácia nos treinos?"
+**Resposta:** "Porque Oral e Cérebro têm o mesmo número de imagens em cada classe. A F1 se separa da acurácia quando as classes são desbalanceadas, como na Pele."
+
+### Acurácia balanceada
+
+**O que é.** A média da sensibilidade de cada classe. Em duas classes: `(Sensibilidade + Especificidade) / 2`. Não é enganada pela classe majoritária: chutar sempre "benigno" dá 50%.
+
+**No PixoraMed.** Reprodução da Pele: (89,0% + 83,7%) / 2 ≈ **86,4%** (conta nossa). Para comparação, a página de Limitações cita que redes pré-treinadas chegam a cerca de 76% de acurácia balanceada nas 7 classes do HAM10000 quando dividem por lesão.
+
+**Pergunta da banca:** "O que é acurácia balanceada?"
+**Resposta:** "A média do acerto de cada classe. Ela dá o mesmo peso à classe rara e à comum, então não fica alta só por acertar a maioria."
+
+### Curva ROC e AUC
+
+**O que é.** A curva ROC mostra, para **todos os limiares possíveis**, a sensibilidade contra a taxa de falsos positivos (1 − especificidade). A **AUC** é a área sob essa curva, de 0 a 1: 0,5 é chute e 1,0 é separação perfeita. Na prática, é a chance de o modelo dar uma nota maior a um caso maligno sorteado do que a um benigno sorteado.
+
+**No PixoraMed.** Reprodução da Pele: **AUC 0,939**, com intervalo de confiança de 95% entre 0,922 e 0,954. Os notebooks da Pele geram a curva ROC com o Matplotlib.
+
+**Pergunta da banca:** "O que é AUC?"
+**Resposta:** "É a área sob a curva ROC. Mede o quanto o modelo separa malignos de benignos, sem depender de um limiar. 0,5 é chute, 1 é perfeito; a nossa reprodução deu 0,939."
+
+**Pergunta da banca:** "Por que usar AUC na Pele?"
+**Resposta:** "Porque ela não muda com o desbalanceamento nem com o limiar escolhido. Mostra a qualidade do modelo; o limiar de 18% é uma decisão de uso, tomada depois."
+
+### Intervalo de confiança
+
+**O que é.** A faixa em que o valor verdadeiro provavelmente está, considerando que o teste usou uma amostra. Com 95% de confiança, se repetíssemos o experimento muitas vezes, 95% das faixas calculadas conteriam o valor real.
+
+**No PixoraMed.** AUC 0,939 (IC 95%: 0,922–0,954).
+
+**Pergunta da banca:** "Por que dar um intervalo e não só o número?"
+**Resposta:** "Porque o resultado veio de uma amostra e varia. O intervalo diz o quanto confiar: mesmo no pior caso da faixa, a AUC fica acima de 0,92."
+
+### Média e desvio padrão entre folds
+
+**O que é.** Na validação cruzada, cada um dos 5 folds dá um resultado. A **média** é o desempenho esperado; o **desvio padrão** diz o quanto os resultados variaram entre os folds.
+
+**No PixoraMed.** Cérebro cinza sem normalização: **95,17% ± 0,55**. Os 5 folds ficaram próximos, então o resultado é estável.
+
+**Pergunta da banca:** "O que significa o ± 0,55?"
+**Resposta:** "É o desvio padrão entre os 5 folds. Quanto menor, menos o resultado depende de quais imagens caíram no teste."
+
+### Limiar de decisão (threshold)
+
+**O que é.** O valor de probabilidade a partir do qual o sistema afirma uma classe. Mudar o limiar troca sensibilidade por especificidade sem treinar o modelo de novo.
+
+**No PixoraMed.**
+
+- **Pele: 18%.** Maligno a partir de 18% de probabilidade calibrada. Aumenta a sensibilidade e aceita mais alarmes falsos.
+- **Oral e Cérebro: 80%.** Abaixo disso, a resposta é "inconclusivo". Na Oral, 188 das 200 imagens ficaram conclusivas (**cobertura** de 94%), e o acerto nelas subiu de 96,5% para **98,4%**.
+- O limiar é regra de negócio: fica no `DecisionService` do backend, configurável por variável de ambiente.
+
+**Pergunta da banca:** "O que é limiar de decisão?"
+**Resposta:** "É o ponto de corte da probabilidade para afirmar uma classe. Na Pele, a partir de 18% o sistema diz maligno."
+
+**Pergunta da banca:** "E se subirem o limiar da Pele para 50%?"
+**Resposta:** "Haveria menos alarmes falsos, então a especificidade e a precisão subiriam, mas mais cânceres passariam como benignos, então a sensibilidade cairia. Para triagem, preferimos o contrário."
+
+**Pergunta da banca:** "O 'inconclusivo' não é um jeito de inflar a acurácia?"
+**Resposta:** "Ele melhora o acerto entre as respostas dadas, mas o sistema deixa de responder alguns casos, e mostramos os dois números: 188 conclusivas de 200 e 98,4% nelas. E ele não evita erro com confiança alta, que é o mais comum em imagens de outra fonte."
+
+### Prevalência e baseline
+
+**O que é.** **Prevalência** é a proporção de positivos nos dados. **Baseline** é o resultado de um modelo trivial, como responder sempre a classe mais comum. Um modelo só vale se superar o baseline com folga.
+
+**No PixoraMed.** Na reprodução da Pele, cerca de 84% das imagens são benignas: o baseline "sempre benigno" tem **83,9%** de acurácia e 0% de sensibilidade. A prevalência baixa de malignos também explica a precisão de 51,2%: com poucos malignos, até uma taxa pequena de alarmes falsos pesa muito.
+
+**Pergunta da banca:** "O que é baseline?"
+**Resposta:** "É a referência mínima: o resultado de um modelo burro, como chutar sempre a classe mais comum. Na Pele, ele já dá 83,9% de acurácia, e é por isso que a acurácia não serve ali."
+
+### Treino, validação e teste
+
+**O que é.** **Treino**: dados que ajustam os pesos. **Validação**: dados para escolher configurações (hiperparâmetros). **Teste**: dados nunca vistos, que medem o desempenho final. Separar só treino e teste é o **hold-out**.
+
+**No PixoraMed.** Os treinos usaram validação cruzada em 5 folds. Depois, Oral (200 imagens) e Cérebro (300 imagens) foram testados com imagens separadas do treino, mas da **mesma fonte**.
+
+**Pergunta da banca:** "Por que não testar com as imagens do treino?"
+**Resposta:** "Porque o modelo já viu essas imagens e pode tê-las decorado. O teste precisa de imagens novas para medir se ele generaliza."
+
+### Validação cruzada estratificada e divisão por lesão
+
+**O que é.** A validação cruzada *k-fold* divide os dados em k partes, treina em k − 1 e testa na que sobrou, k vezes. **Estratificada**: cada parte mantém a proporção das classes. **Por grupo** (`StratifiedGroupKFold`): todas as imagens de um mesmo grupo ficam do mesmo lado.
+
+**No PixoraMed.** 5 folds estratificados com semente fixa (42) nos treinos da CNN. Na Pele, a divisão é **por lesão** (`lesion_id`): fotos da mesma lesão nunca ficam no treino e no teste ao mesmo tempo.
+
+**Pergunta da banca:** "Por que dividir a Pele por lesão?"
+**Resposta:** "O HAM10000 tem várias fotos da mesma lesão. Dividindo por imagem, o modelo veria quase a mesma foto no treino e no teste, e a métrica sairia inflada. Por isso artigos que dividem por imagem chegam a 95–98%."
+
+### Overfitting e underfitting
+
+**O que é.** **Overfitting** (super ajuste): o modelo decora o treino e vai mal em dados novos. Sinal: treino alto, teste baixo. **Underfitting** (sub ajuste): o modelo não aprende nem o treino. Sinal: os dois baixos.
+
+**No PixoraMed.**
+
+- **Overfitting**: Oral em cinza sem normalização teve treino perto de 99% e teste perto de 75%.
+- **Underfitting**: Cérebro com normalização não convergiu em 450 épocas; sem normalizar, chegou a 95%.
+- **O que a CNN tem contra overfitting**: rede pequena (~24 mil parâmetros), Dropout de 25% e validação cruzada para medir.
+
+**Pergunta da banca:** "O que é overfitting?"
+**Resposta:** "É quando o modelo decora os dados de treino em vez de aprender o padrão. Vai muito bem no treino e mal em dados novos. Tivemos um caso na Oral em cinza: 99% no treino e 75% no teste."
+
+**Pergunta da banca:** "Como vocês evitaram?"
+**Resposta:** "Com uma rede pequena, Dropout de 25%, validação cruzada em 5 folds e escolhendo a configuração pelo resultado no teste, não no treino."
+
+### Vazamento de dados (data leakage)
+
+**O que é.** Quando informação do teste chega ao treino, e a métrica fica melhor do que o modelo realmente é.
+
+**No PixoraMed.** O Multi Cancer (Oral e Cérebro) já vem **aumentado**: rotações, zoom e espelhamentos da mesma imagem original. Essas variações podem cair no treino e no teste ao mesmo tempo, e o dataset não é dividido por paciente. Por isso a acurácia alta pode medir memorização. Na Pele, a divisão por lesão evita esse problema.
+
+**Pergunta da banca:** "O que é vazamento de dados?"
+**Resposta:** "É o teste 'ver' algo do treino. A métrica sobe sem o modelo ser bom. Suspeitamos disso no Multi Cancer, porque ele já vem com cópias giradas e espelhadas das mesmas imagens."
+
+### Generalização, teste externo e mudança de domínio
+
+**O que é.** **Generalização** é funcionar em dados novos. **Teste externo** usa imagens de outra fonte (outro hospital, outro aparelho). **Mudança de domínio** é a queda de desempenho quando as imagens de uso são diferentes das do treino.
+
+**No PixoraMed.** Um modelo de mama feito no mesmo processo teve **96,6%** na mesma fonte e **34,5%** em 29 imagens de outra fonte. Por isso saiu do sistema. Nenhum módulo atual foi testado em outra fonte.
+
+**Pergunta da banca:** "O modelo de vocês generaliza?"
+**Resposta:** "Não sabemos, e dizemos isso. Os testes são da mesma fonte do treino. No único teste externo que fizemos, com mama, a acurácia caiu para 34,5%. Testar em outra fonte é o próximo passo."
+
+### Dados desbalanceados
+
+**O que é.** Quando uma classe tem muito mais exemplos que outra. O modelo tende a favorecer a classe maior, e a acurácia fica enganosa.
+
+**No PixoraMed.** O HAM10000 (Pele) tem nevo em ~67% das imagens e dermatofibroma em ~1%. O treino da Pele usou **pesos por classe** (o erro na classe rara pesa mais), que, como avisa a página de Limitações, fazem a rede prever demais as classes raras. A avaliação usou AUC e sensibilidade. Oral e Cérebro foram montados balanceados: 1.000 imagens por classe. O desbalanceamento também gera **viés**: o desempenho em tons de pele pouco representados é desconhecido.
+
+**Pergunta da banca:** "Como trataram o desbalanceamento?"
+**Resposta:** "Na Pele, com pesos por classe no treino e com métricas que não se enganam com a classe maior, como AUC e sensibilidade. Em Oral e Cérebro, usamos o mesmo número de imagens por classe."
+
+### Data augmentation (aumento de dados)
+
+**O que é.** Criar variações das imagens de treino (girar, espelhar, dar zoom, mudar o brilho) para o modelo ver mais exemplos e não depender da posição ou da iluminação.
+
+**No PixoraMed.** O Multi Cancer já vem aumentado. Ajuda o treino, mas, sem separar as variações da mesma imagem, causa o vazamento descrito acima.
+
+**Pergunta da banca:** "Aumento de dados é bom ou ruim?"
+**Resposta:** "É bom no treino. O problema é aumentar antes de separar treino e teste: aí cópias da mesma imagem caem nos dois lados. O certo é separar primeiro e aumentar só o treino."
+
+### Normalização da imagem
+
+**O que é.** Colocar os pixels numa escala que a rede aprende melhor.
+
+- **Divisão por 255** (Oral e Cérebro): pixels de 0–255 viram 0–1. É uma normalização *min-max*.
+- **Normalização ImageNet** (Pele): de cada canal de cor se subtrai a média e se divide pelo desvio do ImageNet (um *z-score* por canal), porque a EfficientNet foi pré-treinada assim.
+
+**No PixoraMed.** A normalização faz parte do pré-processamento e precisa ser idêntica à do treino: sem a divisão por 255 (ou lendo em BGR), a Oral caiu de 96,5% para cerca de 52%. A palavra "normalizado" no CSV dos treinos indica uma normalização extra testada como hiperparâmetro; no Cérebro, a versão sem ela foi a melhor.
+
+**Pergunta da banca:** "Por que normalizar a imagem?"
+**Resposta:** "Para os valores ficarem numa escala pequena e parecida, o que deixa o treino mais estável. E, no uso, a imagem precisa da mesma normalização do treino, senão o modelo erra sem dar erro nenhum."
+
+### Softmax, sigmoid e logit
+
+**O que é.** A última camada da rede devolve números soltos, os **logits**. Funções transformam esses números em probabilidades:
+
+- **Softmax** (Oral e Cérebro): transforma os logits de todas as classes em probabilidades que somam 100%. A maior vira a classe prevista.
+- **Sigmoid** (Pele): transforma um único logit numa probabilidade entre 0 e 1, a de ser maligno. Na Pele ela vem com a calibração de Platt: `sigmoid(a · logit + b)`.
+
+**Pergunta da banca:** "O que é softmax?"
+**Resposta:** "É a função que transforma a saída da rede em probabilidades que somam 100%, uma por classe."
+
+**Pergunta da banca:** "A confiança de 90% quer dizer 90% de chance de ter câncer?"
+**Resposta:** "Não. Em Oral e Cérebro, é o softmax da rede, que não é calibrado: mede o quanto o modelo confia na classe, não a chance real de doença. A tela diz isso ao médico."
+
+### Parâmetros e hiperparâmetros
+
+**O que é.** **Parâmetros** são aprendidos pelo modelo durante o treino: os pesos da rede. **Hiperparâmetros** são escolhidos por nós antes do treino.
+
+**No PixoraMed.** A CNN tem **~24 mil parâmetros**. Hiperparâmetros: 450 épocas, lote de 64, taxa de aprendizado 0,001, Dropout de 25%, 5 folds, cor ou cinza e com ou sem normalização (as configurações comparadas no CSV dos treinos).
+
+**Pergunta da banca:** "Qual a diferença entre parâmetro e hiperparâmetro?"
+**Resposta:** "Parâmetro o modelo aprende sozinho, como os pesos. Hiperparâmetro nós definimos antes, como o número de épocas e a taxa de aprendizado."
+
+### Época, lote, taxa de aprendizado, perda e otimizador
+
+**O que é.**
+
+- **Época**: uma passada completa por todas as imagens de treino.
+- **Lote (batch)**: quantas imagens a rede vê antes de atualizar os pesos (64).
+- **Função de perda**: mede o tamanho do erro. A *CrossEntropyLoss* é a padrão para classificação.
+- **Otimizador**: o algoritmo que ajusta os pesos para diminuir a perda. O **Adam** ajusta o passo de cada peso sozinho.
+- **Taxa de aprendizado**: o tamanho do passo de cada ajuste (0,001). Grande demais, o treino oscila; pequena demais, demora.
+
+**Pergunta da banca:** "Como a rede aprende?"
+**Resposta:** "Ela prevê um lote de 64 imagens, a função de perda mede o erro, e o otimizador Adam ajusta os pesos para errar menos. Uma passada por todas as imagens é uma época."
+
+### Treino e inferência
+
+**O que é.** **Treino** é ajustar os pesos com dados rotulados; é caro e foi feito nos notebooks, com GPU. **Inferência** é usar o modelo pronto para prever uma imagem nova; é o que o ai-service faz, em CPU, com ONNX.
+
+**Pergunta da banca:** "O sistema aprende com as imagens que os médicos enviam?"
+**Resposta:** "Não. O sistema só faz inferência, e a imagem é descartada depois da análise. Treinar de novo exigiria imagens rotuladas, consentimento e uma nova validação."
+
+### Classificação supervisionada, binária e multiclasse
+
+**O que é.** **Supervisionado**: o modelo aprende com exemplos que já têm a resposta certa (o rótulo). **Binária**: duas classes. **Multiclasse**: mais de duas, e o modelo escolhe uma.
+
+**No PixoraMed.** Todos os módulos são classificação supervisionada. Pele (benigno ou maligno) e Oral (normal ou carcinoma espinocelular) são binários; Cérebro (glioma, meningioma ou hipofisário) é multiclasse.
+
+**Pergunta da banca:** "Que tipo de problema de IA é o projeto?"
+**Resposta:** "Classificação de imagens, supervisionada: as redes aprenderam com imagens já rotuladas. Dois módulos são binários, e o Cérebro tem três classes."
+
+### Alucinação (e o equivalente neste projeto)
+
+**O que é.** Termo da IA generativa (LLMs como o ChatGPT): o modelo inventa uma resposta falsa, com tom de certeza. O PixoraMed **não usa IA generativa**: não gera texto, só classifica imagens.
+
+**O equivalente aqui.** Um classificador sempre escolhe uma das classes que conhece, mesmo quando a imagem não tem nada a ver com o treino (**fora da distribuição**). Uma foto qualquer recebe uma classe, e o Cérebro sempre diz um tipo de tumor, porque não tem a classe "sem tumor". Pode até sair com confiança alta.
+
+**O que o sistema faz.** "Inconclusivo" abaixo de 80% em Oral e Cérebro, aviso de baixa certeza na Pele, avisos de escopo na tela e a página de Limitações. Trabalho futuro: um filtro que reconheça o tipo de exame antes de classificar.
+
+**Pergunta da banca:** "O modelo de vocês alucina?"
+**Resposta:** "Alucinação é um termo de modelos que geram texto, e o nosso não gera. Mas existe um problema parecido: se enviarem uma foto qualquer, o modelo escolhe uma das classes que conhece, às vezes com confiança alta. Deixamos isso claro nas limitações, e a solução seria um filtro de tipo de exame antes."
 
 ## Infraestrutura: Docker e Terraform
 
@@ -692,7 +1006,7 @@ Três workflows em BPMN 2.0, em `docs/bpmn/`, gerados por código (`docs/bpmn/ge
 
 | Onde       | O que                                                              | Como rodar                                       |
 | ---------- | ------------------------------------------------------------------ | ------------------------------------------------ |
-| Backend    | 5 testes: regra de decisão e leitura do CSV real                  | `mvn test`                                     |
+| Backend    | 7 testes: regra de decisão, leitura do CSV real e conversão das probabilidades para JSON                 | `mvn test`                                     |
 | ai-service | 20 testes: rotas, token, pré-processamento, modelos reais e erros | `pytest`                                       |
 | Frontend   | ESLint sem erros nem avisos; build de produção                   | `npm run lint` e `npm run build`             |
 | Terraform  | formatação, validação e plano sem mudanças                    | `terraform fmt -check`, `validate`, `plan` |
@@ -744,6 +1058,15 @@ Respostas de uma ou duas frases para revisar na véspera. O detalhe de cada uma 
 | Por que "inconclusivo"?              | Em Oral e Cérebro, abaixo de 80% de confiança o sistema não afirma uma classe.                                                         |
 | O que é ONNX?                       | Formato aberto de rede neural; roda sem PyTorch, com imagem menor e inferência rápida.                                                  |
 | Por que a acurácia alta não basta? | É na mesma fonte, com possível vazamento; em outra fonte, o modelo de mama caiu de 96,6% para 34,5%.                                    |
+| O que é acurácia?                    | Acertos divididos pelo total: (VP + VN) / total. Engana quando as classes são desbalanceadas. |
+| O que é matriz de confusão?          | Tabela que cruza previsto com real; mostra os acertos e o tipo de erro (falso positivo ou falso negativo). |
+| Sensibilidade ou especificidade?     | Sensibilidade: dos doentes, quantos achou, VP / (VP + FN). Especificidade: dos saudáveis, quantos liberou, VN / (VN + FP). |
+| O que é precisão (VPP)?              | Dos que o modelo chamou de maligno, quantos eram: VP / (VP + FP). Na Pele, 51,2%. |
+| O que é F1?                          | Média harmônica de precisão e sensibilidade: 2PR / (P + R). Só é alta se as duas forem. |
+| O que é AUC?                         | Área sob a curva ROC: separa as classes sem depender do limiar. 0,5 é chute; Pele 0,939. |
+| O que é overfitting?                 | Decorar o treino: vai bem no treino e mal em dados novos (Oral cinza: 99% no treino, 75% no teste). |
+| O que é vazamento de dados?          | Informação do teste chegar ao treino e inflar a métrica (cópias aumentadas no Multi Cancer). |
+| O modelo alucina?                    | Não gera texto, então não alucina no sentido de LLM; mas uma imagem qualquer recebe uma das classes. |
 | O que é validação cruzada?        | Treinar e testar 5 vezes, trocando a parte de teste, para medir a média e a variação.                                                  |
 | Docker ou Terraform?                 | Docker empacota cada serviço; Terraform cria a infraestrutura na nuvem onde eles rodam.                                                  |
 | Por que `prevent_destroy`?         | Impede que o Terraform apague o banco do Neon, que tem os dados.                                                                          |
