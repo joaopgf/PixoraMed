@@ -184,7 +184,7 @@
       <bpmn:text>Pele não tem inconclusivo: vira maligno a partir de 18%. Se nenhuma classe chega a 80%, mantém a classe e avisa baixa certeza.</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:textAnnotation id="TextAnnotation_c929922add16">
-      <bpmn:text>Só usuário, modelo, classe, confiança e horário. A imagem é descartada.</bpmn:text>
+      <bpmn:text>Usuário, modelo, classe, confiança e a probabilidade de cada classe (o histórico refaz o gráfico). A imagem é descartada.</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:textAnnotation id="TextAnnotation_8f7f579fe405">
       <bpmn:text>Avisos: modelo experimental, baixa certeza (Pele) e o que o resultado não informa (Cérebro).</bpmn:text>
@@ -326,7 +326,7 @@
         <dc:Bounds x="3865" y="775" width="360" height="60" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="TextAnnotation_c929922add16_di" bpmnElement="TextAnnotation_c929922add16">
-        <dc:Bounds x="4405" y="625" width="300" height="52" />
+        <dc:Bounds x="4405" y="625" width="320" height="60" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="TextAnnotation_8f7f579fe405_di" bpmnElement="TextAnnotation_8f7f579fe405">
         <dc:Bounds x="4430" y="155" width="320" height="60" />

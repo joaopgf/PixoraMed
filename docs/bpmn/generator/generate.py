@@ -216,7 +216,8 @@ d.note("n_probs", "Oral e Cérebro: softmax, não calibrado. Pele: média calibr
        "probs", 40, 70, 330, 60)
 d.note("n_pele", "Pele não tem inconclusivo: vira maligno a partir de 18%. Se nenhuma classe chega a 80%, mantém a classe e avisa baixa certeza.",
        "pele", -105, 70, 360, 60)
-d.note("n_registrar", "Só usuário, modelo, classe, confiança e horário. A imagem é descartada.", "registrar", -105, 70, 300, 52)
+d.note("n_registrar", "Usuário, modelo, classe, confiança e a probabilidade de cada classe (o histórico refaz o gráfico). A imagem é descartada.",
+       "registrar", -105, 70, 320, 60)
 d.note("n_ver", "Avisos: modelo experimental, baixa certeza (Pele) e o que o resultado não informa (Cérebro).", "ver", -350, 70, 320, 60)
 d.save(OUTPUT_DIR / "3_system_usage.bpmn")
 print("ok")
