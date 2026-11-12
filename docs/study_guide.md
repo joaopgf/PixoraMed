@@ -621,6 +621,114 @@ A configuração do app é a melhor dos experimentos: Oral em cor com divisão p
 **Pergunta da banca:** "O que é Dropout?"
 **Resposta:** "No treino, desliga ao acaso 25% dos valores a cada passo, para a rede não depender de um caminho só. É uma defesa contra overfitting. Na hora de usar o modelo, ele fica desligado."
 
+### As operações da CNN com números: kernel, ReLU, MaxPool e softmax
+
+As quatro operações que a banca mais pede para explicar, cada uma com uma conta pequena. Os números são de exemplo e foram conferidos rodando as mesmas funções do PyTorch.
+
+#### Kernel (filtro) e a convolução
+
+**O que é.** Uma matriz pequena de pesos, 3×3 na nossa CNN. Ela passa por cima da imagem, de pixel em pixel. Em cada posição, multiplica cada peso pelo pixel embaixo dele, soma tudo e soma o viés: o resultado é **um** número do mapa de características.
+
+**Fórmula** (numa posição): `saída = Σ (peso × pixel) + viés`
+
+**Exemplo.** Um filtro que reconhece **borda vertical** (escuro à esquerda, claro à direita), passando por dois pedaços de imagem:
+
+```
+Filtro (kernel)      Pedaço com borda      Pedaço liso
+ -1   0   1           10  10  10            10  10  10
+ -1   0   1           10  50  50            10  10  10
+ -1   0   1           10  50  50            10  10  10
+```
+
+- **Com borda**: linha 1: −10 + 0 + 10 = 0; linha 2: −10 + 0 + 50 = 40; linha 3: −10 + 0 + 50 = 40. Total **80**: o filtro "acende".
+- **Liso**: cada linha dá −10 + 0 + 10 = 0. Total **0**: nada a destacar.
+
+Repetindo a conta em todas as posições, sai um mapa que mostra **onde** a imagem tem borda vertical. Na nossa rede, ninguém escolheu esses pesos: os 16 filtros da primeira camada começam aleatórios, e o treino ajusta cada um para detectar o padrão que ajuda a separar as classes.
+
+**Detalhes que aparecem no código.**
+
+- `kernel_size=3`: filtro 3×3. Em imagem colorida, o filtro tem 3×3 pesos **para cada canal** (R, G e B): 27 pesos mais o viés, os 28 de cada filtro da primeira camada (16 × 28 = 448 parâmetros).
+- `padding=1`: uma borda de zeros em volta da imagem, para o filtro caber também nos pixels do canto e a saída continuar com 128×128.
+- Passo (*stride*) 1: o filtro anda de um em um pixel.
+
+**Pergunta da banca:** "Como o kernel calcula o resultado?"
+**Resposta:** "Ele multiplica cada peso pelo pixel embaixo, soma tudo e soma o viés. Se o pedaço da imagem tem o padrão que o filtro aprendeu, o número sai alto; se não tem, sai perto de zero. Fazendo isso em todas as posições, sai o mapa de onde o padrão aparece."
+
+**Pergunta da banca:** "Quem define os valores do filtro?"
+**Resposta:** "O treino. Os pesos começam aleatórios e a retropropagação ajusta cada um. Nós só definimos o tamanho, 3×3, e quantos filtros cada camada tem: 16, 32 e 64."
+
+#### ReLU
+
+**O que é.** A função de ativação depois de cada convolução: deixa os positivos como estão e troca os negativos por zero.
+
+**Fórmula.** `ReLU(x) = max(0, x)`
+
+**Exemplo.** `[−2; 0,5; 3; −0,1]` vira `[0; 0,5; 3; 0]`.
+
+**Por que.** Sem ela, as camadas seriam só somas e multiplicações em sequência, que equivalem a uma conta linear só, e a rede não aprenderia formas complexas. A ReLU também é barata de calcular e não muda o tamanho do mapa.
+
+**Pergunta da banca:** "O que a ReLU faz?"
+**Resposta:** "Troca os valores negativos por zero e mantém os positivos: max(0, x). Isso dá à rede a capacidade de aprender relações não lineares. No mapa do filtro, fica só onde o padrão apareceu."
+
+#### MaxPool
+
+**O que é.** Divide o mapa em quadrados de 2×2 e fica só com o **maior** valor de cada um. A altura e a largura caem pela metade; o número de canais não muda.
+
+**Exemplo.** Um mapa 4×4 vira 2×2:
+
+```
+Entrada (4×4)            Saída (2×2)
+ 1  3 | 2  0
+ 5  2 | 1  4               5   4
+------+------      →
+ 0  1 | 7  2               3   8
+ 3  2 | 6  8
+```
+
+Cada número da saída é o maior do seu quadrado: max(1, 3, 5, 2) = 5; max(2, 0, 1, 4) = 4; max(0, 1, 3, 2) = 3; max(7, 2, 6, 8) = 8.
+
+**Por que.** Guarda o sinal mais forte de cada região (onde o filtro "acendeu" mais), reduz em 4 vezes a quantidade de números para as camadas seguintes e deixa a rede menos sensível a pequenos deslocamentos: se a borda andar um pixel dentro do quadrado, o máximo é o mesmo. Na nossa rede: 128 → 64 → 32 → 16. Não tem parâmetros.
+
+**Pergunta da banca:** "O que é MaxPooling?"
+**Resposta:** "É reduzir o mapa pela metade ficando com o maior valor de cada quadrado 2×2. Guarda o sinal mais forte, diminui as contas e deixa a rede tolerante a pequenos deslocamentos. Não aprende nada: não tem parâmetros."
+
+**Pergunta da banca:** "Por que o máximo e não a média?"
+**Resposta:** "Porque interessa saber se o padrão apareceu na região, e o máximo preserva o sinal mais forte. A média diluiria esse sinal com os vizinhos. A nossa rede usa a média só no fim, no pooling global, para resumir cada filtro num número."
+
+#### Softmax
+
+**O que é.** A função que transforma os números finais da rede, os **logits**, em probabilidades: todas entre 0 e 1, somando 100%. Quanto maior o logit, maior a probabilidade.
+
+**Fórmula.** Para a classe *i*: `softmax(zᵢ) = e^zᵢ / Σ e^zⱼ` (o número *e* elevado a cada logit, dividido pela soma de todos).
+
+**Exemplo** com logits ilustrativos para a Oral (o sistema não guarda os logits reais):
+
+| | normal | carcinoma |
+| --- | --- | --- |
+| Logit | 0,82 | 0,50 |
+| e^logit | 2,2705 | 1,6487 |
+| Divide pela soma (3,9192) | **57,93%** | **42,07%** |
+
+Perto da análise da demonstração (normal com 57,89%). Como nenhuma classe chega a 80%, o backend responde **inconclusivo**.
+
+**No código** (`ai-service/app/inference.py`):
+
+```python
+def softmax(logits: np.ndarray) -> np.ndarray:
+    exp = np.exp(logits - logits.max())
+    return exp / exp.sum()
+```
+
+O `- logits.max()` não muda o resultado (subtrair o mesmo valor de todos os logits dá as mesmas probabilidades), mas evita que *e* elevado a um número grande estoure a conta. No exemplo: `[0; −0,32]` dá `[1; 0,7261]` e as mesmas 57,93% e 42,07%.
+
+**Na Pele não há softmax.** A saída é um logit só, de maligno, e a função é a **sigmoid** calibrada (ver [Softmax, sigmoid e logit](#softmax-sigmoid-e-logit)).
+
+**Pergunta da banca:** "O que é softmax?"
+**Resposta:** "É a função que transforma os logits da última camada em probabilidades que somam 100%: o número e elevado a cada logit, dividido pela soma de todos. A classe com a maior probabilidade é a prevista."
+
+**Pergunta da banca:** "Por que não usar os logits direto?"
+**Resposta:** "Porque logit não tem escala: pode ser negativo ou passar de 1. O softmax põe tudo entre 0 e 1, somando 100%, e assim dá para comparar com o limiar de 80% e mostrar o gráfico na tela."
+
 **Pergunta de banca.** *O que é um fold e por que 5?* Resposta: "A validação cruzada divide os dados em 5 partes. Treina em 4 e testa na que sobrou, cinco vezes, trocando a parte de teste. A média e o desvio dos 5 resultados dizem quanto o número varia. Estratificada quer dizer que cada parte tem a mesma proporção de classes."
 
 ### Transfer learning e o ensemble da Pele
@@ -1428,6 +1536,10 @@ Respostas de uma ou duas frases para revisar na véspera. O detalhe de cada uma 
 | O que é uma rede neural?             | Camadas de neurônios que fazem somas ponderadas com ativação; aprende ajustando os pesos para errar menos (backpropagation). |
 | O que é a EfficientNet-B0?           | CNN do Google pré-treinada no ImageNet, a menor da família; trocamos a última camada por uma saída de maligno. |
 | O que é uma CNN?                    | Rede com filtros convolucionais que aprendem padrões da imagem, de bordas a formas.                                                      |
+| O que é o kernel?                    | Filtro 3×3 de pesos aprendidos: multiplica pelos pixels embaixo e soma; sai alto onde há o padrão. |
+| O que é a ReLU?                      | max(0, x): zera os negativos e mantém os positivos; dá à rede a capacidade não linear. |
+| O que é MaxPooling?                  | Fica com o maior valor de cada quadrado 2×2: o mapa cai pela metade (128 → 64 → 32 → 16). |
+| O que é softmax?                     | e^logit dividido pela soma: probabilidades que somam 100% (ex.: 0,82 e 0,50 → 57,93% e 42,07%). |
 | O que é transfer learning?          | Partir de uma rede já treinada (EfficientNet-B0 no ImageNet) e ajustá-la para pele.                                                     |
 | Por que um ensemble?                 | A média de 5 redes é mais estável que uma só.                                                                                         |
 | Por que o limiar de 18% na Pele?     | Na triagem, perder um câncer é pior que um alarme falso; o limiar aumenta a sensibilidade.                                              |
