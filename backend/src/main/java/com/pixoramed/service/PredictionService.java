@@ -12,8 +12,10 @@ import com.pixoramed.model.Prediction;
 import com.pixoramed.repository.PredictionRepository;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -62,9 +64,13 @@ public class PredictionService {
         DecisionService.Decision decision =
                 decisionService.decide(result.probabilities(), result.classes(), result.threshold());
 
-        // Só o resultado vai para o banco
-        Prediction saved = predictions.save(new Prediction(
-                userId, result.modelId(), decision.predictedClass(), decision.confidence(), result.timeMs()));
+        // Só o resultado vai para o banco: classe, confiança e a probabilidade de cada classe (nunca a imagem)
+        Map<String, Double> byClass = new LinkedHashMap<>();
+        for (int i = 0; i < result.classes().size(); i++) {
+            byClass.put(result.classes().get(i), result.probabilities().get(i));
+        }
+        Prediction saved = predictions.save(new Prediction(userId, result.modelId(), decision.predictedClass(),
+                decision.confidence(), result.timeMs(), byClass));
         log.info("Análise {} concluída: usuário {}, modelo {}, classe {}, confiança {}, IA em {} ms",
                 saved.getId(), userId, result.modelId(), decision.predictedClass(),
                 String.format(Locale.ROOT, "%.4f", decision.confidence()),

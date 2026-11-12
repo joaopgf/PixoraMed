@@ -1,7 +1,8 @@
-// Entidade da tabela "predictions": histórico das análises. A imagem enviada nunca é guardada.
+// Entidade da tabela "predictions": histórico das análises (resultado e probabilidades). A imagem enviada nunca é guardada.
 package com.pixoramed.model;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -9,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.Map;
 
 @Entity
 @Table(name = "predictions", indexes = @Index(columnList = "userId"))
@@ -34,15 +36,22 @@ public class Prediction {
 
     private double timeMs;
 
+    // Probabilidade de cada classe, na ordem do modelo (JSON). Vazia nas análises feitas antes desta coluna
+    @Convert(converter = ProbabilitiesConverter.class)
+    @Column(columnDefinition = "text")
+    private Map<String, Double> probabilities;
+
     protected Prediction() {
     }
 
-    public Prediction(Long userId, String modelId, String predictedClass, double confidence, double timeMs) {
+    public Prediction(Long userId, String modelId, String predictedClass, double confidence, double timeMs,
+                      Map<String, Double> probabilities) {
         this.userId = userId;
         this.modelId = modelId;
         this.predictedClass = predictedClass;
         this.confidence = confidence;
         this.timeMs = timeMs;
+        this.probabilities = probabilities;
     }
 
     public Long getId() {
@@ -71,5 +80,9 @@ public class Prediction {
 
     public double getTimeMs() {
         return timeMs;
+    }
+
+    public Map<String, Double> getProbabilities() {
+        return probabilities;
     }
 }

@@ -1,5 +1,5 @@
 // Etapa 3 da análise: resultado com a classe prevista, a confiança, as probabilidades e os avisos do modelo.
-// Logo após a análise mostra tudo; registros antigos do histórico mostram só o que o banco guarda.
+// Logo após a análise mostra também a imagem; registros do histórico vêm do banco, com as probabilidades e sem a imagem.
 import { useNavigate, useParams } from "react-router-dom";
 
 import { Alert, PageHeader, Steps } from "../components/common";
@@ -30,7 +30,7 @@ export default function Result() {
   const { lastResult } = useAnalysis();
   const current = lastResult?.id === id ? lastResult : null;
 
-  // Registros antigos vêm do banco, que não guarda imagem nem probabilidades
+  // Registros antigos vêm do banco, que guarda o resultado e as probabilidades, mas não a imagem
   const history = usePredictionHistory();
   const models = useModels();
   const record = current ? null : history.data?.find((item) => item.id === id);
@@ -119,8 +119,8 @@ export default function Result() {
               {formatPercent(positiveProbability * 100)}
             </strong>
             <p>
-              Média calibrada de 5 modelos no dataset de treino. Não é o risco
-              clínico deste paciente.
+              Estimativa do modelo para esta imagem. Não é o risco clínico
+              deste paciente.
             </p>
           </article>
         ) : (
@@ -130,7 +130,8 @@ export default function Result() {
               {formatPercent(data.confidence * 100)}
             </strong>
             <p>
-              Saída softmax da rede, não uma probabilidade calibrada de doença.
+              Quanto o modelo confia nesta classe. Não é a chance real de o
+              paciente ter a doença.
             </p>
           </article>
         )}
@@ -177,29 +178,26 @@ export default function Result() {
 
       {leakage && (
         <div style={{ marginBottom: 15 }}>
-          <Alert icon="warning">
-            <strong>Métrica possivelmente inflada neste módulo.</strong>
-            <br />
-            {leakage}
-          </Alert>
+          <Alert type="info">{leakage}</Alert>
         </div>
       )}
 
       <div className="result-placeholder">
         <div className="placeholder-box">
           <h4>Probabilidade por classe</h4>
-          {current ? (
+          {data.probabilities?.length ? (
             <ProbabilityPieChart
-              probabilities={current.probabilities}
-              predictedClass={current.predictedClass}
+              probabilities={data.probabilities}
+              classes={usedModel?.classes}
+              predictedClass={data.predictedClass}
               alertClasses={MALIGNANT_CLASSES}
               formatName={className}
               formatValue={(value) => formatPercent(value * 100)}
             />
           ) : (
             <p>
-              Disponível só logo após a análise. O histórico guarda apenas a
-              classe prevista e a confiança.
+              Esta análise foi feita antes de o sistema guardar as
+              probabilidades de cada classe.
             </p>
           )}
         </div>
@@ -240,14 +238,6 @@ export default function Result() {
           </InfoPair>
         )}
       </Panel>
-
-      <div className="placeholder-box" style={{ marginTop: 15, minHeight: 0 }}>
-        <h4>Explicabilidade / mapa de atenção</h4>
-        <p>
-          Ainda não implementado. Este espaço é reservado para o Grad-CAM, caso
-          o grupo decida incluir.
-        </p>
-      </div>
 
       <div style={{ marginTop: 15 }}>
         <Alert type="info" icon="shield">

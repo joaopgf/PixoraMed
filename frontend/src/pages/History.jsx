@@ -74,7 +74,7 @@ export default function History() {
       <PageHeader
         label="ACOMPANHAMENTO"
         title="Histórico de análises"
-        description="Previsões registradas no banco. A imagem nunca é guardada: só o modelo, a classe, a confiança e o horário."
+        description="Previsões registradas no banco. A imagem nunca é guardada: só o modelo, o resultado, as probabilidades e o horário."
       />
       {history.data && (
         <HistorySummary records={history.data} models={models.data} />

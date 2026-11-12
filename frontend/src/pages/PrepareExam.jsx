@@ -214,7 +214,7 @@ export default function PrepareExam() {
             </h3>
             <p>
               A imagem é processada em memória e descartada. O banco guarda só o
-              modelo, a classe prevista, a confiança e o horário.
+              modelo, o resultado, as probabilidades e o horário.
             </p>
             <ul>
               <li>Não use imagens reais de pacientes.</li>

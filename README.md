@@ -100,4 +100,4 @@ O protótipo não verifica se a imagem é compatível com o módulo escolhido: u
 
 ## Privacidade
 
-A imagem enviada é processada em memória e descartada. A tabela `predictions` guarda só o modelo, a classe prevista, a confiança, o tempo, o horário e o usuário. Cada usuário vê só o próprio histórico.
+A imagem enviada é processada em memória e descartada. A tabela `predictions` guarda só o modelo, a classe prevista, a confiança, as probabilidades de cada classe, o tempo, o horário e o usuário. Cada usuário vê só o próprio histórico.

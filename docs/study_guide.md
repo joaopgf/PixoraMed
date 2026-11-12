@@ -221,7 +221,7 @@ User user = users.findByEmail(email).orElse(null);
 | --------------- | ------------------------------------------------------------------------------ |
 | `users`       | nome, e-mail (único) e hash BCrypt da senha                                   |
 | `trainings`   | uma linha por treino do `training-results.csv`                               |
-| `predictions` | usuário, modelo, classe, confiança, tempo e horário. **Sem a imagem** |
+| `predictions` | usuário, modelo, classe, confiança, probabilidade de cada classe (JSON), tempo e horário. **Sem a imagem** |
 
 A tabela `predictions` tem índice em `userId`, que é a busca do histórico.
 
@@ -453,7 +453,8 @@ export async function request(path, options = {}) {
 **Como funciona.** Acima da tabela, o `HistorySummary` mostra quatro números das análises do usuário (até as 100 mais recentes): total, **suspeita de câncer** (maligno na Pele ou carcinoma espinocelular na Oral, com destaque vermelho), inconclusivas e baixa certeza. A conta fica em `summarizeHistory`, no `utils/resultView.js`; o componente só recebe os registros por props.
 
 **Por que o sistema usa.** É o que o médico quer ver ao abrir o histórico: quantos casos pedem atenção, sem precisar ler a tabela inteira. O painel inicial, ao contrário, perdeu os contadores técnicos (modelos conectados, treinos registrados), que não ajudavam nesse uso.
-- **A cor segue a classe, não a posição**: "benigno" é sempre azul, em qualquer análise.
+- **A cor segue a classe, não a posição**: "benigno" é sempre azul, em qualquer análise. O gráfico recebe as classes do modelo, na ordem do treino, e é essa ordem que define as cores.
+- **Também nas análises antigas**: o backend grava a probabilidade de cada classe na coluna `probabilities` da tabela `predictions`, como texto JSON (`{"normal": 0.0, "scc": 1.0}`). Quem faz a conversão é o `ProbabilitiesConverter`, um `AttributeConverter` do JPA, e o `GET /api/predictions` devolve essa lista. Assim o histórico mostra o mesmo gráfico do momento da análise, sem guardar a imagem. Análises feitas antes dessa coluna existir mostram um aviso no lugar do gráfico.
 - **Acessibilidade**: a paleta passou num validador de daltonismo, e a identidade nunca depende só da cor (legenda com nome e porcentagem, descrição completa para leitor de tela).
 
 ### Vite, proxy e rewrite da Vercel
@@ -679,13 +680,13 @@ Três workflows em BPMN 2.0, em `docs/bpmn/`, gerados por código (`docs/bpmn/ge
 
 - **Não é diagnóstico**: todas as telas de análise mostram que o modelo é experimental; há uma página de limitações.
 - **Consentimento**: antes de cada análise, o usuário confirma que o material é autorizado e desidentificado.
-- **Minimização (LGPD)**: a imagem é processada em memória e descartada. O banco guarda só usuário, modelo, classe, confiança, tempo e horário. O log guarda só o id do usuário.
+- **Minimização (LGPD)**: a imagem é processada em memória e descartada. O banco guarda só usuário, modelo, classe, confiança, probabilidades de cada classe, tempo e horário. O log guarda só o id do usuário.
 - **Isolamento**: cada usuário vê só o próprio histórico, porque o backend filtra pelo id do token, nunca por um parâmetro do navegador.
 - **Licenças**: Multi Cancer e HAM10000 são CC BY-NC-SA 4.0: crédito obrigatório e **sem uso comercial**. Por isso o ganho de tempo é hipotético e não calculamos retorno financeiro.
 - **Viés**: o HAM10000 é desbalanceado (nevo ~67%, dermatofibroma ~1%); o desempenho em tons de pele pouco representados é desconhecido.
 - **Limitação assumida**: o sistema não recusa imagens sem relação. Uma foto qualquer recebe uma das classes. Trabalho futuro: um filtro que identifique o tipo de exame antes.
 
-**Pergunta de banca.** *Que dados pessoais o sistema guarda?* Resposta: "Nome, e-mail e hash da senha de quem se cadastra. Das análises, só modelo, classe, confiança e horário, ligados ao id do usuário. A imagem não é guardada em lugar nenhum."
+**Pergunta de banca.** *Que dados pessoais o sistema guarda?* Resposta: "Nome, e-mail e hash da senha de quem se cadastra. Das análises, só modelo, classe, confiança, probabilidades de cada classe e horário, ligados ao id do usuário. A imagem não é guardada em lugar nenhum."
 
 ## Testes e qualidade
 

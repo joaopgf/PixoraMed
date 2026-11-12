@@ -525,8 +525,8 @@
             mantém a classe e mostra "baixa certeza".
           </li>
           <li>
-            O banco registra só usuário, modelo, classe, confiança e horário; a
-            imagem é descartada.
+            O banco registra só usuário, modelo, classe, confiança,
+            probabilidades e horário; a imagem é descartada.
           </li>
           <li>
             A tela de resultado mostra os avisos: modelo experimental, baixa
@@ -1011,7 +1011,9 @@
         <li>
           <b>Minimização:</b> a imagem é processada em memória e descartada. A
           tabela <code>predictions</code> guarda só usuário, modelo, classe,
-          confiança, tempo e horário.
+          confiança, probabilidades de cada classe, tempo e horário. As
+          probabilidades permitem rever o gráfico de uma análise antiga sem
+          guardar a imagem.
         </li>
         <li>
           <b>Consentimento:</b> antes de cada análise, o usuário confirma que o

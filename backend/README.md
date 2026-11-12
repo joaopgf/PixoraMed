@@ -62,7 +62,7 @@ O banco é simples, sem migrations: o Hibernate cria e atualiza as tabelas sozin
 |---|---|
 | `users` | nome, e-mail (único) e hash BCrypt da senha |
 | `trainings` | uma linha por treino do `training-results.csv` |
-| `predictions` | uma linha por análise: usuário, modelo, classe, confiança, tempo e horário (sem imagem) |
+| `predictions` | uma linha por análise: usuário, modelo, classe, confiança, probabilidade de cada classe (JSON), tempo e horário (sem imagem) |
 
 ### Como a pasta `data` popula o banco
 

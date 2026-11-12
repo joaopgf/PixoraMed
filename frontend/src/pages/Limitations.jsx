@@ -102,8 +102,8 @@ export default function Limitations() {
           <ul className="notes bullets">
             <li>
               A imagem enviada é processada em memória e descartada. O banco
-              guarda só o modelo usado, a classe prevista, a confiança e o
-              horário.
+              guarda só o modelo usado, o resultado, as probabilidades de cada
+              classe e o horário.
             </li>
             <li>
               Não envie imagens com nome, documento ou qualquer dado que

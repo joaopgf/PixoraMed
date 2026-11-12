@@ -18,22 +18,26 @@ const OTHERS_COLOR = "#8a8a8a";
 // Com mais classes que isso, as menores viram uma fatia "Outros"
 const MAX_SLICES = 6;
 
-// probabilities: [{ className, probability }] na ordem das classes do modelo · predictedClass: classe decidida
-// pelo backend · alertClasses: classes pintadas de vermelho · formatName: nome da classe na tela
-// formatValue: probabilidade (0 a 1) em texto
+// probabilities: [{ className, probability }] · classes: classes do modelo, na ordem do treino (define as cores)
+// predictedClass: classe decidida pelo backend · alertClasses: classes pintadas de vermelho
+// formatName: nome da classe na tela · formatValue: probabilidade (0 a 1) em texto
 export default function ProbabilityPieChart({
   probabilities,
+  classes,
   predictedClass,
   alertClasses = [],
   formatName,
   formatValue,
 }) {
   // A cor segue a classe (ordem do modelo), não a posição no ranking: a mesma classe tem sempre a mesma cor
+  const order = classes?.length
+    ? classes
+    : probabilities.map((item) => item.className);
   let nextColor = 0;
   const colorOf = new Map(
-    probabilities.map((item) => [
-      item.className,
-      alertClasses.includes(item.className)
+    order.map((name) => [
+      name,
+      alertClasses.includes(name)
         ? ALERT_COLOR
         : COLORS[nextColor++ % COLORS.length],
     ]),

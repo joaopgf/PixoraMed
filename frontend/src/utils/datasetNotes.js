@@ -1,7 +1,8 @@
-// Conclusões do grupo sobre cada dataset, por tipo de câncer. Mostradas no painel, nos modelos e nas limitações.
+// Conclusões do grupo sobre cada dataset, por tipo de câncer. Mostradas no resultado e nas limitações.
 
+// Aviso em linguagem simples para o médico; o detalhe técnico (dataset aumentado, possível vazamento) fica na página de limitações
 const MULTI_CANCER_AUGMENTATION =
-  "O Multi Cancer foi aumentado (rotação, deslocamento, zoom, espelhamento e brilho). Variações da mesma imagem podem cair no treino e no teste.";
+  "Este módulo foi testado com imagens muito parecidas com as do treino. Em imagens de outros equipamentos ou hospitais, o resultado pode ser menos confiável.";
 
 export const LEAKAGE_SUSPICION = {
   oral: MULTI_CANCER_AUGMENTATION,
