@@ -5,10 +5,10 @@ Site do PixoraMed em **React 19 + Vite** (JavaScript). Mostra as telas e chama a
 ## Estrutura de `src/`
 
 ```
-api/        apiClient.js (fetch central: token, erros) + um arquivo por recurso (authApi, predictionsApi, trainingsApi)
+api/        apiClient.js (fetch central: token, erros) + um arquivo por recurso (authApi, predictionsApi)
 auth/       AuthContext (login guardado no navegador) e ProtectedRoute (telas que exigem login)
 context/    AnalysisContext (análise em andamento e último resultado, só nesta aba)
-hooks/      useApiData (consultas com cache do TanStack Query: modelos, treinos, histórico)
+hooks/      useApiData (consultas com cache do TanStack Query: modelos e histórico)
 components/ peças visuais reutilizáveis (Layout, ProbabilityPieChart, Icon...)
 pages/      uma tela por rota
 utils/      catálogo de módulos, textos dos datasets e formatação
@@ -20,7 +20,7 @@ Fluxo dos dados: **página → hook → serviço de `api/` → apiClient → bac
 
 ## Rotas do site
 
-`/` (início) · `/login` · `/dashboard` · `/new-analysis` · `/analysis/:moduleId` · `/review` · `/result/:id` · `/history` · `/training-results` · `/models` · `/limitations` · `/account`
+`/` (início) · `/login` · `/dashboard` · `/new-analysis` · `/analysis/:moduleId` · `/review` · `/result/:id` · `/history` · `/models` · `/limitations` · `/account`
 
 ## Como o site fala com a API
 

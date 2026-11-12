@@ -1,8 +1,9 @@
-// Histórico de análises do usuário: busca, filtro por módulo, paginação e exportação para CSV.
+// Histórico de análises do usuário: cards de resumo, busca, filtro por módulo, paginação e exportação para CSV.
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { PageHeader } from "../components/common";
+import HistorySummary from "../components/HistorySummary";
 import Icon from "../components/Icon";
 import LowConfidenceTag from "../components/LowConfidenceTag";
 import { useModels, usePredictionHistory } from "../hooks/useApiData";
@@ -74,26 +75,27 @@ export default function History() {
         label="ACOMPANHAMENTO"
         title="Histórico de análises"
         description="Previsões registradas no banco. A imagem nunca é guardada: só o modelo, a classe, a confiança e o horário."
-        actions={
-          <>
-            <button
-              type="button"
-              className="btn secondary"
-              disabled={!visible.length}
-              onClick={() => exportCsv(visible)}
-            >
-              <Icon name="file" /> Exportar CSV
-            </button>
-            <button
-              type="button"
-              className="btn primary"
-              onClick={() => navigate("/new-analysis")}
-            >
-              <Icon name="plusfile" /> Nova análise
-            </button>
-          </>
-        }
       />
+      {history.data && (
+        <HistorySummary records={history.data} models={models.data} />
+      )}
+      <div className="history-actions">
+        <button
+          type="button"
+          className="btn secondary"
+          disabled={!visible.length}
+          onClick={() => exportCsv(visible)}
+        >
+          <Icon name="file" /> Exportar CSV
+        </button>
+        <button
+          type="button"
+          className="btn primary"
+          onClick={() => navigate("/new-analysis")}
+        >
+          <Icon name="plusfile" /> Nova análise
+        </button>
+      </div>
       <section className="panel">
         <div className="history-tools">
           <div>

@@ -17,7 +17,6 @@ const NewAnalysis = lazy(() => import("./pages/NewAnalysis"));
 const PrepareExam = lazy(() => import("./pages/PrepareExam"));
 const Result = lazy(() => import("./pages/Result"));
 const Review = lazy(() => import("./pages/Review"));
-const TrainingResults = lazy(() => import("./pages/TrainingResults"));
 
 // Volta ao topo a cada troca de página
 function ScrollToTop() {
@@ -43,7 +42,6 @@ export default function App() {
             <Route path="/review" element={<Review />} />
             <Route path="/result/:id" element={<Result />} />
             <Route path="/history" element={<History />} />
-            <Route path="/training-results" element={<TrainingResults />} />
             <Route path="/models" element={<Models />} />
             <Route path="/limitations" element={<Limitations />} />
             <Route path="/account" element={<Account />} />

@@ -14,7 +14,7 @@ description: Boas práticas arquiteturais do React no PixoraMed (componentes de 
 
 | Tipo de estado | Onde fica |
 |---|---|
-| Dados do servidor (modelos, treinos, histórico) | TanStack Query, via `hooks/` |
+| Dados do servidor (modelos, histórico) | TanStack Query, via `hooks/` |
 | Login | `AuthContext` |
 | Análise em andamento (imagem, consentimento, último resultado) | `AnalysisContext` (só na memória da aba) |
 | Estado de um formulário ou filtro | `useState` na própria página |

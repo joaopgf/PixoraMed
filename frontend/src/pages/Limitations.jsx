@@ -74,10 +74,10 @@ export default function Limitations() {
             fotos comuns de celular.
           </p>
           <p className="text" style={{ margin: "12px 0 0" }}>
-            O código original desse modelo foi perdido. Os resultados exibidos
-            na página de treinos (AUC de 0,939, sensibilidade de 89,0% e
-            especificidade de 83,7%) são de uma reprodução do treino, não do
-            modelo usado nas análises.
+            O código original desse modelo foi perdido. Os resultados medidos
+            pelo grupo (AUC de 0,939, sensibilidade de 89,0% e especificidade
+            de 83,7%) são de uma reprodução do treino, não do modelo usado nas
+            análises.
           </p>
         </Panel>
 

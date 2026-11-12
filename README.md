@@ -1,6 +1,6 @@
 # PixoraMed
 
-Classificação de imagens médicas de câncer (Pele, Oral e Cérebro) com redes neurais, e um site para fazer análises e comparar os resultados dos treinos.
+Classificação de imagens médicas de câncer (Pele, Oral e Cérebro) com redes neurais, e um site para fazer análises e acompanhar o histórico de resultados.
 
 **Acesse o sistema:** [pixoramed.vercel.app](https://pixoramed.vercel.app)
 

@@ -44,12 +44,15 @@ export function parseModelId(modelId) {
   };
 }
 
-// Classes vêm da API em inglês; a tela mostra em português.
-// A pasta brain_tumor do dataset é de tumor hipofisário; o id "tumor" continua no modelo, na API e no banco
+// Classes vêm da API com os ids do dataset; a tela mostra o nome em português.
+// Nomes conferidos na descrição do Multi Cancer no Kaggle: oral_scc = Oral Squamous Cell Carcinoma,
+// brain_menin = Meningioma, brain_tumor = Pituitary Tumor. Os ids continuam no modelo, na API e no banco
 const CLASS_NAMES = {
   benign: "benigno",
   malignant: "maligno",
   inconclusive: "inconclusivo",
+  scc: "carcinoma espinocelular",
+  menin: "meningioma",
   tumor: "hipofisário",
 };
 export const className = (value) => CLASS_NAMES[value] ?? value;

@@ -1,5 +1,6 @@
 // Prepara o que a tela de resultado mostra a partir da análise e do modelo usado.
 // Não decide a classe (isso é do backend): só interpreta os valores que a API devolveu.
+import { MALIGNANT_CLASSES } from "./modules";
 
 // data: análise atual ou registro do histórico · current: análise feita agora (tem os limiares) · model: modelo usado
 export function buildResultView(data, current, model) {
@@ -44,4 +45,19 @@ export function buildResultView(data, current, model) {
 export function isLowConfidence(record, models = []) {
   const model = models.find((item) => item.id === record.modelId);
   return model ? buildResultView(record, null, model).lowConfidence : false;
+}
+
+// Resumo do histórico do usuário para os cards: total, suspeitas de câncer, inconclusivas e baixa certeza
+export function summarizeHistory(records = [], models = []) {
+  return {
+    total: records.length,
+    malignant: records.filter((record) =>
+      MALIGNANT_CLASSES.includes(record.predictedClass),
+    ).length,
+    inconclusive: records.filter(
+      (record) => record.predictedClass === "inconclusive",
+    ).length,
+    lowConfidence: records.filter((record) => isLowConfidence(record, models))
+      .length,
+  };
 }

@@ -1,4 +1,69 @@
 /* Histórico de análises e tabelas. */
+
+/* Cards de resumo acima da tabela */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.summary-card {
+  padding: 16px 17px;
+  border: 1px solid #e3edf2;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.86);
+}
+.summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #5f7685;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+.summary-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  color: #3887a7;
+  background: #edf7fb;
+}
+.summary-card strong {
+  display: block;
+  margin-top: 10px;
+  color: #23445b;
+  font-size: var(--font-size-xl);
+}
+.summary-card small {
+  display: block;
+  margin-top: 4px;
+  color: #6f8494;
+  font-size: var(--font-size-xs);
+}
+/* Suspeita de câncer: o mesmo vermelho das classes malignas do gráfico, no ícone e na borda */
+.summary-card-alert {
+  border-left: 4px solid #d03b3b;
+}
+.summary-card-alert .summary-icon {
+  color: #d03b3b;
+  background: #fdecec;
+}
+.history-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+@media (max-width: 900px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .table-wrap {
   overflow: auto;
   border: 1px solid #e3ebf0;

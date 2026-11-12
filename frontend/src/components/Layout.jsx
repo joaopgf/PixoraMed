@@ -11,13 +11,7 @@ const NAVIGATION = [
   { to: "/dashboard", name: "Visão geral", icon: "home", group: "WORKSPACE" },
   { to: "/new-analysis", name: "Nova análise", icon: "plusfile" },
   { to: "/history", name: "Histórico de análises", icon: "clock" },
-  {
-    to: "/training-results",
-    name: "Resultados dos treinos",
-    icon: "chart",
-    group: "PROJETO",
-  },
-  { to: "/models", name: "Módulos e modelos", icon: "layers" },
+  { to: "/models", name: "Módulos e modelos", icon: "layers", group: "PROJETO" },
   { to: "/limitations", name: "Limitações e ética", icon: "warning" },
   { to: "/account", name: "Conta e segurança", icon: "shield", group: "CONTA" },
 ];
@@ -29,7 +23,6 @@ const TITLES = [
   ["/review", "Revisar caso"],
   ["/result/", "Resultado da análise"],
   ["/history", "Histórico de análises"],
-  ["/training-results", "Resultados dos treinos"],
   ["/models", "Módulos e modelos"],
   ["/limitations", "Limitações e ética"],
   ["/account", "Conta e segurança"],
@@ -66,10 +59,10 @@ export default function Layout() {
       active: pathname === "/history",
     },
     {
-      to: "/training-results",
-      name: "Resultados",
-      icon: "chart",
-      active: pathname === "/training-results",
+      to: "/limitations",
+      name: "Limitações",
+      icon: "warning",
+      active: pathname === "/limitations",
     },
   ];
 

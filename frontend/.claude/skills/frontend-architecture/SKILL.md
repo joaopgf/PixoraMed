@@ -13,7 +13,7 @@ O frontend só apresenta dados e coleta a entrada do usuário. Toda regra de neg
 
 | Pasta | Responsabilidade |
 |---|---|
-| `src/api/` | `apiClient.js` (único lugar com `fetch`: token, erro padronizado) e um arquivo por recurso (`authApi`, `predictionsApi`, `trainingsApi`) |
+| `src/api/` | `apiClient.js` (único lugar com `fetch`: token, erro padronizado) e um arquivo por recurso (`authApi`, `predictionsApi`) |
 | `src/hooks/` | Consultas com cache do TanStack Query (`useModels`, `useTrainings`, `usePredictionHistory`) |
 | `src/auth/` | `AuthContext` (token no navegador, usuário logado, logout) e `ProtectedRoute` |
 | `src/context/` | `AnalysisContext`: análise em andamento e último resultado, só nesta aba |
@@ -41,10 +41,10 @@ Antes de escrever marcação repetida numa página, use o componente que já exi
 |---|---|
 | `Panel` | Cartão com título, descrição e ações (`as="aside"` quando for lateral) |
 | `InfoPair` | Linha rótulo e valor (`mono` para números) |
-| `Toggle` | Alternância entre opções (ex.: Acurácia / F1 macro) |
 | `QueryState` | Carregando, erro e lista vazia de uma consulta |
 | `ImageDropzone` | Envio de imagem com validação de tipo e tamanho |
-| `BarChartWithError`, `ProbabilityPieChart` | Gráficos (dados por props) |
+| `ProbabilityPieChart` | Gráfico de probabilidades (dados por props) |
+| `HistorySummary` | Cards de resumo do histórico (conta em `utils/resultView.summarizeHistory`) |
 | `LowConfidenceTag` | Etiqueta "baixa certeza" nas listas (regra em `utils/resultView.isLowConfidence`) |
 | `common.jsx` | `PageHeader`, `Alert`, `Steps`, `TextLink` |
 
@@ -52,7 +52,7 @@ Lógica de interpretação para a tela fica em `utils/` (ex.: `buildResultView`)
 
 ## Rotas
 
-Definidas em `App.jsx`, em inglês e kebab-case: `/`, `/login` públicas; `/dashboard`, `/new-analysis`, `/analysis/:moduleId`, `/review`, `/result/:id`, `/history`, `/training-results`, `/models`, `/limitations`, `/account` dentro de `ProtectedRoute` + `Layout`.
+Definidas em `App.jsx`, em inglês e kebab-case: `/`, `/login` públicas; `/dashboard`, `/new-analysis`, `/analysis/:moduleId`, `/review`, `/result/:id`, `/history`, `/models`, `/limitations`, `/account` dentro de `ProtectedRoute` + `Layout`.
 
 As telas internas são importadas com `React.lazy` (cada uma vira um arquivo separado no build) e o `Suspense` fica dentro do `Layout`, em volta do `<Outlet />`. Página nova interna entra do mesmo jeito; só `Landing` e `Login` ficam no pacote principal.
 
