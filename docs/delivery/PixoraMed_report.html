@@ -275,6 +275,7 @@
             <li>Resultados medidos</li>
             <li>Infraestrutura: Docker e Terraform</li>
             <li>Qualidade e testes</li>
+            <li>Rotas da API e métodos HTTP</li>
           </ol>
         </li>
         <li>
@@ -857,6 +858,93 @@
           Código, nomes de arquivos e rotas em inglês, com glossário PT→EN em
           <code>docs/glossary.md</code>; README e documentação de arquitetura em
           cada pasta.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h3>3.8 Rotas da API e métodos HTTP</h3>
+      <p>
+        Cada requisição HTTP tem um método, que diz o que o cliente quer fazer
+        com o recurso da URL: <code>GET</code> lê, <code>POST</code> cria ou
+        envia dados para processar, <code>PUT</code> e <code>PATCH</code>
+        alteram e <code>DELETE</code> apaga. O PixoraMed usa só
+        <code>GET</code> e <code>POST</code>:
+      </p>
+      <table>
+        <tr>
+          <th>Método</th>
+          <th>Rota</th>
+          <th>Login</th>
+          <th>O que faz</th>
+        </tr>
+        <tr>
+          <td><code>POST</code></td>
+          <td><code>/api/auth/register</code></td>
+          <td>não</td>
+          <td>Cria a conta; responde 201, ou 409 se o e-mail já existe</td>
+        </tr>
+        <tr>
+          <td><code>POST</code></td>
+          <td><code>/api/auth/login</code></td>
+          <td>não</td>
+          <td>Confere e-mail e senha e devolve o token JWT</td>
+        </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/health</code></td>
+          <td>não</td>
+          <td>Diz se a API está no ar (health check do Render)</td>
+        </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/trainings</code></td>
+          <td>não</td>
+          <td>Lista os treinos importados do CSV</td>
+        </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/models</code></td>
+          <td>não</td>
+          <td>Lista os modelos da IA e os limiares de decisão</td>
+        </tr>
+        <tr>
+          <td><code>POST</code></td>
+          <td><code>/api/predictions</code></td>
+          <td>sim</td>
+          <td>Envia a imagem e recebe a classe e as probabilidades</td>
+        </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/predictions</code></td>
+          <td>sim</td>
+          <td>Histórico do usuário logado (até 100 análises)</td>
+        </tr>
+      </table>
+      <p>
+        Entre o backend e o ai-service, o padrão é o mesmo:
+        <code>GET /health</code> (pública), <code>GET /models</code> e
+        <code>POST /predict</code>, as duas últimas com o token interno.
+      </p>
+      <ul>
+        <li>
+          <b>GET para o que só lê</b> (saúde, modelos, treinos e histórico):
+          não altera nada, pode ser repetido sem efeito colateral e pode ser
+          guardado em cache.
+        </li>
+        <li>
+          <b>POST para o que cria</b>: o cadastro cria um usuário, o login cria
+          um token e cada análise cria um registro no histórico. O login é
+          <code>POST</code> para a senha ir no corpo da requisição, protegido
+          pelo HTTPS, e nunca na URL, que fica no histórico do navegador e nos
+          logs dos servidores.
+        </li>
+        <li>
+          <b>Sem PUT, PATCH e DELETE</b>: o sistema não tem dados para editar
+          nem apagar. O histórico é um registro do que foi feito, e o logout não
+          precisa de rota, porque o token não fica no banco. O CORS do backend
+          também libera só <code>GET</code> e <code>POST</code>: rotas e métodos
+          sem uso seriam só mais superfície para proteger.
         </li>
       </ul>
     </section>
