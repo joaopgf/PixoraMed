@@ -79,7 +79,7 @@ docs/         BPMN, documento de entrega, glossário, guia para salvar modelos e
 
 ## Backend: Java e Spring Boot
 
-### Camadas (Controller, Service, Repository)
+### Camadas (Controller, Service, Repository, Model)
 
 **O que é.** Cada camada tem uma responsabilidade:
 
@@ -88,8 +88,11 @@ docs/         BPMN, documento de entrega, glossário, guia para salvar modelos e
 | Controller | Recebe o HTTP, valida o DTO (`@Valid`), devolve o status                        | Regra de negócio |
 | Service    | Regras de negócio: login, decisão da classe, importação do CSV, chamada à IA | Conhecer HTTP     |
 | Repository | Acesso ao banco (Spring Data JPA)                                                 | Decidir regra     |
+| Model      | Entidades JPA (`User`, `Training`, `Prediction`): cada classe com `@Entity` vira uma tabela (`users`, `trainings`, `predictions`) e cada campo vira uma coluna | Sair direto na resposta da API (quem sai é o DTO) |
 
-Além delas: `model` (entidades JPA), `dto` (entrada e saída da API), `security` (JWT, BCrypt, CORS) e `exception` (erros padronizados).
+Além delas: `dto` (entrada e saída da API), `security` (JWT, BCrypt, CORS) e `exception` (erros padronizados).
+
+**Como as camadas se encaixam numa análise:** o `PredictionController` recebe o `POST`, o `PredictionService` chama a IA e decide a classe, cria um objeto `Prediction` (o **model**) com o resultado, e o `PredictionRepository` grava esse objeto na tabela `predictions`. Na volta, o service converte o model num DTO (`PredictionResponse`), que é o que o navegador recebe.
 
 **Onde está no código.** `PredictionController` só lê o usuário do token e repassa:
 
@@ -100,6 +103,62 @@ public PredictionResponse predict(@AuthenticationPrincipal Jwt jwt, ...) {
 ```
 
 **Por que o sistema usa.** Uma regra fica num só lugar. A regra "cada usuário vê só as próprias análises" está no `PredictionService.history`, e nenhum controller precisa repeti-la.
+
+### Métodos HTTP e as rotas do sistema
+
+**O que é.** Toda requisição HTTP tem um **método** (também chamado de verbo), que diz o que o cliente quer fazer com o recurso da URL. Os principais:
+
+| Método | Para quê | Seguro? (não altera nada) | Idempotente? (repetir dá o mesmo efeito) |
+| --- | --- | --- | --- |
+| `GET` | Ler um recurso | Sim | Sim |
+| `POST` | Criar algo ou enviar dados para processar | Não | Não |
+| `PUT` | Substituir um recurso inteiro | Não | Sim |
+| `PATCH` | Alterar parte de um recurso | Não | Não necessariamente |
+| `DELETE` | Apagar um recurso | Não | Sim |
+| `OPTIONS` | Perguntar o que o servidor aceita (o navegador usa no *preflight* do CORS) | Sim | Sim |
+
+**Como funciona.** O método vem na primeira linha da requisição, junto com a URL (`POST /api/predictions HTTP/1.1`). No Spring, cada método do controller é ligado a um verbo por uma anotação: `@GetMapping`, `@PostMapping` (e existem `@PutMapping`, `@PatchMapping` e `@DeleteMapping`). No FastAPI, pelo decorador: `@app.get`, `@app.post`. A resposta volta com um **código de status**: `200` (ok), `201` (criado), `401` (sem login válido), `404` (não encontrado), `409` (conflito), `413` (arquivo grande), `422` (dados inválidos), `503` (serviço indisponível).
+
+**Onde está no código.** O PixoraMed usa **só `GET` e `POST`**:
+
+| Método | Rota | Login? | O que faz | Onde |
+| --- | --- | --- | --- | --- |
+| `POST` | `/api/auth/register` | não | Cria a conta; responde **201** (ou 409 se o e-mail já existe) | `AuthController` |
+| `POST` | `/api/auth/login` | não | Confere e-mail e senha e devolve o token JWT | `AuthController` |
+| `GET` | `/api/health` | não | Diz se a API está no ar (usado pelo Render) | `TrainingController` |
+| `GET` | `/api/trainings` | não | Lista os treinos importados do CSV | `TrainingController` |
+| `GET` | `/api/models` | não | Lista os modelos da IA, com os limiares | `PredictionController` |
+| `POST` | `/api/predictions` | sim | Envia a imagem (multipart) e recebe a classe e as probabilidades | `PredictionController` |
+| `GET` | `/api/predictions?limit=100` | sim | Histórico do usuário logado | `PredictionController` |
+
+Entre o backend e o ai-service, o padrão é o mesmo:
+
+| Método | Rota | Token interno? | O que faz |
+| --- | --- | --- | --- |
+| `GET` | `/health` | não | Diz se a IA está no ar e quantos modelos carregou |
+| `GET` | `/models` | sim | Lista os modelos carregados |
+| `POST` | `/predict` | sim | Recebe a imagem e devolve as probabilidades |
+
+```java
+// AuthController: o cadastro cria um recurso, então responde 201 em vez de 200
+@PostMapping("/register")
+@ResponseStatus(HttpStatus.CREATED)
+public AuthResponse register(@Valid @RequestBody RegisterRequest request) { ... }
+```
+
+O CORS do backend também libera só esses dois métodos: `config.setAllowedMethods(List.of("GET", "POST"))`. O `OPTIONS` do *preflight* o próprio Spring responde.
+
+**Por que o sistema usa só esses dois.**
+
+- **`GET` para tudo que só lê** (saúde, modelos, treinos, histórico): não altera nada, pode ser repetido sem efeito colateral e pode ser guardado em cache pelo navegador ou pelo TanStack Query.
+- **`POST` para o que cria ou processa**: o cadastro cria um usuário, o login cria um token e a análise cria um registro no histórico. Mandar a mesma imagem duas vezes gera duas análises, então não é idempotente, e é exatamente o caso do `POST`.
+- **Sem `PUT`, `PATCH` e `DELETE`** porque o sistema não tem nada para editar nem apagar: o histórico é um registro do que foi feito, a conta não tem tela de edição e o logout não precisa de rota (o site só apaga o token, porque o JWT não fica no banco). Criar rotas sem uso só aumentaria o que precisa ser protegido.
+
+**Pergunta de banca.** *Por que o login é `POST` e não `GET`, se ele "busca" o usuário?* Resposta: "No `GET`, os dados vão na URL, e a URL fica no histórico do navegador e nos logs dos servidores. A senha nunca pode ir na URL. No `POST`, ela vai no corpo da requisição, protegido pelo HTTPS. Além disso, o login cria algo novo: o token."
+
+**Pergunta de banca.** *Qual a diferença entre `PUT` e `PATCH`?* Resposta: "O `PUT` substitui o recurso inteiro; o `PATCH` altera só os campos enviados. O PixoraMed não usa nenhum dos dois, porque não tem edição de dados. Se um dia tiver a tela 'editar meu nome', o certo seria um `PATCH /api/users/me`."
+
+**Pergunta de banca.** *O que é idempotente?* Resposta: "Repetir a requisição várias vezes deixa o servidor no mesmo estado que uma vez só. O `GET` do histórico é idempotente; o `POST` da análise não, porque cada envio grava uma análise nova."
 
 ### DTO e record
 
@@ -668,6 +727,8 @@ Respostas de uma ou duas frases para revisar na véspera. O detalhe de cada uma 
 | O que o PixoraMed faz?               | Classifica imagens de Pele, Oral e Cérebro e mostra a probabilidade de cada classe, com histórico e limitações. Não é diagnóstico. |
 | Por que três serviços?             | Cada um com a linguagem certa: React na tela, Java no login e nas regras, Python na IA. A IA fica isolada dos dados de usuário.          |
 | Quem decide a classe?                | O backend (`DecisionService`). A IA só devolve probabilidades.                                                                         |
+| Quais métodos HTTP o sistema usa?    | Só `GET` (ler: saúde, modelos, treinos, histórico) e `POST` (criar: cadastro, login, análise). Não há edição nem exclusão de dados.     |
+| Para que serve o model no backend?   | É a entidade JPA (`User`, `Training`, `Prediction`): cada classe vira uma tabela, e o repository grava e lê esses objetos.             |
 | O que é stateless?                  | O servidor não guarda sessão; a identidade vem no JWT de cada requisição.                                                             |
 | Por que BCrypt?                      | Hash lento e com salt: se o banco vazar, as senhas não aparecem.                                                                         |
 | Para que serve o X-Internal-Token?   | Só o backend pode usar a IA, mesmo com a URL pública no Render.                                                                         |
