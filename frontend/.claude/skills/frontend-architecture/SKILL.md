@@ -47,6 +47,7 @@ Antes de escrever marcação repetida numa página, use o componente que já exi
 | `HistorySummary` | Cards de resumo do histórico (conta em `utils/resultView.summarizeHistory`) |
 | `LowConfidenceTag` | Etiqueta "baixa certeza" nas listas (regra em `utils/resultView.isLowConfidence`) |
 | `common.jsx` | `PageHeader`, `Alert`, `Steps`, `TextLink` |
+| `ErrorBoundary` | Mensagem no lugar da tela quando ela quebra ao montar, em vez de página em branco |
 
 Lógica de interpretação para a tela fica em `utils/` (ex.: `buildResultView`), não dentro da página.
 
@@ -69,7 +70,9 @@ O site sempre chama `/api` no próprio domínio. No desenvolvimento, o Vite repa
 ## Erros e carregamento
 
 - O `apiClient` transforma qualquer erro em `Error(message)`, com a mensagem que o backend mandou em `{"message": ...}`.
-- Toda tela que consulta a API trata `isLoading` e `isError`. O ai-service pode levar ~1 minuto para acordar: mostre "Conectando..." em vez de erro imediato.
+- Toda tela que consulta a API trata `isLoading` e `isError`. O ai-service pode levar ~1 minuto para acordar: mostre "Conectando..." em vez de erro imediato. O `useModels` busca a lista de novo a cada 10 s enquanto ela vier vazia.
+- Erro ao montar uma tela: `components/ErrorBoundary.jsx` (classe). Fica no `main.jsx` (`fullPage`, app inteiro) e no `Layout` em volta do `Suspense` (`resetKey={pathname}`: o menu fica na tela e trocar de página limpa o erro). Sem ele, o React desmonta tudo e a página fica em branco. Ele não pega erro de clique, de código assíncrono nem de requisição.
+- Tela de versão antiga depois de um deploy: cada build muda o nome dos arquivos das telas, e a Vercel responde o arquivo antigo com o `index.html` (200), então o `React.lazy` falha. O `main.jsx` escuta o `vite:preloadError` e o `ErrorBoundary` reconhece o erro de import (`utils/staleChunk.js`): a página recarrega uma vez (no máximo a cada 10 s, guardado no `sessionStorage`); se falhar de novo, aparece a mensagem com "Recarregar a página".
 
 ## Acessibilidade e fontes
 

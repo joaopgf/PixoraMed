@@ -216,3 +216,40 @@
   color: var(--ink);
   font-size: var(--font-size-sm);
 }
+
+/* Tela de erro do ErrorBoundary: no conteúdo (com o menu) ou na página inteira (fullPage) */
+.error-boundary {
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
+}
+.error-boundary.full-page {
+  min-height: 100vh;
+  align-items: center;
+  background: var(--bg);
+}
+.error-boundary-box {
+  max-width: 520px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fff;
+  text-align: center;
+}
+.error-boundary-box h2 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: var(--font-size-xl);
+}
+.error-boundary-box p {
+  margin: 0 0 20px;
+  color: var(--muted);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+}
+.error-boundary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}

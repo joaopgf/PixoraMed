@@ -441,6 +441,30 @@ export async function request(path, options = {}) {
 
 **Pergunta de banca.** *Esconder a rota no front é segurança?* Resposta: "Não, é experiência de uso. A segurança está no backend: análise e histórico exigem token no Spring Security. Chamar a API direto sem token dá 401."
 
+### Error Boundary e a tela branca depois de um deploy
+
+**O que é.** Um **Error Boundary** é um componente que captura erros que acontecem enquanto o React monta uma tela e mostra uma mensagem no lugar dela. Sem ele, o React desmonta o app inteiro e a página fica **em branco**, sem explicação. Precisa ser uma classe (`getDerivedStateFromError` e `componentDidCatch` não existem em hooks).
+
+**O problema que aparecia.** As telas internas são carregadas com `React.lazy`, e cada build dá um nome novo para o arquivo de cada tela (ex.: `History-CF6aEZ2j.js`). Quem estava com o site aberto antes de um deploy pede o arquivo antigo, que não existe mais. A Vercel, pela regra que manda qualquer URL para o `index.html`, responde **200 com HTML** em vez de JavaScript. O import falha, e sem Error Boundary a tela ficava branca. Recarregar a página resolvia, porque trazia a versão nova.
+
+**Como o sistema trata.**
+
+| Peça | Onde | O que faz |
+| --- | --- | --- |
+| `ErrorBoundary` global | `main.jsx` | Qualquer erro de tela vira a mensagem "Algo deu errado nesta tela", com "Recarregar a página" e "Voltar ao início" |
+| `ErrorBoundary` do conteúdo | `Layout.jsx`, em volta do `Suspense` | O erro fica só no conteúdo: menu e barra do topo continuam. Trocar de página limpa o erro |
+| Recarga depois de deploy | `main.jsx` (evento `vite:preloadError`) e `utils/staleChunk.js` | Quando o arquivo de uma tela não carrega, recarrega a página **uma vez** para pegar a versão nova. Se falhar de novo em menos de 10 s, mostra a mensagem, sem ciclo de recarga |
+
+O que ele **não** pega: erro dentro de um clique, código assíncrono e falha de requisição. Esses ficam com o `apiClient` e o `QueryState`, que mostram "Carregando..." e "Não foi possível carregar".
+
+**Como foi testado.** Com a versão de produção servida localmente, uma tela já aberta e o arquivo do Histórico apagado do build: ao clicar em Histórico, a página recarregou uma vez sozinha e, como o arquivo continuava faltando, mostrou a mensagem com o menu visível. Com o arquivo de volta, o Histórico abriu normalmente.
+
+**Pergunta de banca:** "O que é um Error Boundary?"
+**Resposta:** "É um componente que captura erros na montagem das telas e mostra uma mensagem no lugar, em vez de deixar a página em branco. Temos um para o app inteiro e outro só para o conteúdo, para o menu continuar na tela."
+
+**Pergunta de banca:** "Por que a tela ficava branca às vezes?"
+**Resposta:** "Depois de cada deploy, os arquivos das telas mudam de nome. Quem estava com o site aberto pedia o arquivo antigo e recebia HTML no lugar de JavaScript, e a tela quebrava. Agora o site recarrega uma vez sozinho para pegar a versão nova e, se não der, mostra uma mensagem com o botão de recarregar."
+
 ### Gráfico de probabilidades e cores
 
 **Como funciona.** O `ProbabilityPieChart` é um gráfico de rosca (Recharts) com a probabilidade de cada classe, a classe prevista no centro e uma legenda em texto com as porcentagens.

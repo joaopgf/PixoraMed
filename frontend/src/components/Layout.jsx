@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext";
 import Brand from "./Brand";
+import ErrorBoundary from "./ErrorBoundary";
 import Icon from "./Icon";
 import { initials } from "../utils/modules";
 
@@ -131,10 +132,13 @@ export default function Layout() {
           </div>
         </header>
         <main className="content">
-          {/* As telas internas são carregadas sob demanda (App.jsx); o menu continua na tela enquanto isso */}
-          <Suspense fallback={<div className="empty">Carregando...</div>}>
-            <Outlet />
-          </Suspense>
+          {/* As telas internas são carregadas sob demanda (App.jsx); o menu continua na tela enquanto isso.
+              Um erro numa tela fica só no conteúdo, e trocar de página limpa o erro */}
+          <ErrorBoundary resetKey={pathname}>
+            <Suspense fallback={<div className="empty">Carregando...</div>}>
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
         </main>
       </div>
 
