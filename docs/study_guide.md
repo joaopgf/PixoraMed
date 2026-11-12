@@ -486,11 +486,55 @@ O grupo quis ter as duas experiências de deep learning, e cada uma ficou num m�
 | Decisão         | Classe mais provável; "inconclusivo" abaixo de 80%                         | Maligno a partir de 18%; aviso de baixa certeza abaixo de 80%                                  |
 | Tempo por imagem | 0,1 s (Cérebro) e 0,2 s (Oral)                                             | 1,7 s                                                                                          |
 
-### CNN (rede neural convolucional)
+### Rede neural
 
-**O que é.** Uma rede que aprende filtros sobre a imagem: as primeiras camadas detectam bordas e texturas, as seguintes combinam esses padrões em formas.
+**O que é.** Um modelo formado por camadas de **neurônios artificiais**. Cada neurônio recebe números, multiplica cada um por um **peso**, soma tudo com um **viés** (*bias*) e passa o resultado por uma **função de ativação**:
 
-**Como funciona a do projeto.** Três blocos Conv → ReLU → MaxPool (16, 32 e 64 filtros), um *pooling* adaptativo que resume cada filtro num número, Dropout de 25% e uma camada linear com uma saída por classe.
+```
+saída = ativação(w1·x1 + w2·x2 + ... + wn·xn + b)
+```
+
+Os pesos (`w`) e o viés (`b`) são os **parâmetros**: é neles que fica o que a rede aprendeu.
+
+**Como se organiza.** Uma camada de **entrada** (os pixels da imagem), camadas **ocultas** (que transformam esses números) e uma camada de **saída** (um número por classe). Com muitas camadas ocultas, o nome é **deep learning** (aprendizado profundo).
+
+**Como aprende.** Num ciclo repetido a cada lote de imagens:
+
+1. **Forward**: a imagem atravessa a rede e sai uma previsão.
+2. **Perda**: a função de perda mede o quanto a previsão errou em relação ao rótulo.
+3. **Backpropagation** (retropropagação): calcula, de trás para frente, quanto cada peso contribuiu para o erro (o **gradiente**).
+4. **Otimizador** (Adam): ajusta cada peso um pouco na direção que diminui o erro.
+
+Depois de muitas épocas, os pesos param de mudar muito e a rede está treinada.
+
+**Por que a ativação é necessária.** Sem ela, empilhar camadas dá o mesmo que uma única conta linear, e a rede só aprenderia relações em linha reta. A **ReLU** (`max(0, x)`, zera os negativos) é a ativação da nossa CNN.
+
+**Por que não uma rede comum (densa) para imagens.** Numa rede densa, cada neurônio liga em todos os pixels. Uma imagem 128×128 em cor tem 49.152 números; uma única camada densa de 64 neurônios já teria cerca de **3,1 milhões de pesos**, e trataria um pixel do canto igual a um vizinho, ignorando a forma. A CNN resolve os dois problemas.
+
+**Pergunta da banca:** "O que é uma rede neural?"
+**Resposta:** "É um modelo feito de camadas de neurônios artificiais. Cada neurônio faz uma soma ponderada das entradas e passa por uma função de ativação. A rede aprende ajustando esses pesos para errar menos nos exemplos rotulados."
+
+**Pergunta da banca:** "O que é backpropagation?"
+**Resposta:** "É o cálculo de quanto cada peso contribuiu para o erro, feito da saída para a entrada. Com isso o otimizador sabe em que direção mexer cada peso."
+
+**Pergunta da banca:** "Qual a diferença entre machine learning e deep learning?"
+**Resposta:** "Deep learning é machine learning com redes neurais de muitas camadas. A diferença prática é que a rede aprende sozinha as características da imagem, como bordas e texturas, em vez de alguém escolher quais medir."
+
+**Pergunta da banca:** "Para que serve a função de ativação?"
+**Resposta:** "Para a rede aprender relações não lineares. Sem ela, várias camadas valeriam por uma conta linear só."
+
+### CNN (rede neural convolucional): o modelo de Oral e Cérebro
+
+**O que é.** Uma rede neural feita para imagens. Em vez de ligar cada neurônio em todos os pixels, ela usa **filtros** (*kernels*) pequenos, de 3×3, que deslizam pela imagem. As primeiras camadas aprendem bordas e texturas; as seguintes combinam esses padrões em formas maiores.
+
+**As duas ideias que fazem a CNN funcionar.**
+
+- **Conexão local**: cada filtro olha só uma região de 3×3 pixels por vez, porque o que importa numa imagem é a relação entre vizinhos.
+- **Compartilhamento de pesos**: o mesmo filtro passa pela imagem inteira. Ele tem poucos pesos e reconhece o padrão em qualquer posição. Um filtro que aprendeu "borda escura" acha a borda no canto ou no centro.
+
+Cada filtro gera um **mapa de características** (*feature map*): uma imagem nova que mostra onde aquele padrão apareceu.
+
+**A rede do projeto.** Três blocos Conv → ReLU → MaxPool (16, 32 e 64 filtros), um *pooling* adaptativo que resume cada filtro num número, Dropout de 25% e uma camada linear com uma saída por classe.
 
 ```python
 Conv2d(channels, 16, kernel_size=3, padding=1), ReLU(), MaxPool2d(kernel_size=2),
@@ -499,14 +543,59 @@ Conv2d(32, 64, kernel_size=3, padding=1),       ReLU(), MaxPool2d(kernel_size=2)
 AdaptiveAvgPool2d(1), Flatten(), Dropout(p=0.25), Linear(64, num_classes),
 ```
 
-- **Conv2d**: desliza filtros 3×3 sobre a imagem e gera mapas de características.
+- **Conv2d**: desliza os filtros 3×3 e gera os mapas de características. O `padding=1` põe uma borda na imagem para o tamanho não diminuir.
 - **ReLU**: zera os valores negativos; é o que deixa a rede aprender relações não lineares.
-- **MaxPool**: reduz a imagem pela metade, ficando com o valor mais forte de cada região.
-- **Dropout**: desliga 25% dos neurônios a cada passo do treino, para a rede não decorar.
+- **MaxPool**: reduz a imagem pela metade, ficando com o valor mais forte de cada região 2×2. Diminui a conta e deixa a rede menos sensível a pequenos deslocamentos.
+- **AdaptiveAvgPool2d(1)**: tira a média de cada mapa, e cada um dos 64 filtros vira um único número.
+- **Dropout**: desliga 25% desses valores a cada passo do treino, para a rede não depender de um só e não decorar. No uso (inferência), fica desligado.
+- **Linear**: transforma os 64 números em um logit por classe. O **softmax** converte os logits em probabilidades que somam 100%.
 
-**Treino.** PyTorch, otimizador Adam (taxa 0,001), lote de 64, perda *CrossEntropyLoss*, validação cruzada estratificada em 5 folds e semente 42.
+**O caminho de uma imagem da Oral (cor) pela rede.**
+
+| Etapa | Formato (canais × altura × largura) |
+| --- | --- |
+| Entrada | 3 × 128 × 128 |
+| Conv 16 → ReLU → MaxPool | 16 × 64 × 64 |
+| Conv 32 → ReLU → MaxPool | 32 × 32 × 32 |
+| Conv 64 → ReLU → MaxPool | 64 × 16 × 16 |
+| Pooling adaptativo + Flatten | 64 números |
+| Linear | 2 logits (normal, scc) → softmax |
+
+No Cérebro, a entrada tem 1 canal (cinza) e a saída tem 3 classes (glioma, meningioma e hipofisário).
+
+**De onde vêm os ~24 mil parâmetros** (Oral em cor). Cada filtro tem `3 × 3 × canais de entrada` pesos, mais um viés:
+
+| Camada | Conta | Parâmetros |
+| --- | --- | --- |
+| Conv 16 | 16 × (3×3×3) + 16 | 448 |
+| Conv 32 | 32 × (3×3×16) + 32 | 4.640 |
+| Conv 64 | 64 × (3×3×32) + 64 | 18.496 |
+| Linear | 2 × 64 + 2 | 130 |
+| **Total** | | **23.714** |
+
+ReLU, MaxPool, pooling adaptativo e Dropout não têm parâmetros. Sem o pooling adaptativo, a camada linear receberia 64 × 16 × 16 = 16.384 valores e teria mais pesos que o resto da rede inteira.
+
+**Treino.** PyTorch, otimizador Adam (taxa 0,001), lote de 64, perda *CrossEntropyLoss*, 450 épocas, validação cruzada estratificada em 5 folds e semente 42. Os pesos começam aleatórios: a rede foi treinada **do zero**.
 
 **Por que uma rede tão pequena.** Nesses datasets ela já passou de 95% na mesma fonte, e roda numa fração de CPU do Render gratuito. Rede maior seria mais lenta e mais cara sem ganho medido.
+
+**Pergunta da banca:** "O que é uma CNN?"
+**Resposta:** "É uma rede neural para imagens que usa filtros pequenos deslizando pela imagem. Os primeiros filtros aprendem bordas e texturas, e as camadas seguintes juntam isso em formas. É o modelo que usamos na Oral e no Cérebro."
+
+**Pergunta da banca:** "O que é um filtro (kernel)?"
+**Resposta:** "Uma pequena matriz de pesos, 3×3 no nosso caso, que passa pela imagem inteira e acende onde encontra o padrão que aprendeu. O mesmo filtro serve para a imagem toda, por isso a CNN tem poucos parâmetros."
+
+**Pergunta da banca:** "Para que serve o pooling?"
+**Resposta:** "Para reduzir o tamanho da imagem guardando o mais importante. O MaxPool fica com o maior valor de cada região 2×2, então a imagem cai pela metade a cada bloco: 128, 64, 32, 16."
+
+**Pergunta da banca:** "Por que CNN e não uma rede neural comum?"
+**Resposta:** "Uma rede densa ligaria cada neurônio em todos os 49 mil números da imagem: só a primeira camada teria milhões de pesos, e ela ignoraria quais pixels são vizinhos. A CNN olha regiões pequenas e reaproveita o filtro, e por isso a nossa tem só 24 mil parâmetros."
+
+**Pergunta da banca:** "Onde estão os parâmetros da rede?"
+**Resposta:** "Quase todos nos filtros convolucionais; a última convolução sozinha tem cerca de 18 mil dos 24 mil. ReLU, pooling e Dropout não têm parâmetros."
+
+**Pergunta da banca:** "O que é Dropout?"
+**Resposta:** "No treino, desliga ao acaso 25% dos valores a cada passo, para a rede não depender de um caminho só. É uma defesa contra overfitting. Na hora de usar o modelo, ele fica desligado."
 
 **Pergunta de banca.** *O que é um fold e por que 5?* Resposta: "A validação cruzada divide os dados em 5 partes. Treina em 4 e testa na que sobrou, cinco vezes, trocando a parte de teste. A média e o desvio dos 5 resultados dizem quanto o número varia. Estratificada quer dizer que cada parte tem a mesma proporção de classes."
 
@@ -516,7 +605,7 @@ AdaptiveAvgPool2d(1), Flatten(), Dropout(p=0.25), Linear(64, num_classes),
 
 **Como funciona o modelo do app.**
 
-1. **EfficientNet-B0**: arquitetura eficiente, com bom resultado e poucos parâmetros.
+1. **EfficientNet-B0**: arquitetura eficiente, com bom resultado e poucos parâmetros (detalhada na seção seguinte).
 2. **Ensemble de 5**: cinco redes EfficientNet-B0 treinadas separadamente; a resposta é a média das cinco.
 3. **Calibração de Platt**: a saída de cada rede passa por `sigmoid(a · logit + b)`, com `a` e `b` próprios de cada rede, para que "70%" signifique de fato cerca de 70% de chance.
 4. **Limiar de 18%**: a imagem vira "maligno" quando a probabilidade calibrada passa de 18%, mesmo abaixo de 50%.
@@ -536,6 +625,76 @@ return torch.sigmoid(self.slopes * logits + self.intercepts).mean().reshape(1)
 **Pergunta de banca.** *Por que usar um modelo pré-treinado na Pele e uma CNN do zero nos outros?* Resposta: "Quisemos ter as duas experiências. A Pele é o problema mais difícil: imagens dermatoscópicas com diferenças sutis e um dataset desbalanceado, onde o pré-treino ajuda muito. Em Oral e Cérebro, uma CNN pequena feita do zero já resolveu bem o dataset, e mostrou que entendemos cada camada da rede."
 
 **Pergunta de banca.** *O que é calibração?* Resposta: "É ajustar a saída da rede para que a probabilidade seja confiável. Sem calibração, uma rede pode dizer 95% e acertar só 70% dessas vezes. Na Pele usamos a calibração de Platt. Em Oral e Cérebro, a 'confiança' é o softmax da rede, que não é calibrado, e o site avisa isso."
+
+### EfficientNet-B0: o modelo da Pele por dentro
+
+**O que é.** Uma CNN criada pelo Google em 2019. A família vai da B0 (a menor) até a B7 (a maior). A B0 tem cerca de **5,3 milhões de parâmetros** e foi pré-treinada no **ImageNet**: cerca de 1,28 milhão de fotos comuns, em 1.000 classes (cachorro, carro, xícara...). É a mesma ideia da nossa CNN (filtros, ativação, pooling), só que muito mais profunda e com blocos mais eficientes.
+
+**A ideia que dá o nome (*compound scaling*).** Para ter uma rede melhor, os autores aumentam **juntas e na mesma proporção** a profundidade (número de camadas), a largura (número de filtros) e a resolução da imagem. A B0 é a rede base; as outras são versões ampliadas dela. Escolhemos a B0 porque é a menor: roda em CPU, no plano gratuito do Render.
+
+**Os blocos por dentro (MBConv).** A rede é uma pilha de blocos chamados MBConv, cada um com estas peças:
+
+- **Convolução separável em profundidade** (*depthwise separable*): primeiro um filtro 3×3 (ou 5×5) passa em cada canal separado; depois uma convolução 1×1 mistura os canais. Faz quase o mesmo trabalho de uma convolução comum com muito menos contas e parâmetros.
+- **Residual invertido**: o bloco expande os canais, filtra e comprime de novo, e soma a entrada na saída (um "atalho"). O atalho ajuda o gradiente a chegar às primeiras camadas numa rede profunda.
+- **Squeeze-and-excitation**: o bloco aprende um peso para cada canal e reforça os mais úteis para aquela imagem, como uma "atenção" por canal.
+- **BatchNorm e ativação SiLU**: a BatchNorm mantém os valores numa escala estável durante o treino; a SiLU é uma ativação suave, parecida com a ReLU.
+
+**O que o grupo mudou.** No final, a rede resume a imagem em **1.280 números** e uma camada linear dá uma nota para cada uma das 1.000 classes do ImageNet. Essa última camada foi trocada por uma com **uma saída só**: o logit de "maligno".
+
+```python
+# scripts/export_skin_ensemble.py: monta a rede igual à do treino
+network = efficientnet_b0(weights=None)
+network.classifier[1] = Linear(network.classifier[1].in_features, 1)   # 1.280 -> 1 saída
+network.load_state_dict(state_dict, strict=True)
+```
+
+Aqui `weights=None` porque os pesos vêm do arquivo do grupo, já ajustados para pele. No treino, a rede partiu dos pesos do ImageNet e foi ajustada com as imagens do HAM10000. Esse ajuste é o **fine-tuning**, a forma prática do *transfer learning*.
+
+**Por que pré-treinada.** Os primeiros filtros de qualquer rede de imagem aprendem coisas parecidas: bordas, cores, texturas. Aproveitar o que a rede já aprendeu em 1,28 milhão de fotos exige menos imagens de pele e menos tempo do que começar do zero. Isso importa na Pele, onde as diferenças entre lesões são sutis e o dataset é desbalanceado.
+
+**O ensemble de 5 redes.** O pacote do modelo chama as 5 redes de `fold_models`, o que indica uma rede treinada em cada fold da validação cruzada. Os detalhes do treino original se perderam com o código. Cada rede erra em imagens um pouco diferentes; a média das cinco é mais estável que qualquer uma sozinha. O custo é o tempo e o tamanho: 5 redes de ~4 milhões de parâmetros cada (sem a camada das 1.000 classes) dão os ~80 MB do arquivo e os 1,7 s por imagem.
+
+**O caminho de uma imagem de pele, do envio ao resultado.**
+
+1. **Pré-processamento** (ai-service, `preprocess_pil`): corrige a orientação EXIF, converte para RGB, redimensiona para 224×224 (o tamanho do ImageNet) e aplica a normalização do ImageNet.
+2. **5 redes**: cada EfficientNet-B0 devolve um logit.
+3. **Calibração de Platt** em cada rede: `sigmoid(a · logit + b)`, com `a` e `b` próprios de cada rede. Vira uma probabilidade de 0 a 1.
+4. **Média** das 5 probabilidades: é a probabilidade calibrada de maligno, a única saída do ONNX.
+5. **Decisão** (backend, `DecisionService`): maligno se a probabilidade for pelo menos 18%; se nenhuma classe chega a 80%, a tela mostra "baixa certeza".
+
+Os passos 2 a 4 estão todos dentro do `skin_color.onnx`. O script de exportação confere se o ONNX dá a mesma saída que o PyTorch (diferença máxima de 0,0001) antes de aceitar o arquivo.
+
+**CNN do grupo × EfficientNet-B0.**
+
+|  | CNN (Oral e Cérebro) | EfficientNet-B0 (Pele) |
+| --- | --- | --- |
+| Pesos iniciais | Aleatórios (do zero) | ImageNet (pré-treinada) |
+| Profundidade | 3 blocos convolucionais | 16 blocos MBConv |
+| Parâmetros | ~24 mil | ~4 milhões por rede, 5 redes |
+| Entrada | 128×128, pixels / 255 | 224×224, normalização ImageNet |
+| Saída | Softmax entre as classes | Sigmoid calibrada (Platt) de maligno |
+| Tempo por imagem | 0,1–0,2 s | 1,7 s |
+
+**Pergunta da banca:** "O que é a EfficientNet-B0?"
+**Resposta:** "É uma CNN do Google, pré-treinada em 1,28 milhão de imagens do ImageNet. A B0 é a menor da família, com cerca de 5 milhões de parâmetros. Trocamos a última camada por uma saída só, a de maligno, e ajustamos a rede com as imagens de pele."
+
+**Pergunta da banca:** "Por que a B0 e não uma maior?"
+**Resposta:** "Porque o sistema roda em CPU no plano gratuito. As maiores usam imagens maiores e mais camadas: seriam mais lentas e pesadas, e com 5 redes no ensemble o tempo multiplicaria."
+
+**Pergunta da banca:** "O que é fine-tuning?"
+**Resposta:** "É continuar o treino de uma rede pré-treinada com os dados do nosso problema. A EfficientNet já sabia reconhecer bordas e texturas no ImageNet; o fine-tuning ensinou o que diferencia lesões malignas de benignas."
+
+**Pergunta da banca:** "Uma rede treinada com fotos de cachorro e carro serve para pele?"
+**Resposta:** "Serve como ponto de partida. As primeiras camadas aprendem coisas gerais, como bordas, cores e texturas, que valem para qualquer imagem. As últimas é que são ajustadas para a pele."
+
+**Pergunta da banca:** "Por que um ensemble de 5 redes?"
+**Resposta:** "Cada rede erra de um jeito um pouco diferente. A média das cinco é mais estável e confiável do que uma rede só. O preço é ficar mais lento: 1,7 s por imagem."
+
+**Pergunta da banca:** "Como sai a probabilidade final da Pele?"
+**Resposta:** "Cada uma das 5 redes dá um logit, que passa pela calibração de Platt e vira probabilidade. A média das cinco é a probabilidade de maligno, e o backend chama de maligno a partir de 18%."
+
+**Pergunta da banca:** "Por que 224×224 e a normalização do ImageNet?"
+**Resposta:** "Porque a EfficientNet-B0 foi pré-treinada assim. Para aproveitar o que ela aprendeu, a imagem precisa chegar no mesmo tamanho e na mesma escala do treino."
 
 ### ONNX e ONNX Runtime
 
@@ -1051,6 +1210,8 @@ Respostas de uma ou duas frases para revisar na véspera. O detalhe de cada uma 
 | Qual `.env` o Docker usa?          | Só o `infra/.env`. Os `.env` das pastas servem para rodar fora do Docker.                                                            |
 | Para que serve o log?                | Saber o que aconteceu (login, análise, falha da IA) sem guardar e-mail, senha, token ou imagem.                                          |
 | Onde vejo o log?                     | Docker Desktop ou `docker compose logs`, janela Run do IntelliJ, aba Logs do Render.                                                    |
+| O que é uma rede neural?             | Camadas de neurônios que fazem somas ponderadas com ativação; aprende ajustando os pesos para errar menos (backpropagation). |
+| O que é a EfficientNet-B0?           | CNN do Google pré-treinada no ImageNet, a menor da família; trocamos a última camada por uma saída de maligno. |
 | O que é uma CNN?                    | Rede com filtros convolucionais que aprendem padrões da imagem, de bordas a formas.                                                      |
 | O que é transfer learning?          | Partir de uma rede já treinada (EfficientNet-B0 no ImageNet) e ajustá-la para pele.                                                     |
 | Por que um ensemble?                 | A média de 5 redes é mais estável que uma só.                                                                                         |
