@@ -1,0 +1,308 @@
+================================================================================
+HANDOFF -- PixoraMed -- Sessão ENTREGA, LOG E SIMPLIFICAÇÃO DAS TELAS
+================================================================================
+
+Documento de continuidade. Resume o que foi feito nesta sessão (11 e
+12/11/2026), o estado atual do projeto e os próximos passos. Continua de
+resumo_7 (refatoração pedida pelo professor: Java, React JS, infra) e foi
+escrito para valer sozinho: o que ainda vale do resumo_7 está aqui.
+
+Marcação: NÃO CONFERIDO = não verifiquei diretamente.
+
+ÍNDICE
+ 1. Contexto e stack
+ 2. O que foi feito nesta sessão
+ 3. Decisões fechadas
+ 4. Convenções em vigor
+ 5. Entregas desta sessão
+ 6. Pendências
+ 7. Perguntas abertas
+ 8. Próximos passos (em ordem)
+ 9. Referência: endereços, como rodar e armadilhas
+
+
+1. CONTEXTO E STACK
+-------------------
+- Projeto integrador do Bootcamp de IA II/2026 (TCS / SENAI Londrina).
+  Grupo: João Pedro Gonçalves Ferreira (usuário), Samuel Rosa Costa, Ramon
+  Camilo Figueiredo, Henrique Pereira da Silva. Orientador: André Maurício
+  dos Santos. Banca em 23/11/2026; entrega até 21/11.
+- PixoraMed classifica imagens de câncer de Pele, Oral e Cérebro e guarda o
+  histórico de cada usuário. Protótipo acadêmico: não faz diagnóstico. O
+  usuário pensado é um médico: as telas mostram só o essencial.
+- Monorepo: backend/ (Java 21, Spring Boot 4.1.2, Maven), frontend/ (React 19
+  + Vite, JavaScript), ai-service/ (Python 3.12, FastAPI, ONNX Runtime),
+  infra/ (docker compose local e Terraform), docs/.
+- Produção: site na Vercel, backend e ai-service no Render (plano gratuito,
+  dormem após 15 min), PostgreSQL no Neon. Deploy automático a cada push na
+  main.
+- Modelos: Oral e Cérebro com CNN pequena treinada do zero (~24 mil
+  parâmetros, 128x128); Pele com ensemble de 5 EfficientNet-B0 pré-treinadas
+  (transfer learning), calibração de Platt e limiar de 18%. Oral e Cérebro
+  ficam "inconclusivo" abaixo de 80%; a Pele mostra "baixa certeza".
+- Rotas da API: só GET e POST. POST /api/auth/register (201), POST
+  /api/auth/login, GET /api/health, GET /api/trainings, GET /api/models,
+  POST /api/predictions e GET /api/predictions?limit=100 (as duas últimas
+  com token). ai-service: GET /health, GET /models, POST /predict (as duas
+  últimas com X-Internal-Token).
+
+
+2. O QUE FOI FEITO NESTA SESSÃO
+-------------------------------
+2.1 Operação e segurança
+- Backup dos segredos (só existiam no PC): terraform.tfstate e .backup,
+  terraform.tfvars, infra/.env, backend/.env, frontend/.env, ai-service/.env
+  copiados para C:\Users\joaop\PixoraMed-backup-segredos\2026-11-11, fora do
+  OneDrive. Cópias conferidas com SHA-256.
+- Problema: o backend não subia pelo IntelliJ ("'url' must start with jdbc").
+  Causa: o IntelliJ roda da raiz do repositório e o .env só era procurado na
+  pasta de trabalho. Correção: spring.config.import lê .env e backend/.env.
+- Conferido: os .env estão completos e coerentes (token e senha do banco
+  iguais entre infra/.env e backend/.env). O Docker usa só o infra/.env.
+
+2.2 Backend
+- Log no backend (pedido do João, depois de comparar com o sistema de
+  reservas dele): cadastro, login aceito e recusado e análise concluída ou
+  não, no console (sem arquivo). Usuário só pelo id; nunca e-mail, senha,
+  token ou imagem. O modelId vindo do navegador é limpo antes do log.
+- Revisão pela documentação oficial do Spring Boot: o AiServiceClient passou
+  a receber o RestClient.Builder do Spring Boot. Isso exigiu o
+  spring-boot-starter-restclient no pom.xml: sem ele o backend não subia
+  (pego no teste em Docker antes do commit).
+- Probabilidades guardadas: coluna nova "probabilities" (texto JSON) na
+  tabela predictions, via ProbabilitiesConverter (AttributeConverter do JPA,
+  Jackson 3). GET /api/predictions devolve a lista. O Hibernate cria a
+  coluna sozinho (ddl-auto=update). Motivo: o resultado aberto pelo
+  histórico ficava sem gráfico. Análises antigas mostram um aviso.
+- Testes do backend: 7 (eram 5; +2 do conversor). mvn test passando.
+
+2.3 Frontend (simplificação para o médico, item a item pedido pelo João)
+- Cores: classes malignas (malignant, scc) em vermelho #d03b3b, lista em
+  MALIGNANT_CLASSES (utils/modules.js). Cérebro sem vermelho (o módulo não
+  diz se o tumor é benigno ou maligno). A cor segue a classe do modelo, não
+  a posição no ranking. Paleta validada com o validador da skill dataviz.
+- Painel: um único botão "Nova análise" (no cartão de boas-vindas) e sem os
+  4 cards técnicos (módulos, modelos, treinos, análises).
+- Removidas as páginas "Resultados dos treinos" e "Módulos e modelos", com
+  componentes, rotas, menu, CSS e imagens que só elas usavam. Menu lateral
+  com 5 itens; no celular, o 4º botão virou "Limitações".
+- Histórico: 4 cards de resumo acima da tabela (Análises, Suspeita de
+  câncer, Inconclusivas, Baixa certeza), conta em summarizeHistory
+  (utils/resultView.js), componente HistorySummary. Botões Exportar CSV e
+  Nova análise ficaram abaixo dos cards.
+- Nomes das classes por extenso, conferidos no Kaggle (Multi Cancer):
+  scc = carcinoma espinocelular, menin = meningioma, tumor = hipofisário.
+  Só a tela traduz; ids iguais no modelo, na API e no banco.
+- Gráfico de rosca: nome longo quebra dentro do círculo; sem tooltip ao
+  passar o mouse (a legenda já mostra os valores).
+- Resultado: textos sem jargão ("Quanto o modelo confia nesta classe. Não é
+  a chance real de o paciente ter a doença."); o card "Métrica possivelmente
+  inflada" virou aviso simples; card de Grad-CAM removido; gráfico também
+  nas análises antigas.
+- Preparar exame: removido o card "O que acontece depois?"; o modelo padrão
+  é calculado no render (saiu o único eslint-disable de hooks).
+- Revisão contra a documentação do React: estrutura de pastas por tipo
+  (api, auth, components, context, hooks, pages, utils, styles) está dentro
+  do recomendado; fluxo página -> hook -> api -> apiClient.
+
+2.4 Documentação e entrega
+- PDF de entrega criado (docs/delivery): capa, sumário, 3 BPMN em páginas
+  horizontais, justificativa técnica (incluindo 3.8 Rotas e métodos HTTP),
+  ética, governança e segurança, conclusão e referências. 16 páginas.
+- Guia de estudo criado (docs/study_guide.md), no formato do guia do sistema
+  de reservas do João: O que é / Como funciona / Onde está no código / Por
+  que o sistema usa / Pergunta de banca. Cobre arquitetura, camadas (com a
+  linha do Model), métodos HTTP, .env, log, segurança, React, CNN e
+  transfer learning, resultados, Docker, Terraform, BPMN e LGPD.
+- BPMN: só o workflow 3 mudou (nota do que o banco grava, agora com as
+  probabilidades). PNG reexportado com bpmn-js 17.11.1; o método foi
+  conferido exportando o login, que saiu idêntico byte a byte.
+- Slides: diagrama do workflow 3 (slide 6), prints novos da demonstração
+  (slide 8, mesmas imagens e números: isic_0034186 maligno 34,64% com baixa
+  certeza; oral_normal_4963 inconclusivo 57,89%), roteiro do passo 6,
+  privacidade (slide 14) e falas dos slides 6, 8 e 12. Deck aberto no
+  PowerPoint sem pedido de reparo.
+- README da raiz com o link https://pixoramed.vercel.app no topo.
+
+
+3. DECISÕES FECHADAS
+--------------------
+- Log só no console, sem arquivo: o disco do container e do Render é
+  descartável e o painel do Render guarda o console.
+- Log com o id do usuário e nunca e-mail, senha, token ou imagem (LGPD).
+- Telas para o médico: nada de métricas de treino, status técnico ou termos
+  como softmax, dataset, ONNX. Os números técnicos ficam no PDF e no guia.
+- Páginas "Resultados dos treinos" e "Módulos e modelos" removidas. O
+  backend continua importando o CSV de treinos (dados usados no PDF e guia).
+- Cérebro sem cor vermelha (escolha do João entre 3 opções).
+- O banco passa a guardar as probabilidades de cada classe (antes guardava
+  só classe e confiança): permite rever o gráfico sem guardar a imagem.
+- Etiqueta "MODELO CONECTADO" mantida na Nova análise: avisa o médico se o
+  módulo está disponível enquanto a IA acorda no Render.
+- RestClient.Builder injetado (recomendação da documentação do Spring Boot).
+- PDF de entrega gerado do HTML pelo Chrome headless (não há LibreOffice).
+- Revogado: o resumo_7 dizia que o banco guarda só modelo, classe,
+  confiança, tempo e horário. Agora guarda também as probabilidades.
+
+
+4. CONVENÇÕES EM VIGOR
+----------------------
+- Português do Brasil, objetivo. Código, nomes de arquivos e rotas em
+  inglês; textos de tela, README, skills e comentários em português.
+- Cabeçalho curto de descrição no topo de todo arquivo que aceita
+  comentário. Código simples, sem nada desnecessário.
+- Commit e push só quando o João pede ("Commit e push"); cada pedido vale
+  para aquele trabalho. Mensagens em inglês: "feat:", "fix:", "docs:",
+  "refactor:", "chore:", com a linha Co-Authored-By: Claude Opus 5.5
+  <noreply@anthropic.com>. Só a branch main.
+- Toda mudança de tela é testada no Docker local antes do commit (o João
+  pede "altere, teste, faça commit e push").
+- O João formata o código com o Prettier entre uma tarefa e outra: arquivos
+  podem mudar de formatação no disco; isso é dele, não reverter.
+- Fontes só pelas variáveis --font-size-*; a API só é chamada por src/api;
+  componentes de gráfico só recebem props.
+- Cor vermelha #d03b3b só para classe maligna; texto nunca na cor da série.
+- Classe CSS nova não pode colidir com as existentes (ex.: "alert" já é do
+  componente Alert; o card vermelho usa summary-card-alert).
+- terraform apply só depois de mostrar o plan e o João aprovar. Nunca pedir
+  nem exibir chaves. Não criar conta no site de produção; contas de teste
+  só no banco local do Docker.
+- Honestidade dos resultados: não arredondar para cima, "mesma fonte" não é
+  teste externo, reprodução da Pele não é o modelo do app.
+- Quando algo muda nas telas, atualizar README, skills, guia, PDF e slides
+  que citem aquilo.
+
+
+5. ENTREGAS DESTA SESSÃO
+------------------------
+Raiz: C:\Users\joaop\OneDrive\Desktop\Projetos\PixoraMed
+- docs\delivery\PixoraMed_report.html (fonte) e PixoraMed_report.pdf (16 p.)
+- docs\delivery\README.md (como gerar o PDF)
+- docs\study_guide.md (guia de estudo para a banca)
+- docs\PixoraMed_final_presentation.pptx (16 slides, atualizado)
+- docs\bpmn\3_system_usage.bpmn e .png (atualizados)
+- resumo_8.txt (este arquivo). resumo_7.txt fica OBSOLETO, substituído por
+  este; continua no repositório até o João decidir apagá-lo.
+- Fora do repositório: C:\Users\joaop\PixoraMed-backup-segredos\2026-11-11
+Commits desta sessão (todos na main e no GitHub), do mais antigo ao novo:
+  13c1a75 docs: add delivery report with BPMN, technical rationale and ...
+  c6e9689 fix: read backend/.env when the backend runs from the repo root
+  82522d6 feat: show malignant classes in red in the probability chart
+  d8f1444 feat: log sign-ups, logins and analyses without personal data
+  afa795d docs: add study guide for the final presentation
+  7049859 código arrumado com prettier (commit do João)
+  5f33b6f refactor: use Spring Boot RestClient.Builder and derive default ...
+  c96904a docs: add the live site link to the README
+  a401b7f fix: keep a single New analysis button on the dashboard
+  0e55e09 feat: remove technical metric cards from the dashboard
+  c35aa8e feat: remove the training results page, add history summary ...
+  51379ad docs: update study guide and delivery report after removing ...
+  f54b975 fix: keep long class names inside the probability chart
+  ceea8f5 report html corrigido (commit do João)
+  d54a0de feat: remove the technical modules and models page
+  d28c234 fix: remove the technical next-steps card from the exam ...
+  942d7f8 docs: add HTTP methods section and model layer to the study guide
+  5455dc3 docs: add API routes and HTTP methods section to the delivery ...
+  e6ac9be feat: store class probabilities and simplify the result page
+  c41fee7 fix: remove the hover tooltip from the probability chart
+  4c99033 docs: update workflow 3 BPMN, delivery report and presentation ...
+
+
+6. PENDÊNCIAS
+-------------
+- Conferir em produção: fazer uma análise no site e abri-la pelo Histórico
+  (o gráfico deve aparecer). A coluna probabilities no Neon é criada pelo
+  deploy do Render: NÃO CONFERIDO.
+- Conferir que o deploy do Render com o spring-boot-starter-restclient
+  subiu: /api/health respondeu ok e /api/models listou os 3 modelos em
+  12/11 (conferido); o deploy de e6ac9be em diante: NÃO CONFERIDO.
+- O grupo revisar o PDF de entrega e os slides.
+- Gravar o vídeo de backup da demonstração.
+- Dar acesso à banca ao repositório (privado).
+- Ensaiar os 20 minutos com o grupo, estudando pelo docs/study_guide.md.
+- Criar a conta do grupo no site de produção (o João cria).
+- Apagar a pasta C:\c à mão (ainda existe).
+- Levar o backup dos segredos para um cofre ou pendrive e apagar a pasta
+  local; apagar as cópias antigas do state em %TEMP%
+  (terraform.tfstate.pre-apply e .after-apply1).
+- docs/save_model.md ainda usa mama_cor.pt como exemplo (linha 16).
+- Token da Vercel vence por volta de 10/12 (só importa para o Terraform).
+- Opcionais: limite de tentativas de login, testes de rota com @WebMvcTest,
+  testes de componentes React, Dockerfile em camadas (jarmode).
+- Banco local do Docker tem contas e análises de teste criadas nesta sessão
+  (e-mails @pixoramed.test); o registro 25 teve as probabilidades zeradas
+  de propósito para testar o aviso de análise antiga. Nada disso existe em
+  produção.
+
+
+7. PERGUNTAS ABERTAS
+--------------------
+- Como foram divididos os dados entre as 5 EfficientNet-B0 da Pele? (só o
+  colega que treinou sabe; o código original foi perdido)
+- As imagens _4901 a _5000 do Cérebro ficaram fora do treino? (confirmar
+  com o colega; os rótulos das 21 imagens de Pele também)
+- Se o professor contar Pandas como requisito do sistema: hoje Pandas está
+  só nos notebooks. Preparar a fala.
+- Apagar o resumo_7.txt do repositório? (decisão do João)
+
+
+8. PRÓXIMOS PASSOS (EM ORDEM)
+-----------------------------
+O João não definiu uma ordem nesta sessão; esta é a ordem pelos prazos
+(entrega 21/11, banca 23/11):
+ 1. Conferir produção (análise pelo site e abertura pelo Histórico).
+ 2. Revisão do PDF e dos slides pelo grupo.
+ 3. Vídeo de backup e acesso da banca ao repositório.
+ 4. Ensaio com o guia de estudo; criar a conta do grupo no site.
+ 5. Pendências de operação (C:\c, backup em cofre, save_model.md).
+ 6. Opcionais, se sobrar tempo (teste com imagens de outra fonte é o de
+    maior valor para a banca).
+
+
+9. REFERÊNCIA: ENDEREÇOS, COMO RODAR E ARMADILHAS
+-------------------------------------------------
+Endereços
+- GitHub: https://github.com/joaopgf/PixoraMed (privado, só main)
+- Treino: https://github.com/joaopgf/Projeto-ML-Cancer (notebooks)
+- Site: https://pixoramed.vercel.app
+- Backend: https://pixoramed.onrender.com/api/health
+- ai-service: https://pixoramed-ia.onrender.com/health
+- Neon: projeto PixoraMedDB, id purple-morning-85204023
+- Render: backend srv-dborno6417fc73973om0, ai-service
+  srv-dbotmn67bikc73a8j5ig. Vercel: prj_h7AWtemIv2uKVx3N9CKbYPZ8rrnX.
+- Imagens de teste: C:\Users\joaop\OneDrive\Desktop\teste_interno
+  (pele, oral, cerebro).
+
+Como rodar
+- Docker (preferido pelo João): em infra/, docker compose up --build. Site
+  em localhost:5173, API em localhost:8080. Usa só o infra/.env. Banco local
+  na porta 5433. Parar com docker compose down (sem -v).
+- Sem Docker: backend no IntelliJ (lê backend/.env, agora também rodando da
+  raiz), frontend com npm run dev, ai-service com uvicorn na porta 8001 (o
+  PC só tem Python 3.14; o projeto usa 3.12).
+- Logs: docker compose logs -f backend, Docker Desktop (aba Logs), janela
+  Run do IntelliJ ou aba Logs do Render.
+- Testes: backend mvn test (7); ai-service pytest (20); frontend npm run
+  lint e npm run build.
+- PDF: Chrome headless (comando em docs/delivery/README.md).
+- BPMN: python generate.py em docs/bpmn/generator; PNG exportado com
+  bpmn-js 17.11.1 em escala 2 e fundo branco.
+- Slides: PowerPoint exporta via COM (PowerPoint.Application); LibreOffice
+  não existe no PC; o validador XSD da skill pptx falha igual no original.
+- Banca: abrir o site uns 5 min antes e fazer uma análise para acordar o
+  Render (a IA levou 23 s para acordar em 12/11).
+
+Armadilhas
+- O Docker Desktop fechou sozinho três vezes nesta sessão; conferir antes
+  de testar.
+- No Spring Boot 4, o RestClient.Builder exige spring-boot-starter-
+  restclient; os testes unitários não sobem a aplicação e não pegam isso.
+- O IntelliJ roda o backend com pasta de trabalho na raiz do repositório.
+- target/classes pode ficar travado (IntelliJ ou OneDrive): repetir o
+  mvn test.
+- O console do navegador do app acumula mensagens antigas; conferir erros
+  numa aba nova.
+- Render gratuito: atualizar serviço pelo Terraform falha (modo de
+  manutenção); variáveis ficam em env groups.
+- Prints do app para slides: html2canvas (cdnjs) em escala 2 e upload para
+  um servidor local temporário; o screenshot do painel sai pequeno demais.
