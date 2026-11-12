@@ -92,8 +92,9 @@ export default function Review() {
             ) : (
               <Alert>
                 <strong>Ao executar</strong>
-                <br />A imagem é enviada à API, passa pelo modelo e é
-                descartada. O resultado fica registrado no histórico.
+                <br />A imagem é enviada ao sistema, analisada pelo modelo de IA
+                e descartada em seguida. Só o resultado fica registrado no
+                histórico.
               </Alert>
             )}
           </div>
