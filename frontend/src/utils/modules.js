@@ -61,6 +61,9 @@ export const className = (value) => CLASS_NAMES[value] ?? value;
 // Cérebro fica de fora: o módulo não indica se o tumor é benigno ou maligno.
 export const MALIGNANT_CLASSES = ["malignant", "scc"];
 
+// Classe que o backend devolve quando a confiança fica abaixo do limiar (Oral e Cérebro)
+export const INCONCLUSIVE_CLASS = "inconclusive";
+
 export const modeName = (mode) =>
   mode === "color" ? "colorido" : mode === "gray" ? "tons de cinza" : "";
 
@@ -79,8 +82,13 @@ export function formatSize(bytes) {
     : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
-export const formatPercent = (value) =>
-  `${value.toFixed(2).replace(".", ",")}%`;
+// Fração (0 a 1) em porcentagem com vírgula: 0.7947 -> "79,47". Sem o "%" para o CSV, que guarda só o número
+export const percentNumber = (fraction, digits = 2) =>
+  (fraction * 100).toFixed(digits).replace(".", ",");
+
+// Fração (0 a 1) em texto: 0.7947 -> "79,47%"; com digits = 0, 0.18 -> "18%"
+export const formatPercent = (fraction, digits = 2) =>
+  `${percentNumber(fraction, digits)}%`;
 
 // Duas iniciais do nome, para o avatar
 export function initials(name) {

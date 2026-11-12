@@ -108,7 +108,7 @@ export default function Result() {
             {inconclusive
               ? "O sistema não indica uma classe quando a confiança fica abaixo do limiar."
               : threshold !== null
-                ? `Vira "${className(positiveClass)}" quando a probabilidade alcança o limiar de ${formatPercent(threshold * 100)}, mesmo abaixo de 50%.`
+                ? `Vira "${className(positiveClass)}" quando a probabilidade alcança o limiar de ${formatPercent(threshold)}, mesmo abaixo de 50%.`
                 : "A classe mais provável entre as classes usadas no treino."}
           </p>
         </article>
@@ -116,19 +116,17 @@ export default function Result() {
           <article className="result-metric">
             <small>Probabilidade estimada de {className(positiveClass)}</small>
             <strong className="mono">
-              {formatPercent(positiveProbability * 100)}
+              {formatPercent(positiveProbability)}
             </strong>
             <p>
-              Estimativa do modelo para esta imagem. Não é o risco clínico
-              deste paciente.
+              Estimativa do modelo para esta imagem. Não é o risco clínico deste
+              paciente.
             </p>
           </article>
         ) : (
           <article className="result-metric">
             <small>Confiança do modelo</small>
-            <strong className="mono">
-              {formatPercent(data.confidence * 100)}
-            </strong>
+            <strong className="mono">{formatPercent(data.confidence)}</strong>
             <p>
               Quanto o modelo confia nesta classe. Não é a chance real de o
               paciente ter a doença.
@@ -157,10 +155,10 @@ export default function Result() {
           <Alert icon="warning">
             <strong>
               Baixa certeza: nenhuma classe atingiu{" "}
-              {Math.round(lowConfidenceThreshold * 100)}% de probabilidade.
+              {formatPercent(lowConfidenceThreshold, 0)} de probabilidade.
             </strong>
             <br />O resultado "{className(data.predictedClass)}" indica um caso
-            suspeito pelo limiar de {Math.round(threshold * 100)}%, não uma
+            suspeito pelo limiar de {formatPercent(threshold, 0)}, não uma
             confirmação.
           </Alert>
         </div>
@@ -192,7 +190,7 @@ export default function Result() {
               predictedClass={data.predictedClass}
               alertClasses={MALIGNANT_CLASSES}
               formatName={className}
-              formatValue={(value) => formatPercent(value * 100)}
+              formatValue={(value) => formatPercent(value)}
             />
           ) : (
             <p>
@@ -233,8 +231,10 @@ export default function Result() {
         <InfoPair label="Data">{formatDate(data.createdAt)}</InfoPair>
         {metrics?.accuracyMean != null && (
           <InfoPair label="Desempenho na validação (5 folds)" mono>
-            Acurácia {formatPercent(metrics.accuracyMean)}
-            {metrics.f1Mean != null && ` · F1 ${formatPercent(metrics.f1Mean)}`}
+            {/* As métricas dos notebooks já vêm em porcentagem (95.17), não em fração */}
+            Acurácia {formatPercent(metrics.accuracyMean / 100)}
+            {metrics.f1Mean != null &&
+              ` · F1 ${formatPercent(metrics.f1Mean / 100)}`}
           </InfoPair>
         )}
       </Panel>

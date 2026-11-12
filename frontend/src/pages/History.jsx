@@ -15,6 +15,7 @@ import {
   modeName,
   MODULES,
   parseModelId,
+  percentNumber,
   recordCode,
 } from "../utils/modules";
 import { isLowConfidence } from "../utils/resultView";
@@ -37,7 +38,7 @@ function exportCsv(records) {
       parseModelId(record.modelId).module?.name ?? "",
       record.modelId,
       className(record.predictedClass),
-      (record.confidence * 100).toFixed(2).replace(".", ","),
+      percentNumber(record.confidence),
       formatDate(record.createdAt),
       record.timeMs.toFixed(0),
     ]),
@@ -169,9 +170,7 @@ export default function History() {
                         <LowConfidenceTag />
                       )}
                     </td>
-                    <td className="mono">
-                      {formatPercent(record.confidence * 100)}
-                    </td>
+                    <td className="mono">{formatPercent(record.confidence)}</td>
                     <td>{formatDate(record.createdAt)}</td>
                     <td>
                       <button

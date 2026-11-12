@@ -148,9 +148,7 @@ export default function Dashboard() {
                       <LowConfidenceTag />
                     )}
                   </strong>
-                  <small>
-                    Confiança {formatPercent(record.confidence * 100)}
-                  </small>
+                  <small>Confiança {formatPercent(record.confidence)}</small>
                 </div>
               </div>
             );

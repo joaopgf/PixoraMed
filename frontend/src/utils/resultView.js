@@ -1,6 +1,10 @@
 // Prepara o que a tela de resultado mostra a partir da análise e do modelo usado.
 // Não decide a classe (isso é do backend): só interpreta os valores que a API devolveu.
-import { MALIGNANT_CLASSES } from "./modules";
+import {
+  formatPercent,
+  INCONCLUSIVE_CLASS,
+  MALIGNANT_CLASSES,
+} from "./modules";
 
 // data: análise atual ou registro do histórico · current: análise feita agora (tem os limiares) · model: modelo usado
 export function buildResultView(data, current, model) {
@@ -21,12 +25,12 @@ export function buildResultView(data, current, model) {
     Math.max(positiveProbability, 1 - positiveProbability) <
       lowConfidenceThreshold;
 
-  const inconclusive = data.predictedClass === "inconclusive";
+  const inconclusive = data.predictedClass === INCONCLUSIVE_CLASS;
   const inconclusiveThreshold =
     current?.inconclusiveThreshold ?? model?.inconclusiveThreshold ?? null;
   const inconclusiveText = `Resultado inconclusivo: o modelo não atingiu a confiança mínima${
     inconclusiveThreshold !== null
-      ? ` de ${Math.round(inconclusiveThreshold * 100)}%`
+      ? ` de ${formatPercent(inconclusiveThreshold, 0)}`
       : ""
   } para indicar uma classe nesta imagem.`;
 
@@ -55,7 +59,7 @@ export function summarizeHistory(records = [], models = []) {
       MALIGNANT_CLASSES.includes(record.predictedClass),
     ).length,
     inconclusive: records.filter(
-      (record) => record.predictedClass === "inconclusive",
+      (record) => record.predictedClass === INCONCLUSIVE_CLASS,
     ).length,
     lowConfidence: records.filter((record) => isLowConfidence(record, models))
       .length,
