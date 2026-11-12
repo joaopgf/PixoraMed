@@ -1,6 +1,7 @@
 // Gráfico de rosca com a probabilidade de cada classe. Recebe os dados por props (não chama a API).
 // Acessível: legenda em texto com nome e porcentagem de cada fatia, e descrição completa para leitores de tela.
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+// Sem tooltip ao passar o mouse: a legenda ao lado já mostra todos os valores.
+import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 
 // Cores seguras para daltonismo (validadas com o validador de paleta da skill dataviz).
 // Classes de alerta (malignas) usam sempre o vermelho; as demais seguem a ordem fixa da paleta, sem
@@ -89,7 +90,6 @@ export default function ProbabilityPieChart({
                 <Cell key={slice.key} fill={slice.color} />
               ))}
             </Pie>
-            <Tooltip formatter={(value) => formatValue(value)} />
           </PieChart>
         </ResponsiveContainer>
         <div className="pie-chart-center">
