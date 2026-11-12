@@ -1,15 +1,11 @@
-// Painel inicial depois do login: contadores, acesso rápido aos módulos, fluxo de trabalho e atividade recente.
+// Painel inicial depois do login: boas-vindas, acesso rápido aos módulos, fluxo de trabalho e atividade recente.
 import { useNavigate } from "react-router-dom";
 
 import { PageHeader, TextLink } from "../components/common";
 import Icon from "../components/Icon";
 import LowConfidenceTag from "../components/LowConfidenceTag";
 import QueryState from "../components/QueryState";
-import {
-  useModels,
-  usePredictionHistory,
-  useTrainings,
-} from "../hooks/useApiData";
+import { useModels, usePredictionHistory } from "../hooks/useApiData";
 import {
   className,
   formatDate,
@@ -36,41 +32,10 @@ const WORKFLOW = [
   },
 ];
 
-const twoDigits = (value) =>
-  value === undefined ? "–" : String(value).padStart(2, "0");
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const models = useModels();
-  const trainings = useTrainings();
   const predictions = usePredictionHistory();
-
-  const metrics = [
-    {
-      label: "MÓDULOS NO CATÁLOGO",
-      value: twoDigits(MODULES.length),
-      note: "Tipos de câncer na plataforma",
-      icon: "layers",
-    },
-    {
-      label: "MODELOS CONECTADOS",
-      value: twoDigits(models.data?.length),
-      note: "Modelos ONNX no serviço de IA",
-      icon: "activity",
-    },
-    {
-      label: "TREINOS REGISTRADOS",
-      value: twoDigits(trainings.data?.length),
-      note: "Execuções de 5 folds no banco",
-      icon: "chart",
-    },
-    {
-      label: "ANÁLISES RECENTES",
-      value: twoDigits(predictions.data?.length),
-      note: "Previsões no histórico (até 100)",
-      icon: "file",
-    },
-  ];
 
   return (
     <>
@@ -102,21 +67,6 @@ export default function Dashboard() {
             alt="Visualização ilustrativa de cérebro holográfico"
           />
         </div>
-      </section>
-
-      <section className="metric-grid">
-        {metrics.map((metric) => (
-          <article key={metric.label} className="metric">
-            <div className="metric-head">
-              <span>{metric.label}</span>
-              <span className="metric-icon">
-                <Icon name={metric.icon} />
-              </span>
-            </div>
-            <strong>{metric.value}</strong>
-            <small>{metric.note}</small>
-          </article>
-        ))}
       </section>
 
       <div className="dash-grid">

@@ -121,9 +121,6 @@
   flex-wrap: wrap;
 }
 @media (max-width: 780px) {
-  .metric-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   .dash-grid,
   .upload-layout,
   .review-grid,

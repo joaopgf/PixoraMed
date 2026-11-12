@@ -133,9 +133,6 @@
   .welcome-art {
     display: none;
   }
-  .metric-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
   .dash-grid {
     grid-template-columns: 1fr;
   }
@@ -264,12 +261,6 @@
   .app-topbar .pill {
     font-size: var(--font-size-xs);
     padding: 6px 8px;
-  }
-  .metric {
-    padding: 13px;
-  }
-  .metric strong {
-    font-size: var(--font-size-xl);
   }
   .quick-grid,
   .module-list-grid,

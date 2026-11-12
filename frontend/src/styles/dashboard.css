@@ -58,54 +58,12 @@
   filter: drop-shadow(0 9px 18px rgba(42, 143, 181, 0.16));
   animation: gentle-rotation 11s ease-in-out infinite alternate;
 }
-.metric-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin: 17px 0 22px;
-}
-.metric {
-  padding: 16px 17px;
-  border: 1px solid #e3edf2;
-  border-radius: 15px;
-  background: rgba(255, 255, 255, 0.82);
-}
-.metric-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: #8ba0ad;
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-}
-.metric-icon {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  color: #3887a7;
-  background: #edf7fb;
-}
-.metric strong {
-  display: block;
-  margin-top: 10px;
-  color: #23445b;
-  font-family: Inter, "Segoe UI", sans-serif;
-  font-size: var(--font-size-xl);
-  letter-spacing: -0.04em;
-}
-.metric small {
-  display: block;
-  margin-top: 4px;
-  color: #8a9ca8;
-  font-size: var(--font-size-xs);
-}
 .dash-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(270px, 0.75fr);
   gap: 16px;
   align-items: start;
+  margin-top: 18px;
 }
 .panel {
   padding: 20px;
