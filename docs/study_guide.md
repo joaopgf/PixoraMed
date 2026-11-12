@@ -83,11 +83,11 @@ docs/         BPMN, documento de entrega, glossário, guia para salvar modelos e
 
 **O que é.** Cada camada tem uma responsabilidade:
 
-| Camada     | Faz                                                                               | Não faz          |
-| ---------- | --------------------------------------------------------------------------------- | ----------------- |
-| Controller | Recebe o HTTP, valida o DTO (`@Valid`), devolve o status                        | Regra de negócio |
-| Service    | Regras de negócio: login, decisão da classe, importação do CSV, chamada à IA | Conhecer HTTP     |
-| Repository | Acesso ao banco (Spring Data JPA)                                                 | Decidir regra     |
+| Camada     | Faz                                                                                                                                                                          | Não faz                                           |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Controller | Recebe o HTTP, valida o DTO (`@Valid`), devolve o status                                                                                                                   | Regra de negócio                                  |
+| Service    | Regras de negócio: login, decisão da classe, importação do CSV, chamada à IA                                                                                            | Conhecer HTTP                                      |
+| Repository | Acesso ao banco (Spring Data JPA)                                                                                                                                            | Decidir regra                                      |
 | Model      | Entidades JPA (`User`, `Training`, `Prediction`): cada classe com `@Entity` vira uma tabela (`users`, `trainings`, `predictions`) e cada campo vira uma coluna | Sair direto na resposta da API (quem sai é o DTO) |
 
 Além delas: `dto` (entrada e saída da API), `security` (JWT, BCrypt, CORS) e `exception` (erros padronizados).
@@ -108,36 +108,36 @@ public PredictionResponse predict(@AuthenticationPrincipal Jwt jwt, ...) {
 
 **O que é.** Toda requisição HTTP tem um **método** (também chamado de verbo), que diz o que o cliente quer fazer com o recurso da URL. Os principais:
 
-| Método | Para quê | Seguro? (não altera nada) | Idempotente? (repetir dá o mesmo efeito) |
-| --- | --- | --- | --- |
-| `GET` | Ler um recurso | Sim | Sim |
-| `POST` | Criar algo ou enviar dados para processar | Não | Não |
-| `PUT` | Substituir um recurso inteiro | Não | Sim |
-| `PATCH` | Alterar parte de um recurso | Não | Não necessariamente |
-| `DELETE` | Apagar um recurso | Não | Sim |
-| `OPTIONS` | Perguntar o que o servidor aceita (o navegador usa no *preflight* do CORS) | Sim | Sim |
+| Método     | Para quê                                                                    | Seguro? (não altera nada) | Idempotente? (repetir dá o mesmo efeito) |
+| ----------- | ---------------------------------------------------------------------------- | -------------------------- | ----------------------------------------- |
+| `GET`     | Ler um recurso                                                               | Sim                        | Sim                                       |
+| `POST`    | Criar algo ou enviar dados para processar                                    | Não                       | Não                                      |
+| `PUT`     | Substituir um recurso inteiro                                                | Não                       | Sim                                       |
+| `PATCH`   | Alterar parte de um recurso                                                  | Não                       | Não necessariamente                      |
+| `DELETE`  | Apagar um recurso                                                            | Não                       | Sim                                       |
+| `OPTIONS` | Perguntar o que o servidor aceita (o navegador usa no *preflight* do CORS) | Sim                        | Sim                                       |
 
 **Como funciona.** O método vem na primeira linha da requisição, junto com a URL (`POST /api/predictions HTTP/1.1`). No Spring, cada método do controller é ligado a um verbo por uma anotação: `@GetMapping`, `@PostMapping` (e existem `@PutMapping`, `@PatchMapping` e `@DeleteMapping`). No FastAPI, pelo decorador: `@app.get`, `@app.post`. A resposta volta com um **código de status**: `200` (ok), `201` (criado), `401` (sem login válido), `404` (não encontrado), `409` (conflito), `413` (arquivo grande), `422` (dados inválidos), `503` (serviço indisponível).
 
 **Onde está no código.** O PixoraMed usa **só `GET` e `POST`**:
 
-| Método | Rota | Login? | O que faz | Onde |
-| --- | --- | --- | --- | --- |
-| `POST` | `/api/auth/register` | não | Cria a conta; responde **201** (ou 409 se o e-mail já existe) | `AuthController` |
-| `POST` | `/api/auth/login` | não | Confere e-mail e senha e devolve o token JWT | `AuthController` |
-| `GET` | `/api/health` | não | Diz se a API está no ar (usado pelo Render) | `TrainingController` |
-| `GET` | `/api/trainings` | não | Lista os treinos importados do CSV | `TrainingController` |
-| `GET` | `/api/models` | não | Lista os modelos da IA, com os limiares | `PredictionController` |
-| `POST` | `/api/predictions` | sim | Envia a imagem (multipart) e recebe a classe e as probabilidades | `PredictionController` |
-| `GET` | `/api/predictions?limit=100` | sim | Histórico do usuário logado | `PredictionController` |
+| Método  | Rota                           | Login? | O que faz                                                            | Onde                     |
+| -------- | ------------------------------ | ------ | -------------------------------------------------------------------- | ------------------------ |
+| `POST` | `/api/auth/register`         | não   | Cria a conta; responde **201** (ou 409 se o e-mail já existe) | `AuthController`       |
+| `POST` | `/api/auth/login`            | não   | Confere e-mail e senha e devolve o token JWT                         | `AuthController`       |
+| `GET`  | `/api/health`                | não   | Diz se a API está no ar (usado pelo Render)                         | `TrainingController`   |
+| `GET`  | `/api/trainings`             | não   | Lista os treinos importados do CSV                                   | `TrainingController`   |
+| `GET`  | `/api/models`                | não   | Lista os modelos da IA, com os limiares                              | `PredictionController` |
+| `POST` | `/api/predictions`           | sim    | Envia a imagem (multipart) e recebe a classe e as probabilidades     | `PredictionController` |
+| `GET`  | `/api/predictions?limit=100` | sim    | Histórico do usuário logado                                        | `PredictionController` |
 
 Entre o backend e o ai-service, o padrão é o mesmo:
 
-| Método | Rota | Token interno? | O que faz |
-| --- | --- | --- | --- |
-| `GET` | `/health` | não | Diz se a IA está no ar e quantos modelos carregou |
-| `GET` | `/models` | sim | Lista os modelos carregados |
-| `POST` | `/predict` | sim | Recebe a imagem e devolve as probabilidades |
+| Método  | Rota         | Token interno? | O que faz                                          |
+| -------- | ------------ | -------------- | -------------------------------------------------- |
+| `GET`  | `/health`  | não           | Diz se a IA está no ar e quantos modelos carregou |
+| `GET`  | `/models`  | sim            | Lista os modelos carregados                        |
+| `POST` | `/predict` | sim            | Recebe a imagem e devolve as probabilidades        |
 
 ```java
 // AuthController: o cadastro cria um recurso, então responde 201 em vez de 200
@@ -189,7 +189,7 @@ Set<String> existing = trainings.findAll().stream()
         .collect(Collectors.toSet());
 
 // AuthService.login: o repositório devolve Optional<User>
-User user = users.findByEmail(email).orElse(null);
+User user = users.findByEmail(email).ourElse(null);
 ```
 
 **Por que o sistema usa.** Cada regra vira uma linha que diz *o que* se quer, sem índice nem variável auxiliar. O Optional obriga a tratar "não encontrei" no ponto da busca, e no login esse caso vira 401 com a mensagem genérica.
@@ -217,10 +217,10 @@ User user = users.findByEmail(email).orElse(null);
 
 **Como funciona.** A classe `Prediction` com `@Entity` vira a tabela `predictions`. O método `findByUserIdOrderByCreatedAtDesc(userId, pageable)` vira `SELECT ... WHERE user_id = ? ORDER BY created_at DESC LIMIT ?`, sem SQL escrito à mão.
 
-| Tabela          | Conteúdo                                                                      |
-| --------------- | ------------------------------------------------------------------------------ |
-| `users`       | nome, e-mail (único) e hash BCrypt da senha                                   |
-| `trainings`   | uma linha por treino do `training-results.csv`                               |
+| Tabela          | Conteúdo                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `users`       | nome, e-mail (único) e hash BCrypt da senha                                                                        |
+| `trainings`   | uma linha por treino do `training-results.csv`                                                                    |
 | `predictions` | usuário, modelo, classe, confiança, probabilidade de cada classe (JSON), tempo e horário. **Sem a imagem** |
 
 A tabela `predictions` tem índice em `userId`, que é a busca do histórico.
@@ -453,6 +453,7 @@ export async function request(path, options = {}) {
 **Como funciona.** Acima da tabela, o `HistorySummary` mostra quatro números das análises do usuário (até as 100 mais recentes): total, **suspeita de câncer** (maligno na Pele ou carcinoma espinocelular na Oral, com destaque vermelho), inconclusivas e baixa certeza. A conta fica em `summarizeHistory`, no `utils/resultView.js`; o componente só recebe os registros por props.
 
 **Por que o sistema usa.** É o que o médico quer ver ao abrir o histórico: quantos casos pedem atenção, sem precisar ler a tabela inteira. O painel inicial, ao contrário, perdeu os contadores técnicos (modelos conectados, treinos registrados), que não ajudavam nesse uso.
+
 - **A cor segue a classe, não a posição**: "benigno" é sempre azul, em qualquer análise. O gráfico recebe as classes do modelo, na ordem do treino, e é essa ordem que define as cores.
 - **Também nas análises antigas**: o backend grava a probabilidade de cada classe na coluna `probabilities` da tabela `predictions`, como texto JSON (`{"normal": 0.0, "scc": 1.0}`). Quem faz a conversão é o `ProbabilitiesConverter`, um `AttributeConverter` do JPA, e o `GET /api/predictions` devolve essa lista. Assim o histórico mostra o mesmo gráfico do momento da análise, sem guardar a imagem. Análises feitas antes dessa coluna existir mostram um aviso no lugar do gráfico.
 - **Acessibilidade**: a paleta passou num validador de daltonismo, e a identidade nunca depende só da cor (legenda com nome e porcentagem, descrição completa para leitor de tela).
@@ -477,14 +478,14 @@ export async function request(path, options = {}) {
 
 O grupo quis ter as duas experiências de deep learning, e cada uma ficou num módulo:
 
-|                  | CNN do zero (Oral e Cérebro)                                               | Modelo pré-treinado (Pele)                                                                    |
-| ---------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| O que é         | Rede pequena criada e treinada pelo grupo, com pesos aleatórios no início | EfficientNet-B0, uma rede já treinada no ImageNet, ajustada para pele (*transfer learning*) |
-| Tamanho          | ~24 mil parâmetros, ~110 KB                                                | Ensemble de 5 redes, ~80 MB                                                                    |
+|                  | CNN do zero (Oral e Cérebro)                                                   | Modelo pré-treinado (Pele)                                                                    |
+| ---------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| O que é         | Rede pequena criada e treinada pelo grupo, com pesos aleatórios no início     | EfficientNet-B0, uma rede já treinada no ImageNet, ajustada para pele (*transfer learning*) |
+| Tamanho          | ~24 mil parâmetros, ~110 KB                                                    | Ensemble de 5 redes, ~80 MB                                                                    |
 | Entrada          | 128×128; Oral em cor com pixels / 255, Cérebro em cinza com pixels de 0 a 255 | 224×224, cor, normalização ImageNet                                                         |
-| Saída           | Softmax entre as classes                                                    | Probabilidade de maligno, calibrada                                                            |
-| Decisão         | Classe mais provável; "inconclusivo" abaixo de 80%                         | Maligno a partir de 18%; aviso de baixa certeza abaixo de 80%                                  |
-| Tempo por imagem | 0,1 s (Cérebro) e 0,2 s (Oral)                                             | 1,7 s                                                                                          |
+| Saída           | Softmax entre as classes                                                        | Probabilidade de maligno, calibrada                                                            |
+| Decisão         | Classe mais provável; "inconclusivo" abaixo de 80%                             | Maligno a partir de 18%; aviso de baixa certeza abaixo de 80%                                  |
+| Tempo por imagem | 0,1 s (Cérebro) e 0,2 s (Oral)                                                 | 1,7 s                                                                                          |
 
 ### Rede neural
 
@@ -552,14 +553,14 @@ AdaptiveAvgPool2d(1), Flatten(), Dropout(p=0.25), Linear(64, num_classes),
 
 **O caminho de uma imagem da Oral (cor) pela rede.**
 
-| Etapa | Formato (canais × altura × largura) |
-| --- | --- |
-| Entrada | 3 × 128 × 128 |
-| Conv 16 → ReLU → MaxPool | 16 × 64 × 64 |
-| Conv 32 → ReLU → MaxPool | 32 × 32 × 32 |
-| Conv 64 → ReLU → MaxPool | 64 × 16 × 16 |
-| Pooling adaptativo + Flatten | 64 números |
-| Linear | 2 logits (normal, scc) → softmax |
+| Etapa                        | Formato (canais × altura × largura) |
+| ---------------------------- | ------------------------------------- |
+| Entrada                      | 3 × 128 × 128                       |
+| Conv 16 → ReLU → MaxPool   | 16 × 64 × 64                        |
+| Conv 32 → ReLU → MaxPool   | 32 × 32 × 32                        |
+| Conv 64 → ReLU → MaxPool   | 64 × 16 × 16                        |
+| Pooling adaptativo + Flatten | 64 números                           |
+| Linear                       | 2 logits (normal, scc) → softmax     |
 
 No Cérebro, a entrada tem 1 canal (cinza) e a saída tem 3 classes (glioma, meningioma e hipofisário).
 
@@ -579,13 +580,13 @@ Repare que a ReLU e o Dropout não mudam o formato; quem encolhe a imagem é o M
 
 **De onde vêm os ~24 mil parâmetros** (Oral em cor). Cada filtro tem `3 × 3 × canais de entrada` pesos, mais um viés:
 
-| Camada | Conta | Parâmetros |
-| --- | --- | --- |
-| Conv 16 | 16 × (3×3×3) + 16 | 448 |
-| Conv 32 | 32 × (3×3×16) + 32 | 4.640 |
-| Conv 64 | 64 × (3×3×32) + 64 | 18.496 |
-| Linear | 2 × 64 + 2 | 130 |
-| **Total** | | **23.714** |
+| Camada          | Conta                 | Parâmetros      |
+| --------------- | --------------------- | ---------------- |
+| Conv 16         | 16 × (3×3×3) + 16  | 448              |
+| Conv 32         | 32 × (3×3×16) + 32 | 4.640            |
+| Conv 64         | 64 × (3×3×32) + 64 | 18.496           |
+| Linear          | 2 × 64 + 2           | 130              |
+| **Total** |                       | **23.714** |
 
 ReLU, MaxPool, pooling adaptativo e Dropout não têm parâmetros. Sem o pooling adaptativo, a camada linear receberia 64 × 16 × 16 = 16.384 valores e teria mais pesos que o resto da rede inteira.
 
@@ -593,10 +594,10 @@ ReLU, MaxPool, pooling adaptativo e Dropout não têm parâmetros. Sem o pooling
 
 **Dois treinos diferentes, não confunda.**
 
-| | Experimentos (CSV dos treinos) | Modelo do app |
-| --- | --- | --- |
-| Para quê | Comparar configurações: cor ou cinza, com ou sem divisão por 255 | O modelo que roda no sistema |
-| Imagens | 1.000 por classe, validação cruzada estratificada em 5 folds | Cerca de 4.900 por classe (Oral 4.901, Cérebro 4.900) |
+|           | Experimentos (CSV dos treinos)                                                        | Modelo do app                                                                                     |
+| --------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Para quê | Comparar configurações: cor ou cinza, com ou sem divisão por 255                   | O modelo que roda no sistema                                                                      |
+| Imagens   | 1.000 por classe, validação cruzada estratificada em 5 folds                        | Cerca de 4.900 por classe (Oral 4.901, Cérebro 4.900)                                            |
 | Resultado | Média ± desvio dos 5 folds (Oral cor 85,25% ± 1,78; Cérebro cinza 95,17% ± 0,55) | Teste em imagens separadas da mesma fonte: Oral 96,5% (200 imagens), Cérebro 98,3% (300 imagens) |
 
 A configuração do app é a melhor dos experimentos: Oral em cor com divisão por 255 e Cérebro em cinza sem divisão.
@@ -703,10 +704,10 @@ Cada número da saída é o maior do seu quadrado: max(1, 3, 5, 2) = 5; max(2, 0
 
 **Exemplo** com logits ilustrativos para a Oral (o sistema não guarda os logits reais):
 
-| | normal | carcinoma |
-| --- | --- | --- |
-| Logit | 0,82 | 0,50 |
-| e^logit | 2,2705 | 1,6487 |
+|                           | normal           | carcinoma        |
+| ------------------------- | ---------------- | ---------------- |
+| Logit                     | 0,82             | 0,50             |
+| e^logit                   | 2,2705           | 1,6487           |
 | Divide pela soma (3,9192) | **57,93%** | **42,07%** |
 
 Perto da análise da demonstração (normal com 57,89%). Como nenhuma classe chega a 80%, o backend responde **inconclusivo**.
@@ -815,14 +816,14 @@ Os passos 2 a 4 estão todos dentro do `skin_color.onnx`. O script de exportaç�
 
 **CNN do grupo × EfficientNet-B0.**
 
-|  | CNN (Oral e Cérebro) | EfficientNet-B0 (Pele) |
-| --- | --- | --- |
-| Pesos iniciais | Aleatórios (do zero) | ImageNet (pré-treinada) |
-| Profundidade | 3 blocos convolucionais | 16 blocos MBConv |
-| Parâmetros | ~24 mil | ~4 milhões por rede, 5 redes |
-| Entrada | 128×128; Oral / 255, Cérebro de 0 a 255 | 224×224, normalização ImageNet |
-| Saída | Softmax entre as classes | Sigmoid calibrada (Platt) de maligno |
-| Tempo por imagem | 0,1–0,2 s | 1,7 s |
+|                  | CNN (Oral e Cérebro)                     | EfficientNet-B0 (Pele)               |
+| ---------------- | ----------------------------------------- | ------------------------------------ |
+| Pesos iniciais   | Aleatórios (do zero)                     | ImageNet (pré-treinada)             |
+| Profundidade     | 3 blocos convolucionais                   | 16 blocos MBConv                     |
+| Parâmetros      | ~24 mil                                   | ~4 milhões por rede, 5 redes        |
+| Entrada          | 128×128; Oral / 255, Cérebro de 0 a 255 | 224×224, normalização ImageNet    |
+| Saída           | Softmax entre as classes                  | Sigmoid calibrada (Platt) de maligno |
+| Tempo por imagem | 0,1–0,2 s                                | 1,7 s                                |
 
 **Pergunta da banca:** "O que é a EfficientNet-B0?"
 **Resposta:** "É uma CNN do Google, pré-treinada em 1,28 milhão de imagens do ImageNet. A B0 é a menor da família, com cerca de 5 milhões de parâmetros. Trocamos a última camada por uma saída só, a de maligno, e ajustamos a rede com as imagens de pele."
@@ -849,15 +850,15 @@ Os passos 2 a 4 estão todos dentro do `skin_color.onnx`. O script de exportaç�
 
 **Existe, sim.** Há bibliotecas Python que leem o modelo e desenham a arquitetura. As imagens deste guia foram geradas com duas delas pelo script [`docs/model_diagrams/generate.py`](model_diagrams/generate.py).
 
-| Ferramenta | O que desenha | Usamos? |
-| --- | --- | --- |
-| **torchview** | Grafo das camadas com o formato do tensor de entrada e saída de cada uma. Precisa do Graphviz | Sim: grafo da CNN, visão geral da EfficientNet e bloco MBConv |
-| **VisualTorch** | Blocos 3D coloridos (estilo do visualkeras), em que o tamanho do bloco mostra o tamanho do tensor | Sim: CNN em blocos |
-| **Graphviz** (pacote `graphviz`) | Diagrama livre, desenhado à mão no código | Sim: fluxo do ensemble da Pele |
-| **Pillow** | Desenho livre de imagens; usado para refazer os blocos 3D com dados escritos em cada camada | Sim: CNN anotada ([`annotated_cnn.py`](model_diagrams/annotated_cnn.py)) |
-| **Netron** | Visualizador interativo de arquivos de modelo, inclusive `.onnx` | Não no script; serve para abrir os modelos reais do ai-service |
-| **torchinfo** | Tabela em texto com camadas, formatos e número de parâmetros | Não |
-| **torchviz** | Grafo das operações do cálculo do gradiente, mais técnico | Não |
+| Ferramenta                               | O que desenha                                                                                     | Usamos?                                                                   |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **torchview**                      | Grafo das camadas com o formato do tensor de entrada e saída de cada uma. Precisa do Graphviz    | Sim: grafo da CNN, visão geral da EfficientNet e bloco MBConv            |
+| **VisualTorch**                    | Blocos 3D coloridos (estilo do visualkeras), em que o tamanho do bloco mostra o tamanho do tensor | Sim: CNN em blocos                                                        |
+| **Graphviz** (pacote `graphviz`) | Diagrama livre, desenhado à mão no código                                                      | Sim: fluxo do ensemble da Pele                                            |
+| **Pillow**                         | Desenho livre de imagens; usado para refazer os blocos 3D com dados escritos em cada camada       | Sim: CNN anotada ([`annotated_cnn.py`](model_diagrams/annotated_cnn.py)) |
+| **Netron**                         | Visualizador interativo de arquivos de modelo, inclusive `.onnx`                                | Não no script; serve para abrir os modelos reais do ai-service           |
+| **torchinfo**                      | Tabela em texto com camadas, formatos e número de parâmetros                                    | Não                                                                      |
+| **torchviz**                       | Grafo das operações do cálculo do gradiente, mais técnico                                     | Não                                                                      |
 
 **Como funciona.** A torchview e a VisualTorch passam uma imagem falsa (aleatória) pela rede e registram cada camada por onde ela passa, com o formato do tensor. Por isso o desenho mostra a arquitetura, e os pesos não importam: as imagens usam pesos aleatórios e saem iguais às do modelo treinado.
 
@@ -885,12 +886,12 @@ netron ai-service/models/oral_color.onnx
 
 Um modelo treinado é, no fundo, a **arquitetura** (as camadas, em código) mais os **pesos** (os números aprendidos). Cada formato guarda isso de um jeito:
 
-| Formato | O que guarda | Quem lê | No PixoraMed |
-| --- | --- | --- | --- |
-| **pickle** | Qualquer objeto Python salvo em bytes (serialização) | Só Python | É o mecanismo que o `.pt` usa por dentro |
-| **`.pt`** (PyTorch) | Os pesos (`state_dict`) e, no nosso caso, um dicionário com classes, modo, escala e métricas | Python com PyTorch | Sai dos notebooks (`modelos_pt/oral_cor.pt`) |
-| **`.onnx`** | A arquitetura e os pesos juntos, num formato aberto e independente de linguagem | ONNX Runtime (Python, Java, C#, JavaScript...) | É o que roda no sistema |
-| **`.json`** | Os dados de uso que o `.onnx` não guarda: classes, tamanho, escala, normalização, limiar | Qualquer linguagem | Ao lado de cada `.onnx`, em `ai-service/models/` |
+| Formato                     | O que guarda                                                                                     | Quem lê                                       | No PixoraMed                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------- | ---------------------------------------------------- |
+| **pickle**            | Qualquer objeto Python salvo em bytes (serialização)                                           | Só Python                                     | É o mecanismo que o `.pt` usa por dentro          |
+| **`.pt`** (PyTorch) | Os pesos (`state_dict`) e, no nosso caso, um dicionário com classes, modo, escala e métricas | Python com PyTorch                             | Sai dos notebooks (`modelos_pt/oral_cor.pt`)       |
+| **`.onnx`**         | A arquitetura e os pesos juntos, num formato aberto e independente de linguagem                  | ONNX Runtime (Python, Java, C#, JavaScript...) | É o que roda no sistema                             |
+| **`.json`**         | Os dados de uso que o `.onnx` não guarda: classes, tamanho, escala, normalização, limiar    | Qualquer linguagem                             | Ao lado de cada `.onnx`, em `ai-service/models/` |
 
 **Pickle.** É a forma padrão do Python de transformar um objeto em bytes (para salvar em arquivo) e voltar. O `torch.save` usa o pickle por dentro, então o `.pt` é um pickle: foi esse o "pickle" pedido pelo professor (`docs/save_model.md`). O cuidado é que **abrir um pickle executa código**: um arquivo malicioso pode rodar qualquer comando ao ser carregado. Por isso os scripts de exportação carregam o `.pt` com `torch.load(..., weights_only=True)`, que só aceita pesos e tipos simples.
 
@@ -908,11 +909,11 @@ Um modelo treinado é, no fundo, a **arquitetura** (as camadas, em código) mais
 
 **Os arquivos do sistema.**
 
-| Modelo | `.onnx` | O que o `.json` diz |
-| --- | --- | --- |
-| `oral_color` | ~110 KB | cor, 128×128, `scale` 255, classes `normal` e `scc` |
-| `brain_gray` | ~110 KB | cinza, 128×128, `scale` 1, classes `glioma`, `menin` e `tumor` |
-| `skin_color` | ~80 MB | cor, 224×224, `mean` e `std` do ImageNet, classes `benign` e `malignant`, `threshold` 0,18 |
+| Modelo         | `.onnx` | O que o `.json` diz                                                                                 |
+| -------------- | --------- | ----------------------------------------------------------------------------------------------------- |
+| `oral_color` | ~110 KB   | cor, 128×128, `scale` 255, classes `normal` e `scc`                                            |
+| `brain_gray` | ~110 KB   | cinza, 128×128, `scale` 1, classes `glioma`, `menin` e `tumor`                               |
+| `skin_color` | ~80 MB    | cor, 224×224, `mean` e `std` do ImageNet, classes `benign` e `malignant`, `threshold` 0,18 |
 
 **Por que o `.json` existe.** O `.onnx` só sabe fazer a conta: recebe números e devolve números. Ele não sabe o nome das classes, se a imagem é em cor ou cinza, de que tamanho, nem se os pixels são divididos por 255. Sem essas informações, o ai-service não consegue preparar a imagem do jeito do treino nem dar nome à resposta. Exemplo real:
 
@@ -961,7 +962,6 @@ Com o `.json`, um modelo novo entra no sistema **sem mudar código**: basta colo
            .contentType(MediaType.MULTIPART_FORM_DATA)
            .body(form).retrieve().body(AiPrediction.class));
    ```
-
 3. **ai-service: pré-processa.** Procura o modelo pelo id e prepara a imagem com os dados do `.json`: `preprocess` (Oral e Cérebro) ou `preprocess_pil` (Pele).
 4. **ai-service: roda o modelo.** `session.run(...)` no ONNX Runtime. Oral e Cérebro devolvem logits, e o ai-service aplica o **softmax**; a Pele já devolve a probabilidade calibrada de maligno.
 5. **ai-service → backend.** Responde um JSON com as classes, as probabilidades na mesma ordem, o tempo e o limiar, quando existe:
@@ -970,7 +970,6 @@ Com o `.json`, um modelo novo entra no sistema **sem mudar código**: basta colo
    {"model_id": "oral_color", "cancer_type": "oral", "classes": ["normal", "scc"],
     "probabilities": [0.5789, 0.4211], "time_ms": 22.0, "threshold": null}
    ```
-
 6. **Backend decide e grava.** O `DecisionService` aplica as regras (inconclusivo abaixo de 80% em Oral e Cérebro, maligno a partir de 18% na Pele). O `PredictionService` grava o resultado e as probabilidades na tabela `predictions`, sem a imagem, e devolve o `PredictionResponse` para a tela.
 
 **Por que o backend Java não roda o modelo.** O pré-processamento precisa ser idêntico ao do treino, que usa OpenCV e PIL em Python. Mantendo a inferência em Python, a conta é a mesma do notebook. O backend fica com o que é dele: login, regra de decisão e histórico.
@@ -1024,13 +1023,13 @@ if (cut != null && confidence < cut) {
 
 ### O que foi medido
 
-| Módulo  | Teste                                                       | Resultado                                                          |
-| -------- | ----------------------------------------------------------- | ------------------------------------------------------------------ |
-| Oral     | 200 imagens separadas, mesma fonte                          | 96,5% (193/200); com o limiar, 188 conclusivas e 98,4% de acerto   |
-| Cérebro | 300 imagens separadas, mesma fonte                          | 98,3% (295/300); com o limiar, 297 conclusivas e 99,0%             |
+| Módulo  | Teste                                                       | Resultado                                                            |
+| -------- | ----------------------------------------------------------- | -------------------------------------------------------------------- |
+| Oral     | 200 imagens separadas, mesma fonte                          | 96,5% (193/200); com o limiar, 188 conclusivas e 98,4% de acerto     |
+| Cérebro | 300 imagens separadas, mesma fonte                          | 98,3% (295/300); com o limiar, 297 conclusivas e 99,0%               |
 | Cérebro | 5 folds, 1.000 imagens por classe                           | 95,17% ± 0,55 (cinza sem divisão por 255, a melhor configuração) |
-| Pele     | Reprodução do treino (1.915 imagens, divisão por lesão) | AUC 0,939; sensibilidade 89,0%; especificidade 83,7%               |
-| Pele     | Modelo do app, 21 imagens internas                          | 8/8 malignos; 7/13 benignos (os 6 alarmes falsos tiveram aviso)    |
+| Pele     | Reprodução do treino (1.915 imagens, divisão por lesão) | AUC 0,939; sensibilidade 89,0%; especificidade 83,7%                 |
+| Pele     | Modelo do app, 21 imagens internas                          | 8/8 malignos; 7/13 benignos (os 6 alarmes falsos tiveram aviso)      |
 
 ### Como ler esses números
 
@@ -1055,8 +1054,8 @@ Cada termo traz a definição, a fórmula (quando há), o exemplo com os número
 
 O teste do modelo do app com 21 imagens internas (8 malignas e 13 benignas) é uma matriz de confusão real e pequena, boa para fazer as contas de cabeça:
 
-|                       | Real: maligno | Real: benigno |
-| --------------------- | ------------- | ------------- |
+|                             | Real: maligno | Real: benigno |
+| --------------------------- | ------------- | ------------- |
 | **Previsto: maligno** | VP = 8        | FP = 6        |
 | **Previsto: benigno** | FN = 0        | VN = 7        |
 
@@ -1289,14 +1288,14 @@ Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenh
 
 **Os tipos que aparecem no PixoraMed.**
 
-| Tipo de viés | O que é | Onde aparece no projeto |
-| --- | --- | --- |
-| **De representação** (amostragem) | Um grupo aparece pouco ou nada nos dados | Tons de pele: o HAM10000 tem poucas imagens de pele escura, e o desempenho nesses casos é **desconhecido** |
-| **De classe** (desbalanceamento) | Uma classe domina os dados e o modelo puxa para ela | Nevo é ~67% do HAM10000 e dermatofibroma ~1% |
-| **Atalho** (*shortcut learning*) | O modelo aprende uma pista que não é a doença, como o aparelho, a fonte ou uma régua na foto | Quando as classes vêm de aparelhos ou fontes diferentes, a rede pode aprender o aparelho e não a doença |
-| **De seleção / domínio** | Os dados vêm de um tipo de imagem ou de lugar específico | A Pele só viu imagens dermatoscópicas, não fotos de celular; Oral e Cérebro vêm de uma única fonte (Multi Cancer) |
-| **De escopo** (classes que faltam) | Um caso real não existe entre as classes do treino | A queratose actínica (akiec) ficou fora da Pele; o Cérebro não tem a classe "sem tumor" e sempre aponta um tipo de tumor |
-| **De automação** (no uso) | A pessoa confia demais na resposta da máquina | Um médico poderia aceitar o resultado sem conferir; por isso as telas dizem que não é diagnóstico |
+| Tipo de viés                             | O que é                                                                                         | Onde aparece no projeto                                                                                                     |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| **De representação** (amostragem) | Um grupo aparece pouco ou nada nos dados                                                         | Tons de pele: o HAM10000 tem poucas imagens de pele escura, e o desempenho nesses casos é **desconhecido**           |
+| **De classe** (desbalanceamento)    | Uma classe domina os dados e o modelo puxa para ela                                              | Nevo é ~67% do HAM10000 e dermatofibroma ~1%                                                                               |
+| **Atalho** (*shortcut learning*)  | O modelo aprende uma pista que não é a doença, como o aparelho, a fonte ou uma régua na foto | Quando as classes vêm de aparelhos ou fontes diferentes, a rede pode aprender o aparelho e não a doença                  |
+| **De seleção / domínio**         | Os dados vêm de um tipo de imagem ou de lugar específico                                       | A Pele só viu imagens dermatoscópicas, não fotos de celular; Oral e Cérebro vêm de uma única fonte (Multi Cancer)     |
+| **De escopo** (classes que faltam)  | Um caso real não existe entre as classes do treino                                              | A queratose actínica (akiec) ficou fora da Pele; o Cérebro não tem a classe "sem tumor" e sempre aponta um tipo de tumor |
+| **De automação** (no uso)         | A pessoa confia demais na resposta da máquina                                                   | Um médico poderia aceitar o resultado sem conferir; por isso as telas dizem que não é diagnóstico                       |
 
 **O que o grupo fez.**
 
@@ -1486,12 +1485,12 @@ Três workflows em BPMN 2.0, em `docs/bpmn/`, gerados por código (`docs/bpmn/ge
 
 ## Testes e qualidade
 
-| Onde       | O que                                                              | Como rodar                                       |
-| ---------- | ------------------------------------------------------------------ | ------------------------------------------------ |
-| Backend    | 7 testes: regra de decisão, leitura do CSV real e conversão das probabilidades para JSON                 | `mvn test`                                     |
-| ai-service | 20 testes: rotas, token, pré-processamento, modelos reais e erros | `pytest`                                       |
-| Frontend   | ESLint sem erros nem avisos; build de produção                   | `npm run lint` e `npm run build`             |
-| Terraform  | formatação, validação e plano sem mudanças                    | `terraform fmt -check`, `validate`, `plan` |
+| Onde       | O que                                                                                      | Como rodar                                       |
+| ---------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| Backend    | 7 testes: regra de decisão, leitura do CSV real e conversão das probabilidades para JSON | `mvn test`                                     |
+| ai-service | 20 testes: rotas, token, pré-processamento, modelos reais e erros                         | `pytest`                                       |
+| Frontend   | ESLint sem erros nem avisos; build de produção                                           | `npm run lint` e `npm run build`             |
+| Terraform  | formatação, validação e plano sem mudanças                                            | `terraform fmt -check`, `validate`, `plan` |
 
 **Pergunta de banca.** *O que os testes do backend garantem?* Resposta: "Que a regra de decisão está certa (inconclusivo abaixo de 80%, limiar da Pele) e que o CSV real dos notebooks é lido sem erro. São as duas partes que, se quebrarem, mostram um resultado errado sem dar erro nenhum."
 
@@ -1512,57 +1511,57 @@ Na banca, a pergunta costuma vir como "onde está a lógica de X?". Responda seg
 | Só o backend chama a IA                          | `require_token` no ai-service + `AI_SERVICE_TOKEN`                                                          |
 | Classes malignas em vermelho                      | `MALIGNANT_CLASSES` em `utils/modules.js` e `ProbabilityPieChart`                                         |
 | Nome por extenso das classes (scc, menin)         | `CLASS_NAMES` e `className` em `utils/modules.js`                                                         |
-| Cards de resumo do histórico                      | `summarizeHistory` em `utils/resultView.js` e `HistorySummary`                                            |
+| Cards de resumo do histórico                     | `summarizeHistory` em `utils/resultView.js` e `HistorySummary`                                            |
 | Importação dos treinos sem duplicar             | `TrainingService.importCsv` (chave data/hora + dataset)                                                       |
 
 ## Perguntas rápidas de banca
 
 Respostas de uma ou duas frases para revisar na véspera. O detalhe de cada uma está na seção do conceito.
 
-| Pergunta                             | Resposta curta                                                                                                                            |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| O que o PixoraMed faz?               | Classifica imagens de Pele, Oral e Cérebro e mostra a probabilidade de cada classe, com histórico e limitações. Não é diagnóstico. |
-| Por que três serviços?             | Cada um com a linguagem certa: React na tela, Java no login e nas regras, Python na IA. A IA fica isolada dos dados de usuário.          |
-| Quem decide a classe?                | O backend (`DecisionService`). A IA só devolve probabilidades.                                                                         |
-| Quais métodos HTTP o sistema usa?    | Só `GET` (ler: saúde, modelos, treinos, histórico) e `POST` (criar: cadastro, login, análise). Não há edição nem exclusão de dados.     |
-| Para que serve o model no backend?   | É a entidade JPA (`User`, `Training`, `Prediction`): cada classe vira uma tabela, e o repository grava e lê esses objetos.             |
-| O que é stateless?                  | O servidor não guarda sessão; a identidade vem no JWT de cada requisição.                                                             |
-| Por que BCrypt?                      | Hash lento e com salt: se o banco vazar, as senhas não aparecem.                                                                         |
-| Para que serve o X-Internal-Token?   | Só o backend pode usar a IA, mesmo com a URL pública no Render.                                                                         |
-| Onde ficam os segredos?              | Em variáveis de ambiente: `.env` local (fora do git) e env groups do Render, preenchidos pelo Terraform.                               |
-| Qual `.env` o Docker usa?          | Só o `infra/.env`. Os `.env` das pastas servem para rodar fora do Docker.                                                            |
-| Para que serve o log?                | Saber o que aconteceu (login, análise, falha da IA) sem guardar e-mail, senha, token ou imagem.                                          |
-| Onde vejo o log?                     | Docker Desktop ou `docker compose logs`, janela Run do IntelliJ, aba Logs do Render.                                                    |
-| O que é uma rede neural?             | Camadas de neurônios que fazem somas ponderadas com ativação; aprende ajustando os pesos para errar menos (backpropagation). |
-| O que é a EfficientNet-B0?           | CNN do Google pré-treinada no ImageNet, a menor da família; trocamos a última camada por uma saída de maligno. |
-| O que é uma CNN?                    | Rede com filtros convolucionais que aprendem padrões da imagem, de bordas a formas.                                                      |
-| O que é o kernel?                    | Filtro 3×3 de pesos aprendidos: multiplica pelos pixels embaixo e soma; sai alto onde há o padrão. |
-| O que é a ReLU?                      | max(0, x): zera os negativos e mantém os positivos; dá à rede a capacidade não linear. |
-| O que é MaxPooling?                  | Fica com o maior valor de cada quadrado 2×2: o mapa cai pela metade (128 → 64 → 32 → 16). |
-| O que é softmax?                     | e^logit dividido pela soma: probabilidades que somam 100% (ex.: 0,82 e 0,50 → 57,93% e 42,07%). |
-| O que é transfer learning?          | Partir de uma rede já treinada (EfficientNet-B0 no ImageNet) e ajustá-la para pele.                                                     |
-| Por que um ensemble?                 | A média de 5 redes é mais estável que uma só.                                                                                         |
-| Por que o limiar de 18% na Pele?     | Na triagem, perder um câncer é pior que um alarme falso; o limiar aumenta a sensibilidade.                                              |
-| Por que "inconclusivo"?              | Em Oral e Cérebro, abaixo de 80% de confiança o sistema não afirma uma classe.                                                         |
-| O que é ONNX?                       | Formato aberto de rede neural; roda sem PyTorch, com imagem menor e inferência rápida.                                                  |
-| O que é o .pt e o pickle?            | O .pt é o modelo salvo pelo PyTorch, que usa o pickle do Python; só se abre arquivo confiável (`weights_only=True`). |
-| Para que serve o .json do modelo?    | Diz classes, tamanho, cor, escala e limiar; o .onnx só faz a conta. Modelo novo entra sem mudar código. |
-| Como o backend usa o modelo?         | Envia a imagem por HTTP ao `POST /predict` do ai-service, com token interno; recebe as probabilidades e decide a classe. |
-| Por que a acurácia alta não basta? | É na mesma fonte, com possível vazamento; em outra fonte, o modelo de mama caiu de 96,6% para 34,5%.                                    |
-| O que é acurácia?                    | Acertos divididos pelo total: (VP + VN) / total. Engana quando as classes são desbalanceadas. |
-| O que é matriz de confusão?          | Tabela que cruza previsto com real; mostra os acertos e o tipo de erro (falso positivo ou falso negativo). |
-| Sensibilidade ou especificidade?     | Sensibilidade: dos doentes, quantos achou, VP / (VP + FN). Especificidade: dos saudáveis, quantos liberou, VN / (VN + FP). |
-| O que é precisão (VPP)?              | Dos que o modelo chamou de maligno, quantos eram: VP / (VP + FP). Na Pele, 51,2%. |
-| O que é F1?                          | Média harmônica de precisão e sensibilidade: 2PR / (P + R). Só é alta se as duas forem. |
-| O que é AUC?                         | Área sob a curva ROC: separa as classes sem depender do limiar. 0,5 é chute; Pele 0,939. |
-| O que é overfitting?                 | Decorar o treino: vai bem no treino e mal em dados novos (Oral cinza: 99% no treino, 75% no teste). |
-| O que é vazamento de dados?          | Informação do teste chegar ao treino e inflar a métrica (cópias aumentadas no Multi Cancer). |
-| O que é viés de dados?               | Dados de treino que não representam a realidade de uso; o modelo erra mais para quem ficou pouco representado (ex.: tons de pele no HAM10000). |
-| Como desenharam os modelos?          | Com a torchview (grafo com formatos) e a VisualTorch (blocos 3D); os `.onnx` abrem no Netron. |
-| O modelo alucina?                    | Não gera texto, então não alucina no sentido de LLM; mas uma imagem qualquer recebe uma das classes. |
-| O que é validação cruzada?        | Treinar e testar 5 vezes, trocando a parte de teste, para medir a média e a variação.                                                  |
-| Docker ou Terraform?                 | Docker empacota cada serviço; Terraform cria a infraestrutura na nuvem onde eles rodam.                                                  |
-| Por que `prevent_destroy`?         | Impede que o Terraform apague o banco do Neon, que tem os dados.                                                                          |
-| A imagem fica guardada?              | Não. É processada em memória e descartada; o banco guarda só o resultado.                                                             |
-| Pode usar comercialmente?            | Não: os datasets são CC BY-NC-SA 4.0, sem uso comercial.                                                                                |
-| O que fariam a seguir?               | Testar com imagens de outra fonte, filtro de tipo de exame, calibrar Oral e Cérebro, limite de tentativas de login.                      |
+| Pergunta                             | Resposta curta                                                                                                                                   |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| O que o PixoraMed faz?               | Classifica imagens de Pele, Oral e Cérebro e mostra a probabilidade de cada classe, com histórico e limitações. Não é diagnóstico.        |
+| Por que três serviços?             | Cada um com a linguagem certa: React na tela, Java no login e nas regras, Python na IA. A IA fica isolada dos dados de usuário.                 |
+| Quem decide a classe?                | O backend (`DecisionService`). A IA só devolve probabilidades.                                                                                |
+| Quais métodos HTTP o sistema usa?   | Só `GET` (ler: saúde, modelos, treinos, histórico) e `POST` (criar: cadastro, login, análise). Não há edição nem exclusão de dados. |
+| Para que serve o model no backend?   | É a entidade JPA (`User`, `Training`, `Prediction`): cada classe vira uma tabela, e o repository grava e lê esses objetos.               |
+| O que é stateless?                  | O servidor não guarda sessão; a identidade vem no JWT de cada requisição.                                                                    |
+| Por que BCrypt?                      | Hash lento e com salt: se o banco vazar, as senhas não aparecem.                                                                                |
+| Para que serve o X-Internal-Token?   | Só o backend pode usar a IA, mesmo com a URL pública no Render.                                                                                |
+| Onde ficam os segredos?              | Em variáveis de ambiente: `.env` local (fora do git) e env groups do Render, preenchidos pelo Terraform.                                      |
+| Qual `.env` o Docker usa?          | Só o `infra/.env`. Os `.env` das pastas servem para rodar fora do Docker.                                                                   |
+| Para que serve o log?                | Saber o que aconteceu (login, análise, falha da IA) sem guardar e-mail, senha, token ou imagem.                                                 |
+| Onde vejo o log?                     | Docker Desktop ou `docker compose logs`, janela Run do IntelliJ, aba Logs do Render.                                                           |
+| O que é uma rede neural?            | Camadas de neurônios que fazem somas ponderadas com ativação; aprende ajustando os pesos para errar menos (backpropagation).                  |
+| O que é a EfficientNet-B0?          | CNN do Google pré-treinada no ImageNet, a menor da família; trocamos a última camada por uma saída de maligno.                               |
+| O que é uma CNN?                    | Rede com filtros convolucionais que aprendem padrões da imagem, de bordas a formas.                                                             |
+| O que é o kernel?                   | Filtro 3×3 de pesos aprendidos: multiplica pelos pixels embaixo e soma; sai alto onde há o padrão.                                            |
+| O que é a ReLU?                     | max(0, x): zera os negativos e mantém os positivos; dá à rede a capacidade não linear.                                                       |
+| O que é MaxPooling?                 | Fica com o maior valor de cada quadrado 2×2: o mapa cai pela metade (128 → 64 → 32 → 16).                                                    |
+| O que é softmax?                    | e^logit dividido pela soma: probabilidades que somam 100% (ex.: 0,82 e 0,50 → 57,93% e 42,07%).                                                 |
+| O que é transfer learning?          | Partir de uma rede já treinada (EfficientNet-B0 no ImageNet) e ajustá-la para pele.                                                            |
+| Por que um ensemble?                 | A média de 5 redes é mais estável que uma só.                                                                                                |
+| Por que o limiar de 18% na Pele?     | Na triagem, perder um câncer é pior que um alarme falso; o limiar aumenta a sensibilidade.                                                     |
+| Por que "inconclusivo"?              | Em Oral e Cérebro, abaixo de 80% de confiança o sistema não afirma uma classe.                                                                |
+| O que é ONNX?                       | Formato aberto de rede neural; roda sem PyTorch, com imagem menor e inferência rápida.                                                         |
+| O que é o .pt e o pickle?           | O .pt é o modelo salvo pelo PyTorch, que usa o pickle do Python; só se abre arquivo confiável (`weights_only=True`).                        |
+| Para que serve o .json do modelo?    | Diz classes, tamanho, cor, escala e limiar; o .onnx só faz a conta. Modelo novo entra sem mudar código.                                        |
+| Como o backend usa o modelo?         | Envia a imagem por HTTP ao `POST /predict` do ai-service, com token interno; recebe as probabilidades e decide a classe.                       |
+| Por que a acurácia alta não basta? | É na mesma fonte, com possível vazamento; em outra fonte, o modelo de mama caiu de 96,6% para 34,5%.                                           |
+| O que é acurácia?                  | Acertos divididos pelo total: (VP + VN) / total. Engana quando as classes são desbalanceadas.                                                   |
+| O que é matriz de confusão?        | Tabela que cruza previsto com real; mostra os acertos e o tipo de erro (falso positivo ou falso negativo).                                       |
+| Sensibilidade ou especificidade?     | Sensibilidade: dos doentes, quantos achou, VP / (VP + FN). Especificidade: dos saudáveis, quantos liberou, VN / (VN + FP).                      |
+| O que é precisão (VPP)?            | Dos que o modelo chamou de maligno, quantos eram: VP / (VP + FP). Na Pele, 51,2%.                                                                |
+| O que é F1?                         | Média harmônica de precisão e sensibilidade: 2PR / (P + R). Só é alta se as duas forem.                                                     |
+| O que é AUC?                        | Área sob a curva ROC: separa as classes sem depender do limiar. 0,5 é chute; Pele 0,939.                                                       |
+| O que é overfitting?                | Decorar o treino: vai bem no treino e mal em dados novos (Oral cinza: 99% no treino, 75% no teste).                                              |
+| O que é vazamento de dados?         | Informação do teste chegar ao treino e inflar a métrica (cópias aumentadas no Multi Cancer).                                                 |
+| O que é viés de dados?             | Dados de treino que não representam a realidade de uso; o modelo erra mais para quem ficou pouco representado (ex.: tons de pele no HAM10000).  |
+| Como desenharam os modelos?          | Com a torchview (grafo com formatos) e a VisualTorch (blocos 3D); os `.onnx` abrem no Netron.                                                  |
+| O modelo alucina?                    | Não gera texto, então não alucina no sentido de LLM; mas uma imagem qualquer recebe uma das classes.                                          |
+| O que é validação cruzada?        | Treinar e testar 5 vezes, trocando a parte de teste, para medir a média e a variação.                                                         |
+| Docker ou Terraform?                 | Docker empacota cada serviço; Terraform cria a infraestrutura na nuvem onde eles rodam.                                                         |
+| Por que `prevent_destroy`?         | Impede que o Terraform apague o banco do Neon, que tem os dados.                                                                                 |
+| A imagem fica guardada?              | Não. É processada em memória e descartada; o banco guarda só o resultado.                                                                    |
+| Pode usar comercialmente?            | Não: os datasets são CC BY-NC-SA 4.0, sem uso comercial.                                                                                       |
+| O que fariam a seguir?               | Testar com imagens de outra fonte, filtro de tipo de exame, calibrar Oral e Cérebro, limite de tentativas de login.                             |
