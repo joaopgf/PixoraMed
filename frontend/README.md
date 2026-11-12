@@ -20,7 +20,7 @@ Fluxo dos dados: **página → hook → serviço de `api/` → apiClient → bac
 
 ## Rotas do site
 
-`/` (início) · `/login` · `/dashboard` · `/new-analysis` · `/analysis/:moduleId` · `/review` · `/result/:id` · `/history` · `/models` · `/limitations` · `/account`
+`/` (início) · `/login` · `/dashboard` · `/new-analysis` · `/analysis/:moduleId` · `/review` · `/result/:id` · `/history` · `/limitations` · `/account`
 
 ## Como o site fala com a API
 

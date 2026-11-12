@@ -10,8 +10,7 @@
     margin: 0 -22px 22px;
     padding: 15px 22px;
   }
-  .module-list-grid,
-  .model-grid {
+  .module-list-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .public-hero {
@@ -263,8 +262,7 @@
     padding: 6px 8px;
   }
   .quick-grid,
-  .module-list-grid,
-  .model-grid {
+  .module-list-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .quick-card {

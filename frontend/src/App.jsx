@@ -12,7 +12,6 @@ const Account = lazy(() => import("./pages/Account"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const History = lazy(() => import("./pages/History"));
 const Limitations = lazy(() => import("./pages/Limitations"));
-const Models = lazy(() => import("./pages/Models"));
 const NewAnalysis = lazy(() => import("./pages/NewAnalysis"));
 const PrepareExam = lazy(() => import("./pages/PrepareExam"));
 const Result = lazy(() => import("./pages/Result"));
@@ -42,7 +41,6 @@ export default function App() {
             <Route path="/review" element={<Review />} />
             <Route path="/result/:id" element={<Result />} />
             <Route path="/history" element={<History />} />
-            <Route path="/models" element={<Models />} />
             <Route path="/limitations" element={<Limitations />} />
             <Route path="/account" element={<Account />} />
           </Route>

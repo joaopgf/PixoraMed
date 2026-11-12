@@ -335,9 +335,9 @@ INFO  TrainingService   : training-results.csv: 0 treinos novos importados
 
 **O que é.** A tela é montada com componentes: funções que recebem dados (*props*) e devolvem JSX.
 
-**Onde está no código.** `pages/` tem as telas (`Dashboard`, `NewAnalysis`, `PrepareExam`, `Review`, `Result`, `History`, `Models`, `Limitations`...). `components/` tem as peças reaproveitadas (`Panel`, `InfoPair`, `ImageDropzone`, `QueryState`, `ProbabilityPieChart`, `HistorySummary`, `LowConfidenceTag`).
+**Onde está no código.** `pages/` tem as telas (`Dashboard`, `NewAnalysis`, `PrepareExam`, `Review`, `Result`, `History`, `Limitations`...). `components/` tem as peças reaproveitadas (`Panel`, `InfoPair`, `ImageDropzone`, `QueryState`, `ProbabilityPieChart`, `HistorySummary`, `LowConfidenceTag`).
 
-**Por que não há página de resultados dos treinos.** Ela existia, com gráficos de acurácia, F1 e desvio entre folds. Foi removida porque o usuário do sistema é um médico, que precisa analisar uma imagem e acompanhar os próprios resultados, não comparar execuções de treino. Os números dos treinos continuam no banco, no documento de entrega e neste guia.
+**Por que não há página de resultados dos treinos.** Ela existia, com gráficos de acurácia, F1 e desvio entre folds. Foi removida porque o usuário do sistema é um médico, que precisa analisar uma imagem e acompanhar os próprios resultados, não comparar execuções de treino. Os números dos treinos continuam no banco, no documento de entrega e neste guia. Pelo mesmo motivo saiu a página **Módulos e modelos**, que mostrava os modelos carregados, os limiares, a acurácia e um checklist de integração: o que o médico precisa (o que cada módulo analisa, os avisos e as limitações) já aparece na Nova análise, no Resultado e em Limitações e ética.
 
 **Por que o sistema usa.** Os 19 blocos de painel repetidos viraram um `Panel`, e as 14 duplas rótulo/valor viraram `InfoPair`. Componente de gráfico só recebe props, sem chamar a API: fica fácil de testar e reaproveitar.
 
@@ -345,7 +345,7 @@ INFO  TrainingService   : training-results.csv: 0 treinos novos importados
 
 **Como funciona.**
 
-1. A página chama um hook (`useModels`, `useTrainings`, `usePredictionHistory`).
+1. A página chama um hook (`useModels`, `usePredictionHistory`).
 2. O hook usa o **TanStack Query**, que guarda o resultado em cache e controla "carregando" e "erro".
 3. O hook chama uma função de `api/` (`predictionsApi`, `trainingsApi`, `authApi`).
 4. Toda chamada passa pelo `apiClient.request`, o único lugar com `fetch`.

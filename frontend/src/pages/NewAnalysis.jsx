@@ -16,15 +16,6 @@ export default function NewAnalysis() {
         label="CATÁLOGO"
         title="Módulos de análise"
         description="Cada módulo envia a imagem para o modelo treinado só para aquele tipo de exame."
-        actions={
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={() => navigate("/models")}
-          >
-            <Icon name="layers" /> Ver status técnico
-          </button>
-        }
       />
       <div style={{ marginBottom: 16 }}>
         <Alert type="info">
