@@ -1,6 +1,7 @@
 // Prepara o que a tela de resultado mostra a partir da análise e do modelo usado.
 // Não decide a classe (isso é do backend): só interpreta os valores que a API devolveu.
 import {
+  className,
   formatPercent,
   INCONCLUSIVE_CLASS,
   MALIGNANT_CLASSES,
@@ -34,8 +35,19 @@ export function buildResultView(data, current, model) {
       : ""
   } para indicar uma classe nesta imagem.`;
 
+  // Explicação do limiar (Pele) em linguagem simples, conforme o caso foi ou não marcado como suspeito
+  const positiveName = className(positiveClass);
+  const limit = threshold !== null ? formatPercent(threshold, 0) : "";
+  const thresholdText =
+    threshold === null
+      ? null
+      : data.predictedClass === positiveClass
+        ? `A chance estimada de ${positiveName} chegou a ${limit} ou mais. O sistema já marca o caso como suspeito a partir desse ponto, para não deixar passar um câncer.`
+        : `A chance estimada de ${positiveName} ficou abaixo de ${limit}, o ponto a partir do qual o sistema marcaria o caso como suspeito.`;
+
   return {
     threshold,
+    thresholdText,
     positiveClass,
     positiveProbability,
     lowConfidence,

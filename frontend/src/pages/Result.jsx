@@ -62,6 +62,7 @@ export default function Result() {
   const leakage = module && LEAKAGE_SUSPICION[module.id];
   const {
     threshold,
+    thresholdText,
     positiveClass,
     positiveProbability,
     lowConfidence,
@@ -107,9 +108,8 @@ export default function Result() {
           <p>
             {inconclusive
               ? "O sistema não indica uma classe quando a confiança fica abaixo do limiar."
-              : threshold !== null
-                ? `Vira "${className(positiveClass)}" quando a probabilidade alcança o limiar de ${formatPercent(threshold)}, mesmo abaixo de 50%.`
-                : "A classe mais provável entre as classes usadas no treino."}
+              : (thresholdText ??
+                "A classe mais provável entre as classes usadas no treino.")}
           </p>
         </article>
         {threshold !== null ? (
