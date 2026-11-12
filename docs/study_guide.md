@@ -773,13 +773,110 @@ netron ai-service/models/oral_color.onnx
 **Pergunta da banca:** "Como vocês visualizaram a arquitetura dos modelos?"
 **Resposta:** "Com a torchview, que desenha o grafo das camadas com o formato do tensor em cada uma, e com a VisualTorch, que desenha a rede em blocos. Os modelos ONNX do sistema também podem ser abertos no Netron."
 
-### ONNX e ONNX Runtime
+### Formatos do modelo: .pt, pickle, ONNX e o .json
 
-**O que é.** ONNX é um formato aberto para salvar redes neurais. O ONNX Runtime executa esse formato sem precisar do PyTorch.
+Um modelo treinado é, no fundo, a **arquitetura** (as camadas, em código) mais os **pesos** (os números aprendidos). Cada formato guarda isso de um jeito:
 
-**Como funciona.** Os scripts `export_onnx.py` (CNN) e `export_skin_ensemble.py` (Pele) leem o `.pt` dos notebooks e geram `<id>.onnx` + `<id>.json`. O JSON descreve o modelo: classes, tamanho, normalização, limiar e descrição. O ai-service carrega tudo uma vez, na subida.
+| Formato | O que guarda | Quem lê | No PixoraMed |
+| --- | --- | --- | --- |
+| **pickle** | Qualquer objeto Python salvo em bytes (serialização) | Só Python | É o mecanismo que o `.pt` usa por dentro |
+| **`.pt`** (PyTorch) | Os pesos (`state_dict`) e, no nosso caso, um dicionário com classes, modo, escala e métricas | Python com PyTorch | Sai dos notebooks (`modelos_pt/oral_cor.pt`) |
+| **`.onnx`** | A arquitetura e os pesos juntos, num formato aberto e independente de linguagem | ONNX Runtime (Python, Java, C#, JavaScript...) | É o que roda no sistema |
+| **`.json`** | Os dados de uso que o `.onnx` não guarda: classes, tamanho, escala, normalização, limiar | Qualquer linguagem | Ao lado de cada `.onnx`, em `ai-service/models/` |
 
-**Por que o sistema usa.** O PyTorch tem centenas de MB e não é necessário para rodar o modelo. Com ONNX, o `requirements.txt` do serviço não tem `torch`, a imagem fica menor e a inferência é rápida em CPU.
+**Pickle.** É a forma padrão do Python de transformar um objeto em bytes (para salvar em arquivo) e voltar. O `torch.save` usa o pickle por dentro, então o `.pt` é um pickle: foi esse o "pickle" pedido pelo professor (`docs/save_model.md`). O cuidado é que **abrir um pickle executa código**: um arquivo malicioso pode rodar qualquer comando ao ser carregado. Por isso os scripts de exportação carregam o `.pt` com `torch.load(..., weights_only=True)`, que só aceita pesos e tipos simples.
+
+**`.pt` e `state_dict`.** O `state_dict` é o dicionário com os pesos de cada camada (`net.0.weight`, `net.0.bias`...). Ele **não** guarda a arquitetura: para usar, é preciso escrever a classe da rede igual à do treino e carregar os pesos nela (`model.load_state_dict(...)`). Por isso o `export_onnx.py` repete a classe `CustomModel` dos notebooks, com os mesmos nomes.
+
+**ONNX** (*Open Neural Network Exchange*). Formato aberto para redes neurais: guarda o grafo de operações (convolução, ReLU, pooling...) **e** os pesos no mesmo arquivo. Quem executa é o **ONNX Runtime**, uma biblioteca pequena, sem o PyTorch.
+
+**Por que converter para ONNX.**
+
+- **Tamanho e peso**: o PyTorch tem centenas de MB e só é necessário para treinar. O `requirements.txt` do ai-service tem `onnxruntime` e não tem `torch`, então a imagem Docker fica menor e sobe mais rápido no Render gratuito (512 MB).
+- **Não depende do código do treino**: o `.onnx` já traz a arquitetura. O ai-service não precisa da classe `CustomModel` nem da EfficientNet.
+- **Rápido em CPU**: o ONNX Runtime é otimizado para inferência. Limitado a 1 thread, rodou a Pele em 1,7 s com 0,1 de CPU.
+- **Um arquivo para tudo na Pele**: as 5 EfficientNet-B0, a calibração de Platt e a média viraram um único `skin_color.onnx`.
+- **Formato aberto**: o mesmo arquivo poderia rodar em Java ou no navegador, se um dia fosse preciso.
+
+**Os arquivos do sistema.**
+
+| Modelo | `.onnx` | O que o `.json` diz |
+| --- | --- | --- |
+| `oral_color` | ~110 KB | cor, 128×128, `scale` 255, classes `normal` e `scc` |
+| `brain_gray` | ~110 KB | cinza, 128×128, `scale` 1, classes `glioma`, `menin` e `tumor` |
+| `skin_color` | ~80 MB | cor, 224×224, `mean` e `std` do ImageNet, classes `benign` e `malignant`, `threshold` 0,18 |
+
+**Por que o `.json` existe.** O `.onnx` só sabe fazer a conta: recebe números e devolve números. Ele não sabe o nome das classes, se a imagem é em cor ou cinza, de que tamanho, nem se os pixels são divididos por 255. Sem essas informações, o ai-service não consegue preparar a imagem do jeito do treino nem dar nome à resposta. Exemplo real:
+
+```json
+{
+  "id": "oral_color",
+  "cancer_type": "oral",
+  "mode": "color",
+  "size": 128,
+  "scale": 255.0,
+  "classes": ["normal", "scc"],
+  "onnx_file": "oral_color.onnx"
+}
+```
+
+Com o `.json`, um modelo novo entra no sistema **sem mudar código**: basta colocar o par `.onnx` + `.json` na pasta `models/` e reiniciar o ai-service.
+
+**A conversão confere a si mesma.** Os scripts passam a mesma imagem de teste pelo PyTorch e pelo ONNX e comparam as saídas. Se a diferença passar de 0,0001, o arquivo é recusado.
+
+**Pergunta da banca:** "O que é o arquivo .pt?"
+**Resposta:** "É o modelo salvo pelo PyTorch. Por dentro ele usa o pickle do Python e guarda os pesos da rede. Para usar, é preciso ter o PyTorch e o código da arquitetura."
+
+**Pergunta da banca:** "O que é pickle e qual o risco?"
+**Resposta:** "É o jeito do Python de salvar um objeto em arquivo. O risco é que abrir um pickle pode executar código, então só se abre arquivo de confiança. Nós carregamos o .pt com weights_only=True, que só aceita os pesos."
+
+**Pergunta da banca:** "Por que converteram para ONNX?"
+**Resposta:** "Para rodar o modelo sem o PyTorch, que é pesado e só serve para treinar. O ONNX guarda a arquitetura e os pesos num formato aberto, e o ONNX Runtime roda rápido em CPU, que é o que temos no plano gratuito do Render."
+
+**Pergunta da banca:** "Para que serve o .json ao lado do .onnx?"
+**Resposta:** "O ONNX só faz a conta. O .json diz o que o ai-service precisa saber para usar o modelo: as classes, o tamanho e a cor da imagem, a escala dos pixels e o limiar. Com ele, trocar ou adicionar um modelo não exige mudar código."
+
+### Como o sistema usa o modelo: o caminho de uma análise
+
+**Na subida do ai-service** (`ModelRegistry.load`, em `app/inference.py`): lê cada `.json` da pasta `models/`, abre o `.onnx` indicado numa sessão do ONNX Runtime e guarda tudo na memória. Isso acontece **uma vez**; as análises reaproveitam a sessão aberta.
+
+**A cada análise:**
+
+1. **Navegador → backend.** O React envia `POST /api/predictions` com a imagem (multipart) e o id do modelo, com o token JWT.
+2. **Backend → ai-service.** O `PredictionService` chama o `AiServiceClient`, que repassa a imagem para `POST /predict` do ai-service com o header `X-Internal-Token` (timeout de 120 s, por causa do Render dormindo).
+
+   ```java
+   // AiServiceClient.predict: a imagem e o id do modelo vão num formulário multipart
+   form.add("model_id", modelId);
+   form.add("file", new ByteArrayResource(content) { ... });
+   return call(() -> http.post().uri("/predict")
+           .contentType(MediaType.MULTIPART_FORM_DATA)
+           .body(form).retrieve().body(AiPrediction.class));
+   ```
+
+3. **ai-service: pré-processa.** Procura o modelo pelo id e prepara a imagem com os dados do `.json`: `preprocess` (Oral e Cérebro) ou `preprocess_pil` (Pele).
+4. **ai-service: roda o modelo.** `session.run(...)` no ONNX Runtime. Oral e Cérebro devolvem logits, e o ai-service aplica o **softmax**; a Pele já devolve a probabilidade calibrada de maligno.
+5. **ai-service → backend.** Responde um JSON com as classes, as probabilidades na mesma ordem, o tempo e o limiar, quando existe:
+
+   ```json
+   {"model_id": "oral_color", "cancer_type": "oral", "classes": ["normal", "scc"],
+    "probabilities": [0.5789, 0.4211], "time_ms": 22.0, "threshold": null}
+   ```
+
+6. **Backend decide e grava.** O `DecisionService` aplica as regras (inconclusivo abaixo de 80% em Oral e Cérebro, maligno a partir de 18% na Pele). O `PredictionService` grava o resultado e as probabilidades na tabela `predictions`, sem a imagem, e devolve o `PredictionResponse` para a tela.
+
+**Por que o backend Java não roda o modelo.** O pré-processamento precisa ser idêntico ao do treino, que usa OpenCV e PIL em Python. Mantendo a inferência em Python, a conta é a mesma do notebook. O backend fica com o que é dele: login, regra de decisão e histórico.
+
+**Erros no caminho.** Modelo inexistente (404), imagem grande (413) ou ilegível (422): a mensagem da IA volta para a tela. Token errado, IA fora do ar ou demora demais: o backend responde 503, "serviço de IA indisponível".
+
+**Pergunta da banca:** "Como o backend chama o modelo de IA?"
+**Resposta:** "Por HTTP. O backend envia a imagem para o POST /predict do ai-service, com um token interno. O ai-service, que já carregou os modelos ONNX na subida, prepara a imagem conforme o .json, roda o modelo e devolve as probabilidades. O backend decide a classe com as regras dele e grava o resultado."
+
+**Pergunta da banca:** "O modelo é carregado a cada análise?"
+**Resposta:** "Não. O ai-service carrega todos os modelos uma vez, quando sobe, e mantém as sessões do ONNX Runtime na memória. Cada análise só roda a sessão já aberta, por isso leva de 0,1 a 1,7 segundo."
+
+**Pergunta da banca:** "Como se coloca um modelo novo no sistema?"
+**Resposta:** "Treina no notebook e salva o .pt, converte com o script de exportação, que gera o .onnx e o .json e confere se a saída bate com o PyTorch, coloca os dois arquivos na pasta models do ai-service e reinicia. O backend lista o modelo novo em até 5 minutos, sem mudar código."
 
 ### Pré-processamento igual ao treino
 
@@ -1336,6 +1433,9 @@ Respostas de uma ou duas frases para revisar na véspera. O detalhe de cada uma 
 | Por que o limiar de 18% na Pele?     | Na triagem, perder um câncer é pior que um alarme falso; o limiar aumenta a sensibilidade.                                              |
 | Por que "inconclusivo"?              | Em Oral e Cérebro, abaixo de 80% de confiança o sistema não afirma uma classe.                                                         |
 | O que é ONNX?                       | Formato aberto de rede neural; roda sem PyTorch, com imagem menor e inferência rápida.                                                  |
+| O que é o .pt e o pickle?            | O .pt é o modelo salvo pelo PyTorch, que usa o pickle do Python; só se abre arquivo confiável (`weights_only=True`). |
+| Para que serve o .json do modelo?    | Diz classes, tamanho, cor, escala e limiar; o .onnx só faz a conta. Modelo novo entra sem mudar código. |
+| Como o backend usa o modelo?         | Envia a imagem por HTTP ao `POST /predict` do ai-service, com token interno; recebe as probabilidades e decide a classe. |
 | Por que a acurácia alta não basta? | É na mesma fonte, com possível vazamento; em outra fonte, o modelo de mama caiu de 96,6% para 34,5%.                                    |
 | O que é acurácia?                    | Acertos divididos pelo total: (VP + VN) / total. Engana quando as classes são desbalanceadas. |
 | O que é matriz de confusão?          | Tabela que cruza previsto com real; mostra os acertos e o tipo de erro (falso positivo ou falso negativo). |
