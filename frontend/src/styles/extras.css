@@ -13,12 +13,16 @@
   aspect-ratio: 1;
   flex: 0 0 auto;
 }
+/* O texto fica dentro do furo da rosca (raio interno de 58%): a faixa de 52% da largura cabe no círculo,
+   e nomes longos, como "carcinoma espinocelular", quebram em duas linhas em vez de invadir as fatias */
 .pie-chart-center {
   position: absolute;
-  inset: 0;
+  inset: 0 24%;
   display: grid;
   place-content: center;
   text-align: center;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
   pointer-events: none;
 }
 .pie-chart-center strong {
