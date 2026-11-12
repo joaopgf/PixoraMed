@@ -43,7 +43,7 @@ export default function PrepareExam() {
   const pending = !analysis.file
     ? "Selecione uma imagem para continuar."
     : !model
-      ? "Este módulo ainda não tem modelo conectado."
+      ? "Aguarde o modelo carregar para continuar."
       : !analysis.consent
         ? "Confirme o uso de material autorizado e desidentificado."
         : "";
@@ -121,7 +121,7 @@ export default function PrepareExam() {
                 }
               >
                 {!available.length && (
-                  <option value="">Nenhum modelo disponível</option>
+                  <option value="">Carregando modelo...</option>
                 )}
                 {available.map((item) => (
                   <option key={item.id} value={item.id}>
@@ -227,11 +227,11 @@ export default function PrepareExam() {
           </div>
           {!available.length && !models.isLoading && (
             <Alert>
-              <strong>Sem modelo neste módulo</strong>
+              <strong>Carregando o modelo</strong>
               <br />
-              Salve o modelo no notebook e converta para ONNX (veja{" "}
-              <code>docs/save_model.md</code>). Depois, reinicie o serviço de
-              IA.
+              Aguarde alguns instantes: o modelo deste módulo está sendo
+              carregado. A página tenta de novo sozinha e libera a análise assim
+              que ele estiver pronto.
             </Alert>
           )}
         </aside>

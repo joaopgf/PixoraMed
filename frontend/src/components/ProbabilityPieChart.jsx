@@ -107,12 +107,7 @@ export default function ProbabilityPieChart({
               className="pie-chart-swatch"
               style={{ background: slice.color }}
             />
-            <span className="pie-chart-name">
-              {slice.name}
-              {slice.key === predictedClass && (
-                <small> · classe prevista</small>
-              )}
-            </span>
+            <span className="pie-chart-name">{slice.name}</span>
             <span className="pie-chart-value mono">
               {formatValue(slice.value)}
             </span>
