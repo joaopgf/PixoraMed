@@ -14,7 +14,7 @@ Cada conceito segue o mesmo roteiro, que é a ordem em que a banca costuma pergu
 
 A dica para a banca é responder nessa mesma ordem: definição, mecanismo, exemplo do próprio código, motivo.
 
-Os números deste guia são os medidos pelo grupo. Regra de ouro na banca: **não arredondar para cima e não chamar teste da mesma fonte de "teste externo"**. A seção [Resultados e honestidade](#resultados-e-honestidade) diz o que cada número mede e o que não mede, e a seção [Métricas e conceitos de IA](#métricas-e-conceitos-de-ia) traz a definição, a fórmula e as perguntas de banca de cada termo (acurácia, F1, matriz de confusão, AUC, overfitting, alucinação...).
+Os números deste guia são os medidos pelo grupo. Regra de ouro na banca: **não arredondar para cima e não chamar teste da mesma fonte de "teste externo"**. A seção [Resultados e honestidade](#resultados-e-honestidade) diz o que cada número mede e o que não mede, e a seção [Métricas e conceitos de IA](#métricas-e-conceitos-de-ia) traz a definição, a fórmula e as perguntas de banca de cada termo (acurácia, F1, matriz de confusão, AUC, overfitting, viés, alucinação...). A seção [IA: os modelos](#ia-os-modelos) tem imagens das redes, geradas com Python.
 
 ## Visão geral em uma tela
 
@@ -563,6 +563,16 @@ AdaptiveAvgPool2d(1), Flatten(), Dropout(p=0.25), Linear(64, num_classes),
 
 No Cérebro, a entrada tem 1 canal (cinza) e a saída tem 3 classes (glioma, meningioma e hipofisário).
 
+**A CNN em imagens.** O desenho em blocos mostra o tamanho de cada etapa: a imagem fica menor (altura e largura) e mais "funda" (mais filtros) a cada bloco, até virar 64 números e depois 2 saídas.
+
+![CNN da Oral em blocos 3D: a imagem encolhe e ganha filtros a cada bloco](model_diagrams/cnn_oral_layers.png)
+
+O grafo mostra a mesma rede camada por camada, com o formato do tensor na entrada e na saída de cada uma, no padrão do PyTorch `(lote, canais, altura, largura)`:
+
+<img src="model_diagrams/cnn_oral_graph.png" alt="Grafo da CNN da Oral com o formato do tensor em cada camada" width="320">
+
+Repare que a ReLU e o Dropout não mudam o formato; quem encolhe a imagem é o MaxPool, e quem muda o número de canais é a Conv2d.
+
 **De onde vêm os ~24 mil parâmetros** (Oral em cor). Cada filtro tem `3 × 3 × canais de entrada` pesos, mais um viés:
 
 | Camada | Conta | Parâmetros |
@@ -639,6 +649,17 @@ return torch.sigmoid(self.slopes * logits + self.intercepts).mean().reshape(1)
 - **Squeeze-and-excitation**: o bloco aprende um peso para cada canal e reforça os mais úteis para aquela imagem, como uma "atenção" por canal.
 - **BatchNorm e ativação SiLU**: a BatchNorm mantém os valores numa escala estável durante o treino; a SiLU é uma ativação suave, parecida com a ReLU.
 
+**Um bloco MBConv aberto.** A imagem abaixo é o primeiro bloco do 2º estágio da rede, lido de cima para baixo:
+
+1. **Expansão** (Conv 1×1): 16 canais viram 96.
+2. **Filtro em profundidade** (Conv 3×3, um filtro por canal): a imagem cai de 112×112 para 56×56.
+3. **Squeeze-and-excitation**: resume cada canal num número (96), comprime para 4, volta para 96 e passa por uma sigmoid. O resultado multiplica (`mul`) os 96 canais: os úteis são reforçados e os outros, atenuados.
+4. **Projeção** (Conv 1×1): 96 canais viram 24, sem ativação.
+
+Este bloco muda o tamanho e o número de canais, então não tem o atalho residual; nos blocos em que a entrada e a saída têm o mesmo formato, a entrada é somada à saída.
+
+<img src="model_diagrams/efficientnet_b0_mbconv_block.png" alt="Um bloco MBConv da EfficientNet-B0: expansão, filtro em profundidade, squeeze-and-excitation e projeção" width="320">
+
 **O que o grupo mudou.** No final, a rede resume a imagem em **1.280 números** e uma camada linear dá uma nota para cada uma das 1.000 classes do ImageNet. Essa última camada foi trocada por uma com **uma saída só**: o logit de "maligno".
 
 ```python
@@ -648,6 +669,10 @@ network.classifier[1] = Linear(network.classifier[1].in_features, 1)   # 1.280 -
 network.load_state_dict(state_dict, strict=True)
 ```
 
+A visão geral da rede, com os estágios de blocos MBConv fechados: a imagem de 224×224 vai encolhendo até 7×7, com 1.280 canais no fim, e a última camada linear dá **uma saída só**.
+
+<img src="model_diagrams/efficientnet_b0_overview.png" alt="Visão geral da EfficientNet-B0 da Pele: estágios MBConv, pooling global e a camada final com uma saída" width="340">
+
 Aqui `weights=None` porque os pesos vêm do arquivo do grupo, já ajustados para pele. No treino, a rede partiu dos pesos do ImageNet e foi ajustada com as imagens do HAM10000. Esse ajuste é o **fine-tuning**, a forma prática do *transfer learning*.
 
 **Por que pré-treinada.** Os primeiros filtros de qualquer rede de imagem aprendem coisas parecidas: bordas, cores, texturas. Aproveitar o que a rede já aprendeu em 1,28 milhão de fotos exige menos imagens de pele e menos tempo do que começar do zero. Isso importa na Pele, onde as diferenças entre lesões são sutis e o dataset é desbalanceado.
@@ -655,6 +680,8 @@ Aqui `weights=None` porque os pesos vêm do arquivo do grupo, já ajustados para
 **O ensemble de 5 redes.** O pacote do modelo chama as 5 redes de `fold_models`, o que indica uma rede treinada em cada fold da validação cruzada. Os detalhes do treino original se perderam com o código. Cada rede erra em imagens um pouco diferentes; a média das cinco é mais estável que qualquer uma sozinha. O custo é o tempo e o tamanho: 5 redes de ~4 milhões de parâmetros cada (sem a camada das 1.000 classes) dão os ~80 MB do arquivo e os 1,7 s por imagem.
 
 **O caminho de uma imagem de pele, do envio ao resultado.**
+
+![Fluxo do ensemble da Pele: pré-processamento, 5 EfficientNet-B0, calibração de Platt, média e limiar de 18% no backend](model_diagrams/skin_ensemble_flow.png)
 
 1. **Pré-processamento** (ai-service, `preprocess_pil`): corrige a orientação EXIF, converte para RGB, redimensiona para 224×224 (o tamanho do ImageNet) e aplica a normalização do ImageNet.
 2. **5 redes**: cada EfficientNet-B0 devolve um logit.
@@ -695,6 +722,38 @@ Os passos 2 a 4 estão todos dentro do `skin_color.onnx`. O script de exportaç�
 
 **Pergunta da banca:** "Por que 224×224 e a normalização do ImageNet?"
 **Resposta:** "Porque a EfficientNet-B0 foi pré-treinada assim. Para aproveitar o que ela aprendeu, a imagem precisa chegar no mesmo tamanho e na mesma escala do treino."
+
+### Como desenhar um modelo com Python (pesquisa pedida pelo professor)
+
+**Existe, sim.** Há bibliotecas Python que leem o modelo e desenham a arquitetura. As imagens deste guia foram geradas com duas delas pelo script [`docs/model_diagrams/generate.py`](model_diagrams/generate.py).
+
+| Ferramenta | O que desenha | Usamos? |
+| --- | --- | --- |
+| **torchview** | Grafo das camadas com o formato do tensor de entrada e saída de cada uma. Precisa do Graphviz | Sim: grafo da CNN, visão geral da EfficientNet e bloco MBConv |
+| **VisualTorch** | Blocos 3D coloridos (estilo do visualkeras), em que o tamanho do bloco mostra o tamanho do tensor | Sim: CNN em blocos |
+| **Graphviz** (pacote `graphviz`) | Diagrama livre, desenhado à mão no código | Sim: fluxo do ensemble da Pele |
+| **Netron** | Visualizador interativo de arquivos de modelo, inclusive `.onnx` | Não no script; serve para abrir os modelos reais do ai-service |
+| **torchinfo** | Tabela em texto com camadas, formatos e número de parâmetros | Não |
+| **torchviz** | Grafo das operações do cálculo do gradiente, mais técnico | Não |
+
+**Como funciona.** A torchview e a VisualTorch passam uma imagem falsa (aleatória) pela rede e registram cada camada por onde ela passa, com o formato do tensor. Por isso o desenho mostra a arquitetura, e os pesos não importam: as imagens usam pesos aleatórios e saem iguais às do modelo treinado.
+
+**Como gerar de novo** (da raiz do repositório, com o Graphviz instalado):
+
+```bash
+pip install torch torchvision torchview visualtorch
+python docs/model_diagrams/generate.py
+```
+
+**Para ver os modelos reais do sistema**, o Netron abre o arquivo `.onnx` no navegador e mostra cada camada com os pesos:
+
+```bash
+pip install netron
+netron ai-service/models/oral_color.onnx
+```
+
+**Pergunta da banca:** "Como vocês visualizaram a arquitetura dos modelos?"
+**Resposta:** "Com a torchview, que desenha o grafo das camadas com o formato do tensor em cada uma, e com a VisualTorch, que desenha a rede em blocos. Os modelos ONNX do sistema também podem ser abertos no Netron."
 
 ### ONNX e ONNX Runtime
 
@@ -1001,6 +1060,46 @@ Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenh
 **Pergunta da banca:** "Como trataram o desbalanceamento?"
 **Resposta:** "Na Pele, com pesos por classe no treino e com métricas que não se enganam com a classe maior, como AUC e sensibilidade. Em Oral e Cérebro, usamos o mesmo número de imagens por classe."
 
+### Viés (enviesamento) de dados
+
+**O que é.** Quando os dados de treino não representam bem a realidade em que o modelo vai ser usado, o modelo aprende essa distorção e erra mais para alguns grupos ou situações. O modelo não "tem opinião": ele só repete o padrão dos dados que recebeu. Por isso se diz que **o viés está nos dados**, e o modelo o herda.
+
+**Os tipos que aparecem no PixoraMed.**
+
+| Tipo de viés | O que é | Onde aparece no projeto |
+| --- | --- | --- |
+| **De representação** (amostragem) | Um grupo aparece pouco ou nada nos dados | Tons de pele: o HAM10000 tem poucas imagens de pele escura, e o desempenho nesses casos é **desconhecido** |
+| **De classe** (desbalanceamento) | Uma classe domina os dados e o modelo puxa para ela | Nevo é ~67% do HAM10000 e dermatofibroma ~1% |
+| **Atalho** (*shortcut learning*) | O modelo aprende uma pista que não é a doença, como o aparelho, a fonte ou uma régua na foto | Quando as classes vêm de aparelhos ou fontes diferentes, a rede pode aprender o aparelho e não a doença |
+| **De seleção / domínio** | Os dados vêm de um tipo de imagem ou de lugar específico | A Pele só viu imagens dermatoscópicas, não fotos de celular; Oral e Cérebro vêm de uma única fonte (Multi Cancer) |
+| **De escopo** (classes que faltam) | Um caso real não existe entre as classes do treino | A queratose actínica (akiec) ficou fora da Pele; o Cérebro não tem a classe "sem tumor" e sempre aponta um tipo de tumor |
+| **De automação** (no uso) | A pessoa confia demais na resposta da máquina | Um médico poderia aceitar o resultado sem conferir; por isso as telas dizem que não é diagnóstico |
+
+**O que o grupo fez.**
+
+- **Mediu com métricas que não escondem o viés de classe**: AUC e sensibilidade na Pele, em vez de acurácia.
+- **Separou os dados por lesão** na Pele, para o modelo não reconhecer a mesma lesão no teste.
+- **Usou o mesmo número de imagens por classe** em Oral e Cérebro (1.000 cada).
+- **Declarou o que não sabe**: a página de Limitações e o relatório dizem que o desempenho em tons de pele pouco representados é desconhecido, que a Pele vale só para dermatoscopia e que o Cérebro não detecta ausência de tumor.
+- **Desenhou as telas contra o viés de automação**: "caso suspeito, não confirmação", "inconclusivo", aviso de baixa certeza e "não é diagnóstico".
+
+**O que não foi feito (e seria o próximo passo).** Medir o desempenho separado por grupo (por tom de pele, idade, sexo ou aparelho) e testar com imagens de outra fonte. Sem esses dados, não dá para afirmar que o modelo é justo com todos os grupos.
+
+**Pergunta da banca:** "O que é viés de dados?"
+**Resposta:** "É quando os dados de treino não representam bem a realidade de uso. O modelo aprende essa distorção e erra mais para quem ficou pouco representado."
+
+**Pergunta da banca:** "O modelo de vocês tem viés?"
+**Resposta:** "Provavelmente sim, e dizemos isso. O HAM10000 tem poucas imagens de pele escura e é muito desbalanceado, e Oral e Cérebro vêm de uma fonte só. Não medimos o desempenho por tom de pele, então ele é desconhecido nesses casos. Está escrito nas limitações."
+
+**Pergunta da banca:** "O que é aprendizado por atalho?"
+**Resposta:** "É o modelo acertar pelo motivo errado. Se todas as imagens de câncer viessem de um aparelho e as saudáveis de outro, a rede poderia aprender a reconhecer o aparelho, e não a doença. No teste da mesma fonte ela acertaria, e no hospital erraria."
+
+**Pergunta da banca:** "Como reduzir o viés?"
+**Resposta:** "Com dados mais diversos, de vários hospitais, aparelhos e tons de pele, medindo o resultado separado por grupo. Do nosso lado, usamos métricas que não escondem a classe rara, dividimos a Pele por lesão e deixamos as limitações visíveis para o médico."
+
+**Pergunta da banca:** "Viés e desbalanceamento são a mesma coisa?"
+**Resposta:** "Não. Desbalanceamento é um tipo de viés: uma classe com muito mais exemplos. Mas há viés mesmo com classes balanceadas, por exemplo se todas as imagens forem de um só hospital ou de um só tom de pele."
+
 ### Data augmentation (aumento de dados)
 
 **O que é.** Criar variações das imagens de treino (girar, espelhar, dar zoom, mudar o brilho) para o modelo ver mais exemplos e não depender da posição ou da iluminação.
@@ -1227,6 +1326,8 @@ Respostas de uma ou duas frases para revisar na véspera. O detalhe de cada uma 
 | O que é AUC?                         | Área sob a curva ROC: separa as classes sem depender do limiar. 0,5 é chute; Pele 0,939. |
 | O que é overfitting?                 | Decorar o treino: vai bem no treino e mal em dados novos (Oral cinza: 99% no treino, 75% no teste). |
 | O que é vazamento de dados?          | Informação do teste chegar ao treino e inflar a métrica (cópias aumentadas no Multi Cancer). |
+| O que é viés de dados?               | Dados de treino que não representam a realidade de uso; o modelo erra mais para quem ficou pouco representado (ex.: tons de pele no HAM10000). |
+| Como desenharam os modelos?          | Com a torchview (grafo com formatos) e a VisualTorch (blocos 3D); os `.onnx` abrem no Netron. |
 | O modelo alucina?                    | Não gera texto, então não alucina no sentido de LLM; mas uma imagem qualquer recebe uma das classes. |
 | O que é validação cruzada?        | Treinar e testar 5 vezes, trocando a parte de teste, para medir a média e a variação.                                                  |
 | Docker ou Terraform?                 | Docker empacota cada serviço; Terraform cria a infraestrutura na nuvem onde eles rodam.                                                  |
