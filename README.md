@@ -44,7 +44,7 @@ frontend/     site React (api, auth, context, hooks, components, pages, utils)
 ai-service/   microsserviço de IA, modelos ONNX (models/) e scripts de exportação (scripts/)
 infra/        docker-compose.yml (desenvolvimento local) e terraform/ (Vercel, Render e Neon)
 docs/         workflows BPMN, documento de entrega (delivery/), guia de estudo para a banca (study_guide.md),
-              guia para salvar modelos, glossário PT→EN e o deck
+              gráficos dos resultados dos modelos (model_results/), guia para salvar modelos, glossário PT→EN e o deck
 ```
 
 Cada pasta tem um `README.md` com os detalhes, um `CLAUDE.md` e as skills de arquitetura em `.claude/skills/`.
