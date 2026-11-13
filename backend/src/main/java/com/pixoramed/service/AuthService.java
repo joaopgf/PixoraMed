@@ -34,13 +34,13 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
-        String email = request.email().trim().toLowerCase();
+        // Nome e e-mail já chegam normalizados pelo RegisterRequest
+        String email = request.email();
         if (users.existsByEmail(email)) {
             log.info("Cadastro recusado: e-mail já cadastrado");
             throw new ApiException(HttpStatus.CONFLICT, "Já existe uma conta com este e-mail.");
         }
-        String name = request.name().trim().replaceAll("\\s+", " ");
-        User user = users.save(new User(name, email, passwordEncoder.encode(request.password())));
+        User user = users.save(new User(request.name(), email,passwordEncoder.encode(request.password())));
         log.info("Usuário {} cadastrado", user.getId());
         return authResponse(user);
     }

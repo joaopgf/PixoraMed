@@ -43,12 +43,13 @@ Toda resposta usa DTO. Toda falha esperada é uma `ApiException(status, mensagem
 - **Login:** BCrypt para a senha; JWT HS256 assinado com `JWT_SECRET`, com o id do usuário no `subject` e validade de `JWT_EXPIRATION_HOURS`. O Spring valida o token (`oauth2ResourceServer().jwt()`); o controller lê o usuário com `@AuthenticationPrincipal Jwt`.
 - **Autorização:** só cadastro, login, health, trainings e models são públicos; o resto exige token. Cada usuário vê só as próprias análises (filtro por `userId` no service).
 - **CORS:** origens vindas de `CORS_ALLOWED_ORIGINS`.
-- **Ainda falta (alvo):** limite de tentativas de login (rate limit), recuperação de senha e revogação de token.
+- **Conta (`/api/users/me`):** o usuário vê, edita nome e e-mail, troca a senha (pede a atual) e exclui a conta com o histórico (hard delete, pede a senha). Senha errada responde 400, não 401. Regras de tamanho em `dto/AccountRules.java` (senha até 72 bytes por causa do BCrypt).
+- **Ainda falta (alvo):** limite de tentativas de login (rate limit), recuperação de senha e revogação de token (o token de uma conta com senha trocada vale até vencer; as rotas da conta e a análise recusam conta excluída).
 
 ## Banco
 
 - PostgreSQL, sem migrations: o Hibernate cria e atualiza as tabelas (`ddl-auto=update`). Isso só acrescenta; **renomear ou apagar coluna exige SQL manual** no Neon, testado antes num branch do Neon.
-- Tabelas: `users`, `trainings` (do CSV) e `predictions` (sem imagem e sem probabilidades).
+- Tabelas: `users`, `trainings` (do CSV) e `predictions` (sem imagem). Aumentar o tamanho de uma coluna também exige SQL manual (ex.: `ALTER TABLE users ALTER COLUMN name TYPE varchar(255)`).
 - `training-results.csv` (em `resources/data`) é importado na subida, de forma idempotente (chave `runAt` + `dataset`).
 
 ## Integração com o ai-service

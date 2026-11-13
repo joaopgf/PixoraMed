@@ -13,7 +13,7 @@ O frontend só apresenta dados e coleta a entrada do usuário. Toda regra de neg
 
 | Pasta | Responsabilidade |
 |---|---|
-| `src/api/` | `apiClient.js` (único lugar com `fetch`: token, erro padronizado) e um arquivo por recurso (`authApi`, `predictionsApi`) |
+| `src/api/` | `apiClient.js` (único lugar com `fetch`: token, erro padronizado) e um arquivo por recurso (`authApi`, `predictionsApi`, `usersApi`) |
 | `src/hooks/` | Consultas com cache do TanStack Query (`useModels`, `usePredictionHistory`) |
 | `src/auth/` | `AuthContext` (token no navegador, usuário logado, logout) e `ProtectedRoute` |
 | `src/context/` | `AnalysisContext`: análise em andamento e último resultado, só nesta aba |

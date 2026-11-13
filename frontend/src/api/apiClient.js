@@ -22,12 +22,16 @@ export async function request(path, options = {}) {
       body?.message ?? `Erro ${response.status} ao acessar a API`,
     );
   }
-  return response.json();
+  // 204 (troca de senha, exclusão da conta) não tem corpo
+  return response.status === 204 ? null : response.json();
 }
 
-export const postJson = (path, body) =>
+// Envia um corpo JSON com o método escolhido (POST, PUT, PATCH ou DELETE)
+export const sendJson = (method, path, body) =>
   request(path, {
-    method: "POST",
+    method,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+
+export const postJson = (path, body) => sendJson("POST", path, body);

@@ -25,8 +25,22 @@ exception   → ApiException e GlobalExceptionHandler (todo erro sai como {"mess
 | GET | `/api/models` | não | Modelos do ai-service, com os limiares de decisão |
 | POST | `/api/predictions` | sim | Envia `modelId` + `file` (multipart) e recebe a classe e as probabilidades |
 | GET | `/api/predictions?limit=100` | sim | Histórico do usuário logado |
+| GET | `/api/users/me` | sim | Dados da conta logada |
+| PUT | `/api/users/me` | sim | Altera `name` e `email` e devolve o usuário atualizado (409 se o e-mail já for de outra conta) |
+| PATCH | `/api/users/me/password` | sim | Troca a senha (`currentPassword`, `newPassword`); responde 204 |
+| DELETE | `/api/users/me` | sim | Exclui a conta e todo o histórico de análises (hard delete), com a senha no corpo (`password`); responde 204 |
 
 As rotas com login recebem `Authorization: Bearer <token>`. O token é um JWT assinado com `JWT_SECRET` (HS256) e vale `JWT_EXPIRATION_HOURS` horas. A senha fica só como hash BCrypt. Não há rota de logout: o JWT não fica no banco, então o site só apaga o token.
+
+### Regras da conta
+
+Valem no cadastro e na edição (`dto/AccountRules.java`, com as mesmas regras repetidas em `frontend/src/utils/accountRules.js`):
+
+- **Nome:** 2 a 255 caracteres, depois de juntar espaços repetidos e tirar os das pontas.
+- **E-mail:** formato de e-mail, 6 a 254 caracteres, guardado sem espaços e em minúsculas.
+- **Senha:** pelo menos 8 caracteres e no máximo **72 bytes** em UTF-8, porque o BCrypt só usa os 72 primeiros bytes (o resto seria ignorado sem aviso). Letra com acento ou cedilha ocupa 2 bytes.
+- Senha atual errada na troca de senha ou na exclusão responde **400**, não 401: o site trata 401 como sessão vencida e faria logout.
+- Depois da exclusão, o token antigo continua assinado até vencer, mas as rotas da conta e a análise respondem 401 porque o usuário não existe mais.
 
 ## Log
 
@@ -60,9 +74,15 @@ O banco é simples, sem migrations: o Hibernate cria e atualiza as tabelas sozin
 
 | Tabela | Conteúdo |
 |---|---|
-| `users` | nome, e-mail (único) e hash BCrypt da senha |
+| `users` | nome (até 255), e-mail (único, até 254) e hash BCrypt da senha |
 | `trainings` | uma linha por treino do `training-results.csv` |
 | `predictions` | uma linha por análise: usuário, modelo, classe, confiança, probabilidade de cada classe (JSON), tempo e horário (sem imagem) |
+
+O `ddl-auto=update` só acrescenta: ele não aumenta o tamanho de uma coluna que já existe. Num banco criado antes do limite de 255 no nome (que era 80), rode uma vez:
+
+```sql
+ALTER TABLE users ALTER COLUMN name TYPE varchar(255);
+```
 
 ### Como a pasta `data` popula o banco
 

@@ -41,6 +41,15 @@ function clearSession() {
   storages().forEach((storage) => storage.removeItem(STORAGE_KEY));
 }
 
+// "Manter conectado" foi marcado se a sessão está no localStorage
+function isKept() {
+  try {
+    return localStorage.getItem(STORAGE_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
 function saveSession(session, keep) {
   clearSession();
   try {
@@ -95,6 +104,12 @@ export function AuthProvider({ children }) {
         saveSession(newSession, keep);
         setSessionState(newSession);
         setLoginNotice("");
+      },
+      // Depois de editar a conta: troca o usuário guardado, mantendo o mesmo token
+      updateUser: (user) => {
+        const next = { ...session, user };
+        saveSession(next, isKept());
+        setSessionState(next);
       },
       logout,
     }),

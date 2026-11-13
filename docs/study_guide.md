@@ -119,7 +119,7 @@ public PredictionResponse predict(@AuthenticationPrincipal Jwt jwt, ...) {
 
 **Como funciona.** O método vem na primeira linha da requisição, junto com a URL (`POST /api/predictions HTTP/1.1`). No Spring, cada método do controller é ligado a um verbo por uma anotação: `@GetMapping`, `@PostMapping` (e existem `@PutMapping`, `@PatchMapping` e `@DeleteMapping`). No FastAPI, pelo decorador: `@app.get`, `@app.post`. A resposta volta com um **código de status**: `200` (ok), `201` (criado), `401` (sem login válido), `404` (não encontrado), `409` (conflito), `413` (arquivo grande), `422` (dados inválidos), `503` (serviço indisponível).
 
-**Onde está no código.** O PixoraMed usa **só `GET` e `POST`**:
+**Onde está no código.** O PixoraMed usa os cinco métodos:
 
 | Método  | Rota                           | Login? | O que faz                                                            | Onde                     |
 | -------- | ------------------------------ | ------ | -------------------------------------------------------------------- | ------------------------ |
@@ -130,6 +130,10 @@ public PredictionResponse predict(@AuthenticationPrincipal Jwt jwt, ...) {
 | `GET`  | `/api/models`                | não   | Lista os modelos da IA, com os limiares                              | `PredictionController` |
 | `POST` | `/api/predictions`           | sim    | Envia a imagem (multipart) e recebe a classe e as probabilidades     | `PredictionController` |
 | `GET`  | `/api/predictions?limit=100` | sim    | Histórico do usuário logado                                        | `PredictionController` |
+| `GET`  | `/api/users/me`              | sim    | Dados da conta logada                                                | `UserController`       |
+| `PUT`  | `/api/users/me`              | sim    | Altera nome e e-mail (409 se o e-mail já for de outra conta)         | `UserController`       |
+| `PATCH` | `/api/users/me/password`    | sim    | Troca a senha, conferindo a atual; responde **204**                  | `UserController`       |
+| `DELETE` | `/api/users/me`            | sim    | Exclui a conta e o histórico (hard delete), com a senha no corpo; **204** | `UserController` |
 
 Entre o backend e o ai-service, o padrão é o mesmo:
 
@@ -146,17 +150,21 @@ Entre o backend e o ai-service, o padrão é o mesmo:
 public AuthResponse register(@Valid @RequestBody RegisterRequest request) { ... }
 ```
 
-O CORS do backend também libera só esses dois métodos: `config.setAllowedMethods(List.of("GET", "POST"))`. O `OPTIONS` do *preflight* o próprio Spring responde.
+O CORS do backend libera esses cinco métodos: `config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE"))`. O `OPTIONS` do *preflight* o próprio Spring responde.
 
-**Por que o sistema usa só esses dois.**
+**Por que cada método.**
 
 - **`GET` para tudo que só lê** (saúde, modelos, treinos, histórico): não altera nada, pode ser repetido sem efeito colateral e pode ser guardado em cache pelo navegador ou pelo TanStack Query.
 - **`POST` para o que cria ou processa**: o cadastro cria um usuário, o login cria um token e a análise cria um registro no histórico. Mandar a mesma imagem duas vezes gera duas análises, então não é idempotente, e é exatamente o caso do `POST`.
-- **Sem `PUT`, `PATCH` e `DELETE`** porque o sistema não tem nada para editar nem apagar: o histórico é um registro do que foi feito, a conta não tem tela de edição e o logout não precisa de rota (o site só apaga o token, porque o JWT não fica no banco). Criar rotas sem uso só aumentaria o que precisa ser protegido.
+- **`PUT`, `PATCH` e `DELETE` só na conta** (`/api/users/me`, o CRUD da própria conta): `PUT` troca nome e e-mail juntos, `PATCH` muda só a senha e `DELETE` apaga a conta. O `me` vem do token, então ninguém consegue editar a conta de outro trocando um id na URL. As análises continuam sem edição: o histórico é um registro do que foi feito. O logout também não tem rota: o site só apaga o token, porque o JWT não fica no banco.
 
 **Pergunta de banca.** *Por que o login é `POST` e não `GET`, se ele "busca" o usuário?* Resposta: "No `GET`, os dados vão na URL, e a URL fica no histórico do navegador e nos logs dos servidores. A senha nunca pode ir na URL. No `POST`, ela vai no corpo da requisição, protegido pelo HTTPS. Além disso, o login cria algo novo: o token."
 
-**Pergunta de banca.** *Qual a diferença entre `PUT` e `PATCH`?* Resposta: "O `PUT` substitui o recurso inteiro; o `PATCH` altera só os campos enviados. O PixoraMed não usa nenhum dos dois, porque não tem edição de dados. Se um dia tiver a tela 'editar meu nome', o certo seria um `PATCH /api/users/me`."
+**Pergunta de banca.** *Qual a diferença entre `PUT` e `PATCH`?* Resposta: "O `PUT` substitui o recurso inteiro; o `PATCH` altera só uma parte. No PixoraMed, o `PUT /api/users/me` manda nome e e-mail juntos, e o `PATCH /api/users/me/password` muda só a senha, que tem regra própria: precisa da senha atual."
+
+**Pergunta de banca.** *Por que a senha tem no máximo 72 bytes?* Resposta: "O BCrypt só usa os 72 primeiros bytes da senha. Se a gente aceitasse mais, o resto seria ignorado sem aviso, e duas senhas diferentes com o mesmo começo dariam o mesmo hash. Por isso o limite é em bytes, não em caracteres: letra com acento ocupa 2 bytes em UTF-8."
+
+**Pergunta de banca.** *A exclusão da conta é soft ou hard delete?* Resposta: "Hard delete: o `AccountService` apaga as análises do usuário e depois a conta, na mesma transação. Pede a senha antes, porque não dá para desfazer."
 
 **Pergunta de banca.** *O que é idempotente?* Resposta: "Repetir a requisição várias vezes deixa o servidor no mesmo estado que uma vez só. O `GET` do histórico é idempotente; o `POST` da análise não, porque cada envio grava uma análise nova."
 

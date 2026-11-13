@@ -9,6 +9,13 @@ import { Alert } from "../components/common";
 import Icon from "../components/Icon";
 import OrganVisual from "../components/OrganVisual";
 import { useAnalysis } from "../context/AnalysisContext";
+import {
+  EMAIL_MAX,
+  EMAIL_MIN,
+  NAME_MAX,
+  PASSWORD_MIN,
+  passwordProblem,
+} from "../utils/accountRules";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -34,8 +41,8 @@ export default function Login() {
 
   async function submit(event) {
     event.preventDefault();
-    if (isRegister && password !== confirmation)
-      return setError("As senhas não conferem.");
+    const problem = isRegister ? passwordProblem(password, confirmation) : "";
+    if (problem) return setError(problem);
     setError("");
     setSending(true);
     try {
@@ -123,7 +130,7 @@ export default function Login() {
                   id="registerName"
                   required
                   minLength={2}
-                  maxLength={80}
+                  maxLength={NAME_MAX}
                   autoComplete="name"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
@@ -139,7 +146,8 @@ export default function Login() {
                 id="loginEmail"
                 type="email"
                 required
-                maxLength={254}
+                minLength={isRegister ? EMAIL_MIN : undefined}
+                maxLength={EMAIL_MAX}
                 autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -154,15 +162,17 @@ export default function Login() {
                 id="loginPassword"
                 type="password"
                 required
-                minLength={isRegister ? 8 : undefined}
-                maxLength={128}
+                minLength={isRegister ? PASSWORD_MIN : undefined}
                 autoComplete={isRegister ? "new-password" : "current-password"}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
             </div>
             {isRegister && (
-              <span className="hint">Pelo menos 8 caracteres.</span>
+              <span className="hint">
+                Pelo menos 8 caracteres e no máximo 72 bytes (letras com acento
+                contam como 2).
+              </span>
             )}
           </div>
           {isRegister && (
@@ -174,7 +184,6 @@ export default function Login() {
                   id="registerConfirmation"
                   type="password"
                   required
-                  maxLength={128}
                   autoComplete="new-password"
                   value={confirmation}
                   onChange={(event) => setConfirmation(event.target.value)}

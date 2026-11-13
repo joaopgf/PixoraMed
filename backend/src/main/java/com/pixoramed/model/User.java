@@ -17,7 +17,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 80)
+    @Column(nullable = false, length = 255)
     private String name;
 
     // Sempre em minúsculas
@@ -57,5 +57,17 @@ public class User {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 }

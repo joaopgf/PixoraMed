@@ -66,3 +66,25 @@
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
+/* Colunas da tela de conta: cartões empilhados em cada lado */
+.account-column {
+  display: grid;
+  gap: 15px;
+  align-content: start;
+}
+.profile-card h3 {
+  margin: 0 0 14px;
+  font-size: var(--font-size-base);
+}
+.profile-card .card-text {
+  margin: -6px 0 14px;
+  color: #8a9ca8;
+  font-size: var(--font-size-xs);
+  line-height: 1.55;
+}
+.danger-zone {
+  border-color: #f0dddd;
+}
+.danger-zone h3 {
+  color: #a44e4e;
+}

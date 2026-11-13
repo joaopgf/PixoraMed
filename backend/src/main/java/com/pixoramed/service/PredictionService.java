@@ -10,6 +10,7 @@ import com.pixoramed.dto.PredictionResponse.ClassProbability;
 import com.pixoramed.exception.ApiException;
 import com.pixoramed.model.Prediction;
 import com.pixoramed.repository.PredictionRepository;
+import com.pixoramed.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -19,6 +20,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,12 +35,14 @@ public class PredictionService {
     private final AiServiceClient aiService;
     private final DecisionService decisionService;
     private final PredictionRepository predictions;
+    private final UserRepository users;
 
     public PredictionService(AiServiceClient aiService, DecisionService decisionService,
-                             PredictionRepository predictions) {
+                             PredictionRepository predictions, UserRepository users) {
         this.aiService = aiService;
         this.decisionService = decisionService;
         this.predictions = predictions;
+        this.users = users;
     }
 
     public List<ModelResponse> listModels() {
@@ -52,6 +56,10 @@ public class PredictionService {
     }
 
     public PredictionResponse predict(Long userId, String modelId, MultipartFile file) {
+        // O token continua válido até vencer mesmo depois que a conta é excluída: não grava análise sem dono
+        if (!users.existsById(userId)) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Conta não encontrada. Entre novamente.");
+        }
         // A IA pré-processa, roda o modelo e devolve as probabilidades; a imagem não fica guardada
         AiPrediction result;
         try {
