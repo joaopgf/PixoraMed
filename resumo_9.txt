@@ -1,0 +1,329 @@
+================================================================================
+HANDOFF -- PixoraMed -- Sessão GUIA DE ESTUDO, SLIDES E AJUSTES DE TELA
+================================================================================
+
+Documento de continuidade. Resume o que foi feito nesta sessão (12 e
+13/11/2026), o estado atual do projeto e os próximos passos. Continua de
+resumo_8 (entrega, log e simplificação das telas) e foi escrito para valer
+sozinho: o que ainda vale do resumo_8 está aqui.
+
+Marcação: NÃO CONFERIDO = não verifiquei diretamente.
+
+ÍNDICE
+ 1. Contexto e stack
+ 2. O que foi feito nesta sessão
+ 3. Decisões fechadas
+ 4. Convenções em vigor
+ 5. Entregas desta sessão
+ 6. Pendências
+ 7. Perguntas abertas
+ 8. Próximos passos (em ordem)
+ 9. Referência: endereços, como rodar e armadilhas
+
+
+1. CONTEXTO E STACK
+-------------------
+- Projeto integrador do Bootcamp de IA II/2026 (TCS / SENAI Londrina).
+  Grupo: João Pedro Gonçalves Ferreira (usuário), Samuel Rosa Costa, Ramon
+  Camilo Figueiredo, Henrique Pereira da Silva. Orientador: André Maurício
+  dos Santos. O resumo_8 dizia banca em 23/11 e entrega até 21/11; o slide 1,
+  editado pelo João nesta sessão, agora diz 19/11/2026 (ver item 7).
+- PixoraMed classifica imagens de câncer de Pele, Oral e Cérebro e guarda o
+  histórico de cada usuário. Protótipo acadêmico: não faz diagnóstico. O
+  usuário pensado é um médico: as telas mostram só o essencial.
+- Monorepo: backend/ (Java 21, Spring Boot 4.1.2, Maven), frontend/ (React 19
+  + Vite 6, JavaScript, TanStack Query 5), ai-service/ (Python 3.12, FastAPI,
+  ONNX Runtime), infra/ (docker compose local e Terraform), docs/.
+- Produção: site na Vercel, backend e ai-service no Render (plano gratuito,
+  dormem após 15 min), PostgreSQL no Neon. Deploy automático a cada push na
+  main.
+- Modelos (dados conferidos nesta sessão nos .json e no código):
+  - Oral (oral_color): CNN pequena do zero, cor, 128x128, scale 255 (divide
+    por 255), classes normal e scc.
+  - Cérebro (brain_gray): mesma CNN, cinza, 128x128, scale 1 (pixels de 0 a
+    255, SEM divisão), classes glioma, menin e tumor.
+  - Pele (skin_color): ensemble de 5 EfficientNet-B0 (o pacote chama de
+    fold_models), calibração de Platt, 224x224, normalização ImageNet,
+    limiar 0,18.
+  - CNN: 23.714 parâmetros na Oral (448 + 4.640 + 18.496 + 130).
+  - Dois treinos diferentes: experimentos do CSV (1.000 imagens por classe,
+    5 folds) e modelo do app (~4.900 por classe: Oral 4.901, Cérebro 4.900,
+    segundo o slide 10).
+- Rotas da API: só GET e POST (sem mudança nesta sessão).
+
+
+2. O QUE FOI FEITO NESTA SESSÃO
+-------------------------------
+2.1 Guia de estudo (docs/study_guide.md)
+- Pedido do João: definições para a banca no formato "Pergunta da banca" /
+  "Resposta" curta, usando as anotações do curso (anotações-organizada.txt)
+  só onde o conteúdo aparece no projeto.
+- Seção "Métricas e conceitos de IA" (24 termos): matriz de confusão,
+  acurácia, precisão (VPP), sensibilidade, especificidade, F1, acurácia
+  balanceada, ROC/AUC, intervalo de confiança, média e desvio entre folds,
+  limiar, prevalência e baseline, treino/validação/teste, validação cruzada
+  por lesão, overfitting/underfitting, vazamento, generalização e mudança de
+  domínio, desbalanceamento, viés (enviesamento), data augmentation,
+  normalização, softmax/sigmoid/logit, parâmetros e hiperparâmetros,
+  época/lote/perda/otimizador, treino e inferência, alucinação (o projeto
+  não usa IA generativa; o equivalente é a imagem fora da distribuição).
+  Exemplo base: matriz real dos 21 testes da Pele (VP 8, FP 6, FN 0, VN 7).
+  Números calculados por mim estão marcados "conta nossa" (F1 ~65% e
+  acurácia balanceada ~86,4% da reprodução da Pele; cobertura de 94% da
+  Oral).
+- Seção "IA: os modelos": rede neural; CNN por dentro (tabela de formatos
+  128 -> 64 -> 32 -> 16 e conta dos parâmetros); EfficientNet-B0 por dentro
+  (MBConv, compound scaling, troca da última camada para 1 saída,
+  fine-tuning, ensemble, caminho da imagem até o limiar); operações da CNN
+  com números conferidos no PyTorch (kernel de borda = 80, ReLU, MaxPool
+  4x4 -> [[5, 4], [3, 8]], softmax 0,82/0,50 -> 57,93%/42,07%).
+- Formatos do modelo: .pt, pickle (risco de executar código; os scripts usam
+  torch.load(weights_only=True)), ONNX e o .json; e o caminho de uma análise
+  (ModelRegistry carrega na subida, AiServiceClient -> POST /predict com
+  X-Internal-Token, timeout 120 s, DecisionService decide).
+- Visualização de modelos (pesquisa pedida pelo professor): torchview,
+  VisualTorch, Graphviz, Pillow e Netron (testado com o oral_color.onnx).
+- Error Boundary e a tela branca depois de um deploy (ver 2.5).
+- Correções encontradas ao revisar os slides: o Cérebro NÃO divide por 255
+  (o guia dizia que sim, em 4 lugares); "normalizado" no CSV dos treinos
+  significa a divisão por 255 (o guia dizia ser normalização extra); tabela
+  "Dois treinos diferentes" separando experimentos e modelo do app; testes
+  do backend corrigidos de 5 para 7.
+
+2.2 Diagramas dos modelos (docs/model_diagrams/)
+- generate.py (torchview, VisualTorch, Graphviz): cnn_oral_layers.png,
+  cnn_oral_graph.png, efficientnet_b0_overview.png,
+  efficientnet_b0_mbconv_block.png e skin_ensemble_flow.png.
+- annotated_cnn.py (Pillow): cnn_oral_annotated.png, blocos 3D com formato e
+  parâmetros por camada, etapas, treino (4.901 por classe, /255) e
+  resultado. Pedido do professor ("colocar dados no diagrama").
+- As imagens usam pesos aleatórios: mostram só a arquitetura.
+
+2.3 Relatório de entrega (docs/delivery)
+- Cérebro corrigido para "pixels de 0 a 255"; parágrafo do treino separa
+  experimentos de 5 folds e modelo do app; PDF gerado de novo pelo Chrome
+  (16 páginas). Visual do PDF: NÃO CONFERIDO (sem renderizador de PDF).
+
+2.4 Slides (docs/PixoraMed_final_presentation.pptx, 19 slides)
+- Numeração salva corrigida (os slides 4 a 6 mostravam "4").
+- Slide 4 novo "Origem das bases": Kaggle -> Multi Cancer e HAM10000, com
+  imagens reais da pasta teste_interno (as do colega pareciam ilustrações).
+- Slide 9 "Apresentação do sistema": título central e print da página
+  inicial do site no ar; o roteiro da demo ficou nas notas.
+- Slide 11 novo "Cor e escala de cada módulo": barras das 4 configurações
+  (Oral: cor /255 85,25%; Cérebro: cinza sem /255 95,17%).
+- Slide 13 novo "A CNN por dentro": diagrama anotado.
+- O João editou no Google Slides: tirou nomes e tempos do rodapé, removeu os
+  cartões Viés e Licença do slide 17, mudou a data do slide 1 para 19/11.
+  A conversão do Google virou os gráficos em imagem e trocou os nomes das
+  barras por 1, 2, 3... nos slides 10, 12, 15 e 16. Refiz os 4 como
+  gráficos nativos com os dados do commit anterior.
+- Slide 16: primeiro cartão passou de Mama para Oral ("Na Oral, 3 dos 7
+  erros tiveram confiança acima de 80%..."). Conta: 193/200 certas; com o
+  limiar, 188 conclusivas e 98,4% -> 185 certas e 3 erradas.
+- Slide 17 reorganizado em grade 2x2 com os 4 cartões restantes.
+- Notas dos slides 16 e 17 reescritas. As notas dos demais slides ainda têm
+  nomes e tempos ("Henrique (00:00)", "Termine em 06:00").
+
+2.5 Frontend
+- formatPercent recebe fração (0 a 1) e digits; percentNumber para o CSV;
+  constante INCONCLUSIVE_CLASS. Motivo: 7 repetições de "x * 100".
+- Legenda do gráfico: saiu "· classe prevista"; a linha da classe prevista
+  segue em negrito pelo CSS (li.predicted).
+- Preparar exame sem modelo: aviso "Carregando o modelo / Aguarde..." no
+  lugar das instruções de desenvolvedor; opção "Carregando modelo...";
+  useModels busca de novo a cada 10 s enquanto a lista vier vazia.
+- Tela branca: não havia Error Boundary. Causa confirmada no site: depois de
+  um deploy, a Vercel responde o arquivo antigo de uma tela com o
+  index.html (200), e o React.lazy falha. Agora: ErrorBoundary no main.jsx
+  (página inteira) e no Layout (só o conteúdo, resetKey = rota);
+  utils/staleChunk.js + evento vite:preloadError recarregam uma vez (no
+  máximo a cada 10 s, sessionStorage). Testado com vite preview e o arquivo
+  do Histórico apagado do build.
+- Card da classe prevista (Pele): texto do limiar em linguagem simples,
+  diferente para maligno e benigno (montado em utils/resultView.js).
+- Passo 2 (revisão): "enviada à API, passa pelo modelo" virou "enviada ao
+  sistema, analisada pelo modelo de IA... Só o resultado fica registrado".
+- Componentização: comparado com o sistema de reservas (src/types/index.js).
+  O utils/modules.js já cumpre esse papel; não foi criada pasta nova.
+- Todas as mudanças de tela: lint, build e teste no Docker local.
+
+
+3. DECISÕES FECHADAS
+--------------------
+- Não criar types/index.js: utils/modules.js já concentra constantes e
+  funções puras; trocar só mudaria o nome e mexeria em 11 imports.
+- formatPercent recebe fração; as métricas de treino (em %) são divididas
+  por 100 antes (comentário no Result.jsx).
+- Cérebro: cinza sem divisão por 255; Oral: cor com /255 (justificado no
+  slide 11 com o CSV).
+- Imagens de exemplo nos slides são reais (teste_interno), não ilustrações.
+- Gráficos dos slides: nativos (python-pptx), não imagens; o Google Slides
+  quebrou os que vieram do deck antigo.
+- Aviso de modelo indisponível fala em "carregando", com nova tentativa
+  automática; o selo "MODELO NÃO CONECTADO" da Nova análise foi mantido.
+- ErrorBoundary em dois níveis + recarga única depois de deploy.
+- Texto do limiar e do passo 2 sem termos técnicos (limiar, API).
+- Skills do backend e guia continuam descrevendo a regra em termos técnicos
+  (são para o grupo e a banca, não para o médico).
+- Revogado: o guia e o relatório diziam que o Cérebro divide por 255 e que
+  "normalizado" era normalização extra. Corrigido.
+
+
+4. CONVENÇÕES EM VIGOR
+----------------------
+- Português do Brasil, objetivo, nas respostas ao João. Código, nomes de
+  arquivos e rotas em inglês; textos de tela, README, skills e comentários
+  em português. Cabeçalho curto no topo de todo arquivo que aceita
+  comentário.
+- Commit e push só quando o João pede ("Commit e push"). Mensagens em
+  inglês ("feat:", "fix:", "docs:", "refactor:"), com Co-Authored-By:
+  Claude Opus 5.5 <noreply@anthropic.com>. Só a branch main.
+- Toda mudança de tela: npm run lint, npm run build e teste no Docker local
+  antes do commit.
+- O João formata com o Prettier e faz commits próprios entre tarefas
+  (ex.: "slides atualizados"); isso é dele, não reverter.
+- Frontend: fontes só pelas variáveis --font-size-*; API só por src/api;
+  interpretação para a tela em utils/ (ex.: resultView); componentes de
+  gráfico só recebem props.
+- Cor vermelha #d03b3b só para classe maligna.
+- Guia de estudo: "O que é / Como funciona / Onde está no código / Por que"
+  e perguntas no formato "Pergunta da banca:" / "Resposta:"; números
+  calculados por nós marcados "conta nossa".
+- Slides: editar com python-pptx, conferir abrindo no PowerPoint (COM) e
+  exportando PNG; guardar cópia antes de mexer; manter numeração salva
+  atualizada. Depois de qualquer passagem pelo Google Slides, conferir os
+  gráficos.
+- Honestidade dos resultados: não arredondar para cima, "mesma fonte" não é
+  teste externo, reprodução da Pele não é o modelo do app.
+- terraform apply só depois de mostrar o plan e o João aprovar. Nunca pedir
+  nem exibir chaves. Contas de teste só no banco local do Docker.
+
+
+5. ENTREGAS DESTA SESSÃO
+------------------------
+Raiz: C:\Users\joaop\OneDrive\Desktop\Projetos\PixoraMed
+- docs\study_guide.md (guia de estudo, muito ampliado)
+- docs\model_diagrams\generate.py e annotated_cnn.py, com 6 imagens .png
+- docs\PixoraMed_final_presentation.pptx (19 slides)
+- docs\delivery\PixoraMed_report.html e PixoraMed_report.pdf (16 p.)
+- frontend\src\components\ErrorBoundary.jsx (novo)
+- frontend\src\utils\staleChunk.js (novo)
+- frontend: main.jsx, Layout.jsx, Result.jsx, Review.jsx, PrepareExam.jsx,
+  History.jsx, Dashboard.jsx, ProbabilityPieChart.jsx, useApiData.js,
+  utils\modules.js, utils\resultView.js, styles\extras.css
+- frontend\.claude\skills\frontend-architecture\SKILL.md (erros e boundary)
+- resumo_9.txt (este arquivo). resumo_8.txt fica OBSOLETO, substituído por
+  este.
+Cópias de segurança do deck (fora do repositório, pasta temporária):
+- C:\Users\joaop\AppData\Local\Temp\claude\763b271afd8bcd09\
+  b6dfee1a-9a40-4e92-a208-47f56db49ff1\scratchpad\deck_backup4_user.pptx
+  (versão do Google, antes do ajuste dos slides 16 e 17; o caminho é um só,
+  quebrado aqui por causa das 80 colunas)
+Commits desta sessão, do mais antigo ao novo (todos na main e no GitHub):
+  f1fefde atualização no guia de estudo (João)
+  79b7ed9 adição de modelos no guia de estudos (João)
+  1e55bc9 adicionado enviesamento e imagem dos modelos (João)
+  5ddc192 adicionado novo diagrama (João)
+  28720d6 refactor: take fractions in formatPercent and add an inconclusive
+          class constant
+  e4fbf8f docs: fix brain input scale and training data, add CNN diagram
+          slide
+  a8a55f2 docs: explain model file formats and how the backend calls the
+          models
+  84a2f39 docs: add a dataset origin slide with real training images
+  59cb2c7 docs: add worked examples for kernel, ReLU, MaxPool and softmax
+  e856700 add relu, maxpool, softmax e kernel (João)
+  6d5a259 docs: simplify the demo slide and add the color and scale choice
+          slide
+  9657e16 fix: simplify the chart legend and explain that the model is
+          loading
+  ed2cb12 fix: show an error message instead of a blank page and reload
+          after deploys
+  16f2334 fix: explain the skin threshold in plain language on the result
+          card
+  d77c5b6 fix: replace technical terms in the review step warning
+  36f75e8 slides atualizados (João; inclui o ajuste dos slides 10, 12, 15,
+          16 e 17)
+
+
+6. PENDÊNCIAS
+-------------
+- Conferir produção depois dos deploys desta sessão: legenda, aviso de
+  carregamento, texto do limiar, passo 2 e Error Boundary. NÃO CONFERIDO.
+- Conferir em produção a coluna probabilities e o gráfico ao abrir uma
+  análise pelo Histórico (pendência do resumo_8). NÃO CONFERIDO.
+- Abrir o PDF de entrega e olhar a seção de modelos (texto novo).
+- Notas dos slides 1 a 15, 18 e 19 ainda com nomes e tempos; decidir se
+  saem (ver item 7).
+- Se o grupo editar o deck de novo no Google Slides, conferir os gráficos
+  dos slides 10, 11, 12, 15 e 16.
+- Ensaiar a apresentação: o bloco técnico ganhou slides (11 e 13).
+- Gravar o vídeo de backup da demonstração.
+- Dar acesso à banca ao repositório (privado).
+- Criar a conta do grupo no site de produção (o João cria).
+- docs/save_model.md ainda usa mama_cor.pt como exemplo.
+- Apagar a pasta C:\c; levar o backup dos segredos para cofre/pendrive.
+- Token da Vercel vence por volta de 10/12 (só importa para o Terraform).
+- Docker local ficou ligado; banco local tem análises de teste 28 a 32 da
+  conta teste.percent...@pixoramed.test (senha só na pasta temporária).
+- Opcionais: limite de tentativas de login, testes de rota, testes de
+  componentes React.
+
+
+7. PERGUNTAS ABERTAS
+--------------------
+- A banca é em 19/11 (slide 1) ou 23/11 (resumo_8)? E a entrega?
+- Tirar nomes e tempos também das notas dos slides?
+- Como foram divididos os dados entre as 5 EfficientNet-B0 da Pele? (o
+  pacote chama de fold_models; o código original foi perdido)
+- As imagens _4901 a _5000 do Cérebro ficaram fora do treino? (confirmar
+  com o colega)
+- Se o professor contar Pandas como requisito do sistema: hoje está só nos
+  notebooks. Preparar a fala.
+
+
+8. PRÓXIMOS PASSOS (EM ORDEM)
+-----------------------------
+O João não definiu uma ordem nesta sessão; esta é a ordem pelos prazos:
+ 1. Confirmar a data da banca (19/11 ou 23/11).
+ 2. Conferir produção (análise pelo site, Histórico, telas alteradas).
+ 3. Decidir as notas dos slides e ensaiar com o guia de estudo.
+ 4. Vídeo de backup, acesso da banca ao repositório, conta do grupo no
+    site.
+ 5. Pendências de operação (C:\c, backup em cofre, save_model.md).
+
+
+9. REFERÊNCIA: ENDEREÇOS, COMO RODAR E ARMADILHAS
+-------------------------------------------------
+Endereços
+- GitHub: https://github.com/joaopgf/PixoraMed (privado, só main)
+- Treino: https://github.com/joaopgf/Projeto-ML-Cancer (notebooks)
+- Site: https://pixoramed.vercel.app
+- Backend: https://pixoramed.onrender.com/api/health
+- ai-service: https://pixoramed-ia.onrender.com/health
+- Imagens de teste: C:\Users\joaop\OneDrive\Desktop\teste_interno
+
+Como rodar
+- Docker: em infra/, docker compose up --build. Site em localhost:5173, API
+  em localhost:8080. Usa só o infra/.env.
+- Testes: backend mvn test (7); ai-service pytest (20); frontend npm run
+  lint e npm run build.
+- Diagramas: python docs/model_diagrams/generate.py e annotated_cnn.py
+  (precisa de torch, torchvision, torchview, visualtorch e do Graphviz).
+- PDF: Chrome headless (comando em docs/delivery/README.md).
+- Slides: python-pptx para editar; PowerPoint via COM para abrir e exportar
+  PNG de conferência.
+
+Armadilhas
+- Google Slides: converte gráficos em imagem e pode trocar os nomes das
+  barras por números.
+- vite preview roda na porta 4173 e o backend só aceita a origem 5173
+  (CORS): para testar, use sessão com token do backend local.
+- Depois de um deploy, aba antiga pode pedir arquivo que não existe mais; o
+  site agora recarrega sozinho uma vez.
+- Node puro não resolve os imports sem .js do frontend; testar no Vite.
+- No Spring Boot 4, o RestClient.Builder exige spring-boot-starter-
+  restclient.
+- Banca: abrir o site uns 5 min antes e fazer uma análise para acordar o
+  Render.
