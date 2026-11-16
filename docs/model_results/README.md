@@ -65,21 +65,18 @@ python docs/model_results/generate.py
 
 ## Oral e Cérebro: treino de cada configuração (`oral/` e `brain/`)
 
-Esta é a imagem de resumo que o notebook salva no fim de cada treino: erro e acurácia por época em cada fold, a acurácia e a F1 de cada fold no teste e a matriz de confusão somada dos 5 folds. As imagens foram copiadas de `Projeto-ML-Cancer/resultados/` e conferidas com a coluna `pasta_graficos` do CSV.
+Esta é a imagem de resumo que o notebook salva no fim de cada treino: erro e acurácia por época em cada fold, a acurácia e a F1 de cada fold no teste e a matriz de confusão somada dos 5 folds. As imagens foram copiadas de `Projeto-ML-Cancer/resultados/` (a do Cérebro cor sem /255 veio do Drive do grupo, porque rodou no Colab) e conferidas com a coluna `pasta_graficos` do CSV.
 
-| Arquivo                        | Configuração                | Acurácia      | Origem no Projeto-ML-Cancer                 |
+| Arquivo                        | Configuração                | Acurácia      | Origem (pasta do treino)                    |
 | ------------------------------ | --------------------------- | ------------- | ------------------------------------------- |
 | `oral/oral_color_div255.png`   | Oral cor /255 (**app**)     | 85,25 ± 1,78  | `graficos_oral/Oral_cor_norm/2026-10-29_10-48-19`   |
 | `oral/oral_color_raw.png`      | Oral cor sem /255           | 84,85 ± 1,70  | `graficos_oral/Oral_cor/2026-10-29_11-29-23`        |
 | `oral/oral_gray_div255.png`    | Oral cinza /255 (1ª execução) | 75,15 ± 2,10 | `graficos_oral/Oral_cinza_norm/2026-10-29_12-54-41` |
+| `oral/oral_gray_div255_run2.png` | Oral cinza /255 (2ª execução, a que vale) | 76,80 ± 1,64 | `resultados/Oral/Oral_cinza_norm/2026-10-30_09-14-31` |
+| `oral/oral_gray_raw.png`       | Oral cinza sem /255         | 75,20 ± 1,93  | `resultados/Oral/Oral_cinza/2026-10-30_10-30-07`    |
 | `brain/brain_color_div255.png` | Cérebro cor /255            | 90,13 ± 0,97  | `Cérebro/Cérebro_cor_norm/2026-10-30_00-10-04`      |
+| `brain/brain_color_raw.png`    | Cérebro cor sem /255        | 94,37 ± 1,81  | Drive do grupo (Colab): `Cerebro_Cor_Sem_Norm/graficos/2026-11-06_20-48-23` |
 | `brain/brain_gray_div255.png`  | Cérebro cinza /255          | 88,90 ± 0,83  | `Cérebro/Cérebro_cinza_norm/2026-10-30_11-27-14`    |
 | `brain/brain_gray_raw.png`     | Cérebro cinza sem /255 (**app**) | 95,17 ± 0,55 | `Cérebro/Cérebro_cinza/2026-10-30_11-56-55`   |
 
-Estes resumos não estão na pasta local do Projeto-ML-Cancer. Os números estão no CSV, mas as imagens não:
-
-- Oral cinza /255, 2ª execução (`Oral_cinza_norm/2026-10-30_09-14-31`, 76,80%)
-- Oral cinza sem /255 (`Oral_cinza/2026-10-30_10-30-07`, 75,20%)
-- Cérebro cor sem /255 (rodado no Colab, `Cerebro_Cor_Sem_Norm/graficos/2026-11-06_20-48-23`, 94,37%)
-
-Se alguém do grupo tiver essas imagens, elas podem entrar aqui com o mesmo padrão de nome.
+Os resumos das 8 configurações de Oral e Cérebro estão completos. Os dois da Oral em cinza vieram da pasta `resultados` do grupo (fora do Projeto-ML-Cancer) e foram conferidos com o CSV.
