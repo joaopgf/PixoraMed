@@ -518,6 +518,9 @@ O `userId` é quem grava, porque o id já vem do token e não é preciso carrega
 **Pergunta de banca:** *Por que `trainings` não se liga a nenhuma tabela?*
 **Resposta:** "Porque não pertence a ninguém: é o registro dos experimentos de treino, importado do CSV que os notebooks geraram. Ela documenta por que cada modelo usa cor ou cinza e a divisão por 255."
 
+**Pergunta de banca:** *Onde o sistema usa a tabela de treinos? O site mostra esses dados?*
+**Resposta:** "O site não mostra: tiramos a página de resultados de treino porque a tela é pensada para o médico, que não precisa de métrica de treino, e os gráficos ficaram em `docs/model_results`. A tabela fecha o caminho dos dados: os notebooks geram o CSV, o backend importa para o PostgreSQL a cada subida, sem duplicar, e os dados ficam consultáveis por SQL e pela rota pública `GET /api/trainings`. É o registro dos experimentos que escolheram cor ou cinza e a divisão por 255 de cada modelo."
+
 **Pergunta de banca:** *Por que as probabilidades ficam num texto JSON e não numa tabela própria?*
 **Resposta:** "Elas são sempre lidas junto com a análise, para redesenhar o gráfico, e nunca filtradas. Uma tabela separada, com uma linha por classe, seria mais normalizada, mas exigiria um JOIN em toda leitura sem ganho para o sistema. É um meio-termo consciente."
 
