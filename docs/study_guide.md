@@ -14,7 +14,7 @@ Cada conceito segue o mesmo roteiro, que é a ordem em que a banca costuma pergu
 
 A dica para a banca é responder nessa mesma ordem: definição, mecanismo, exemplo do próprio código, motivo.
 
-Os números deste guia são os medidos pelo grupo. Regra de ouro na banca: **não arredondar para cima e não chamar teste da mesma fonte de "teste externo"**. A seção [Resultados e honestidade](#resultados-e-honestidade) diz o que cada número mede e o que não mede, e a seção [Métricas e conceitos de IA](#métricas-e-conceitos-de-ia) traz a definição, a fórmula e as perguntas de banca de cada termo (acurácia, F1, matriz de confusão, AUC, overfitting, viés, alucinação...). A seção [IA: os modelos](#ia-os-modelos) tem imagens das redes, geradas com Python. A seção [Tecnologias usadas](#tecnologias-usadas-slide-9) explica, no roteiro do slide 9, o que cada tecnologia faz e por que o grupo usa.
+Os números deste guia são os medidos pelo grupo. Regra de ouro na banca: **não arredondar para cima e não chamar teste da mesma fonte de "teste externo"**. A seção [Resultados e honestidade](#resultados-e-honestidade) diz o que cada número mede e o que não mede, e a seção [Métricas e conceitos de IA](#métricas-e-conceitos-de-ia) traz a definição, a fórmula e as perguntas de banca de cada termo (acurácia, F1, matriz de confusão, AUC, overfitting, viés, alucinação...). A seção [IA: os modelos](#ia-os-modelos) tem imagens das redes, geradas com Python. A seção [Tecnologias usadas](#tecnologias-usadas-slide-10) explica, no roteiro do slide 10, o que cada tecnologia faz e por que o grupo usa.
 
 ## Visão geral em uma tela
 
@@ -40,9 +40,9 @@ Navegador ──► frontend (React + Vite, Vercel)
 
 **Pergunta de banca.** *Resuma a arquitetura em 30 segundos.* Resposta: "São três serviços. O React na Vercel só mostra as telas e chama `/api`. A Vercel repassa para o backend Spring Boot no Render, que cuida do login, do histórico e da regra de decisão, e grava no PostgreSQL do Neon. Para classificar a imagem, o backend chama o ai-service em Python, que roda os modelos ONNX e devolve só as probabilidades. A IA não tem banco e não guarda imagem."
 
-## Tecnologias usadas (slide 9)
+## Tecnologias usadas (slide 10)
 
-Esta seção segue os três grupos do slide 9. Para cada tecnologia: **o que é**, **o que faz no PixoraMed** e **por que usamos**. A versão entre parênteses é a que aparece no slide. Na banca, a fala curta é sempre a mesma: "o que é, onde entra no nosso sistema e por que escolhemos".
+Esta seção segue os três grupos do slide 10. Para cada tecnologia: **o que é**, **o que faz no PixoraMed** e **por que usamos**. A versão entre parênteses é a que aparece no slide. Na banca, a fala curta é sempre a mesma: "o que é, onde entra no nosso sistema e por que escolhemos".
 
 ```
 DESENVOLVIMENTO DO SISTEMA            TREINO DOS MODELOS              FERRAMENTAS E HOSPEDAGEM
@@ -438,23 +438,59 @@ User user = users.findByEmail(email).ourElse(null);
 
 ## Backend: banco e dados
 
-### JPA, Hibernate e as três tabelas
+### O banco do sistema: as 3 tabelas e o DER (slide 8)
 
-**O que é.** JPA é a especificação Java de mapeamento objeto-relacional (ORM); Hibernate é a implementação; Spring Data JPA gera os repositórios a partir do nome do método.
+**O que é.** O PixoraMed guarda os dados num banco **PostgreSQL**: no Docker em desenvolvimento, no Neon em produção. São só três tabelas, criadas pelo Hibernate a partir das entidades do backend (`User`, `Prediction` e `Training`). O DER abaixo foi gerado pelo pgAdmin direto do banco (botão direito no banco → **ERD For Database**).
 
-**Como funciona.** A classe `Prediction` com `@Entity` vira a tabela `predictions`. O método `findByUserIdOrderByCreatedAtDesc(userId, pageable)` vira `SELECT ... WHERE user_id = ? ORDER BY created_at DESC LIMIT ?`, sem SQL escrito à mão.
+![DER lógico do PixoraMed gerado pelo pgAdmin: users ligada a predictions (1 para N) e trainings separada](<DER Lógico.png>)
 
-| Tabela          | Conteúdo                                                                                                           |
-| --------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `users`       | nome, e-mail (único) e hash BCrypt da senha                                                                        |
-| `trainings`   | uma linha por treino do `training-results.csv`                                                                    |
-| `predictions` | usuário, modelo, classe, confiança, probabilidade de cada classe (JSON), tempo e horário. **Sem a imagem** |
+Há também uma versão comentada, com legenda e observações, em [der/pixoramed_der.png](der/pixoramed_der.png), gerada por `docs/der/generate_der.py`.
 
-A tabela `predictions` tem índice em `user_id`, que é a busca do histórico.
+**Como ler o DER.**
 
-**A relação entre usuário e análise.** Um usuário tem 0 ou N análises, e cada análise pertence a um usuário. No banco, `predictions.user_id` é **chave estrangeira** para `users.id` (`fk_predictions_user`): o PostgreSQL recusa uma análise de um usuário que não existe e impede apagar um usuário que ainda tem análises. Por isso a exclusão da conta apaga as análises antes, na mesma transação. O DER lógico está em `docs/der/pixoramed_der.png`.
+- Cada caixa é uma tabela, com uma linha por coluna e o tipo ao lado.
+- **Chave amarela** = chave primária (`id`). **Chave cinza** = chave estrangeira (`predictions.user_id`). **Ícone "1"** = valor único (`email` em `users`; `run_at` + `dataset` em `trainings`).
+- A **linha com "1" e "N"** liga `users.id` a `predictions.user_id`: **1 usuário tem N análises**, e cada análise pertence a 1 usuário.
+- `trainings` fica **sem linha**, de propósito: ela não pertence a nenhum usuário.
 
-No código, a entidade guarda as duas formas na mesma coluna:
+**Por que só três tabelas.** Cada tabela responde a uma pergunta do sistema, e nada além disso fica no banco:
+
+| Pergunta | Tabela |
+| --- | --- |
+| Quem usa o sistema? | `users` |
+| O que cada pessoa analisou e qual foi o resultado? | `predictions` |
+| Como os modelos foram escolhidos? | `trainings` |
+
+O que **não** tem tabela, e por quê:
+
+- **A imagem enviada**: é processada em memória e descartada (privacidade e LGPD).
+- **Sessão ou token**: o login é JWT; o token fica só no navegador.
+- **Os modelos e as classes**: ficam no ai-service, em arquivos `.onnx` + `.json`. Trocar de modelo não mexe no banco.
+
+**O que cada tabela guarda e o valor disso.**
+
+| Tabela | O que guarda | Para que serve no sistema | O que nunca guarda |
+| --- | --- | --- | --- |
+| `users` | `name`, `email` (único), `password_hash` (BCrypt), `created_at` | Login e "dono" do histórico. O e-mail único impede duas contas iguais | A senha em texto, o token |
+| `predictions` | `user_id`, `model_id`, `predicted_class` (decidida pelo backend), `confidence`, `probabilities` (JSON com a probabilidade de cada classe), `time_ms`, `created_at` | O **Histórico**: tabela, cards de resumo e reabrir o gráfico de um resultado antigo, que é desenhado a partir de `probabilities` | **A imagem** e qualquer dado de paciente |
+| `trainings` | Uma linha por experimento do `training-results.csv` (29 treinos): dataset, cor ou cinza, divisão por 255, épocas, lote, GPU, tempo, acurácia e F1 por fold | Registro dos experimentos que escolheram a configuração de cada modelo (slide 13). Fecha o caminho de dados: notebook → CSV → backend → SQL | Dados de usuário |
+
+Sobre `trainings`: o site não mostra mais esses gráficos (eles foram para `docs/model_results/`), mas a tabela continua sendo importada a cada subida e pode ser consultada por SQL no pgAdmin ou pela rota pública `GET /api/trainings`.
+
+**Como o sistema relaciona usuário e análise, passo a passo.**
+
+1. **Cadastro**: o backend grava uma linha em `users`, e o banco gera o `id` (IDENTITY).
+2. **Login**: o token JWT leva esse `id` no campo `subject`.
+3. **Análise**: o backend lê o `id` do token e grava a análise com `user_id = id`. O usuário nunca escolhe de quem é a análise.
+4. **Histórico**: `SELECT ... FROM predictions WHERE user_id = ? ORDER BY created_at DESC LIMIT ?`, que usa o índice `idx_predictions_user_id`. Cada pessoa só vê as próprias análises.
+5. **Excluir a conta**: na mesma transação, o backend apaga as análises (`DELETE FROM predictions WHERE user_id = ?`) e depois o usuário.
+
+**Quem garante a relação: a chave estrangeira.** `predictions.user_id` é chave estrangeira para `users.id` (`fk_predictions_user`). Com ela, o próprio PostgreSQL:
+
+- **recusa** uma análise com um `user_id` que não existe;
+- **recusa** apagar um usuário que ainda tem análises. A chave não apaga em cascata, então a ordem do passo 5 importa: primeiro as análises, depois o usuário.
+
+No código, a entidade `Prediction` mapeia a mesma coluna de dois jeitos:
 
 ```java
 @Column(name = "user_id", nullable = false)
@@ -466,9 +502,35 @@ private Long userId;                       // grava: o id vem do token
 private User user;                         // só leitura: gera a chave estrangeira
 ```
 
-O `userId` continua sendo o que grava, porque o id já vem do token e não precisa carregar o usuário. O `@ManyToOne` só existe para o Hibernate criar a chave estrangeira; ele não tem getter, então os dados do usuário nunca vão para o JSON do histórico.
+O `userId` é quem grava, porque o id já vem do token e não é preciso carregar o usuário do banco. O `@ManyToOne` só existe para o Hibernate criar a chave estrangeira. Ele não tem getter, então os dados do usuário (incluindo o hash da senha) nunca vão parar no JSON do histórico.
 
-**Pergunta de banca.** *Por que guardar o id e também o `@ManyToOne`?* Resposta: "O Hibernate só cria a chave estrangeira quando a entidade tem a associação. Mas para gravar uma análise basta o id do token, sem buscar o usuário no banco. Então o `userId` grava, e a associação fica só de leitura, para o banco garantir a integridade."
+**Histórico da mudança.** Até 16/11/2026, a entidade guardava só o `userId`, e a relação era garantida apenas pelo código. O DER do pgAdmin saía com as tabelas soltas. A chave estrangeira foi adicionada no código e criada no Neon com um SQL manual (está no `backend/README.md`).
+
+**Pergunta de banca:** *Por que o sistema tem só três tabelas?*
+**Resposta:** "Porque cada uma responde a uma pergunta: quem usa (`users`), o que cada um analisou (`predictions`) e como os modelos foram escolhidos (`trainings`). A imagem não é guardada, o login é por token, sem sessão no banco, e os modelos ficam no serviço de IA, não no banco."
+
+**Pergunta de banca:** *Como o sistema sabe de quem é cada análise?*
+**Resposta:** "O id do usuário vem do token JWT, assinado pelo backend, e é gravado em `predictions.user_id`. Essa coluna é chave estrangeira para `users.id`, então o banco recusa análise de usuário inexistente. O histórico filtra por esse id, e cada um só vê as suas."
+
+**Pergunta de banca:** *O que acontece se alguém apagar um usuário direto no banco?*
+**Resposta:** "Se ele tiver análises, o PostgreSQL recusa, por causa da chave estrangeira. Pelo sistema, a exclusão da conta apaga primeiro as análises e depois o usuário, na mesma transação."
+
+**Pergunta de banca:** *Por que `trainings` não se liga a nenhuma tabela?*
+**Resposta:** "Porque não pertence a ninguém: é o registro dos experimentos de treino, importado do CSV que os notebooks geraram. Ela documenta por que cada modelo usa cor ou cinza e a divisão por 255."
+
+**Pergunta de banca:** *Por que as probabilidades ficam num texto JSON e não numa tabela própria?*
+**Resposta:** "Elas são sempre lidas junto com a análise, para redesenhar o gráfico, e nunca filtradas. Uma tabela separada, com uma linha por classe, seria mais normalizada, mas exigiria um JOIN em toda leitura sem ganho para o sistema. É um meio-termo consciente."
+
+**Pergunta de banca:** *Por que guardar o id e também o `@ManyToOne`?*
+**Resposta:** "O Hibernate só cria a chave estrangeira quando a entidade tem a associação. Mas para gravar uma análise basta o id do token, sem buscar o usuário no banco. Então o `userId` grava, e a associação fica só de leitura, para o banco garantir a integridade."
+
+### JPA, Hibernate e as três tabelas
+
+**O que é.** JPA é a especificação Java de mapeamento objeto-relacional (ORM); Hibernate é a implementação; Spring Data JPA gera os repositórios a partir do nome do método.
+
+**Como funciona.** A classe `Prediction` com `@Entity` vira a tabela `predictions`. O método `findByUserIdOrderByCreatedAtDesc(userId, pageable)` vira `SELECT ... WHERE user_id = ? ORDER BY created_at DESC LIMIT ?`, sem SQL escrito à mão.
+
+As três tabelas, o que cada uma guarda e a relação entre usuário e análise estão na seção anterior, [O banco do sistema](#o-banco-do-sistema-as-3-tabelas-e-o-der-slide-8).
 
 **Por que sem Flyway.** O `ddl-auto=update` deixa o Hibernate criar e atualizar as tabelas sozinho. Foi uma escolha de simplicidade do grupo: três tabelas, sem histórico de migrations para manter. Em um sistema com dados reais de produção, o caminho seria Flyway, para versionar cada mudança do banco.
 
@@ -1207,9 +1269,9 @@ As duas são **redes convolucionais**: as duas usam filtros que deslizam pela im
 **Pergunta de banca:** *Por que a CNN usa softmax e a Pele usa sigmoid?*
 **Resposta:** "A CNN escolhe entre várias classes, então dá um número para cada uma e o softmax faz as probabilidades somarem 100%. A Pele é benigno contra maligno, com uma saída só: a sigmoid transforma esse número na probabilidade de maligno, e o benigno é o resto."
 
-### Como explicar os diagramas das duas redes na apresentação (slides 14 e 15)
+### Como explicar os diagramas das duas redes na apresentação (slides 15 e 16)
 
-Os slides 14 (CNN da Oral e do Cérebro) e 15 (EfficientNet-B0 da Pele) usam o **mesmo tipo de desenho**, de propósito: quem entendeu o primeiro lê o segundo sozinho. A ideia é explicar a "gramática" do desenho uma vez, no slide 14, e no slide 15 só mostrar o que muda. Cada slide tem cerca de **40 segundos** (notas do deck).
+Os slides 15 (CNN da Oral e do Cérebro) e 16 (EfficientNet-B0 da Pele) usam o **mesmo tipo de desenho**, de propósito: quem entendeu o primeiro lê o segundo sozinho. A ideia é explicar a "gramática" do desenho uma vez, no slide 15, e no slide 16 só mostrar o que muda. Cada slide tem cerca de **40 segundos** (notas do deck).
 
 #### Como ler o desenho (vale para os dois)
 
@@ -1229,7 +1291,7 @@ Os slides 14 (CNN da Oral e do Cérebro) e 15 (EfficientNet-B0 da Pele) usam o *
 
 **A frase que resume os dois desenhos:** "a imagem vai ficando **menor** e mais **funda**". Menor em altura e largura (os blocos baixam), mais funda em canais (os blocos alargam). No fim, um pooling global resume cada canal em um número, e a camada linear dá a resposta.
 
-#### Slide 14: a CNN da Oral e do Cérebro
+#### Slide 15: a CNN da Oral e do Cérebro
 
 **Roteiro (~40 s), com onde apontar.**
 
@@ -1248,7 +1310,7 @@ Os slides 14 (CNN da Oral e do Cérebro) e 15 (EfficientNet-B0 da Pele) usam o *
 - *"Por que a Linear tem só 130 parâmetros?"* "Porque o pooling global reduziu tudo a 64 números: 64 × 2 pesos + 2 vieses. Sem ele, seriam 16.384 entradas."
 - *"Como foi feito o desenho?"* "Com Python: torchview e VisualTorch para a estrutura e o Pillow para escrever os dados em cada camada. O script está em `docs/model_diagrams/`."
 
-#### Slide 15: a EfficientNet-B0 da Pele
+#### Slide 16: a EfficientNet-B0 da Pele
 
 **Frase de transição (do 14 para o 15):** "O próximo desenho segue a mesma leitura, mas agora a rede **não é nossa**."
 
