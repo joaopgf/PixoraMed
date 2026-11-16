@@ -49,7 +49,7 @@ Toda resposta usa DTO. Toda falha esperada é uma `ApiException(status, mensagem
 ## Banco
 
 - PostgreSQL, sem migrations: o Hibernate cria e atualiza as tabelas (`ddl-auto=update`). Isso só acrescenta; **renomear ou apagar coluna exige SQL manual** no Neon, testado antes num branch do Neon.
-- Tabelas: `users`, `trainings` (do CSV) e `predictions` (sem imagem). Aumentar o tamanho de uma coluna também exige SQL manual (ex.: `ALTER TABLE users ALTER COLUMN name TYPE varchar(255)`).
+- Tabelas: `users`, `trainings` (do CSV) e `predictions` (sem imagem). `predictions.user_id` é chave estrangeira para `users.id` (`fk_predictions_user`, sem cascata) e tem o índice `idx_predictions_user_id`. Na entidade, `userId` (Long) grava a coluna e o `@ManyToOne` só de leitura (sem getter) existe para gerar a chave; nomes de índice e de chave são fixos para o `ddl-auto` não duplicar. Aumentar o tamanho de uma coluna também exige SQL manual (ex.: `ALTER TABLE users ALTER COLUMN name TYPE varchar(255)`).
 - `training-results.csv` (em `resources/data`) é importado na subida, de forma idempotente (chave `runAt` + `dataset`).
 
 ## Integração com o ai-service

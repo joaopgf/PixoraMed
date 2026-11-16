@@ -4,24 +4,37 @@ package com.pixoramed.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.Map;
 
 @Entity
-@Table(name = "predictions", indexes = @Index(columnList = "userId"))
+@Table(name = "predictions", indexes = @Index(name = "idx_predictions_user_id", columnList = "user_id"))
 public class Prediction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    // Dono da análise. O id vem do token, então a análise é gravada só com o número, sem carregar o usuário
+    @Column(name = "user_id", nullable = false)
     private Long userId;
+
+    // Relação N análises -> 1 usuário, na mesma coluna user_id. Só leitura (quem grava é o userId acima);
+    // existe para o banco ter a chave estrangeira fk_predictions_user e recusar análise sem usuário.
+    // Sem getter de propósito: o histórico não precisa dos dados do usuário e nada disso vai para o JSON
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false,
+            foreignKey = @ForeignKey(name = "fk_predictions_user"))
+    private User user;
 
     @Column(nullable = false)
     private Instant createdAt = Instant.now();

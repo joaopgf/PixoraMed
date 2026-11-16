@@ -78,10 +78,56 @@ O banco é simples, sem migrations: o Hibernate cria e atualiza as tabelas sozin
 | `trainings` | uma linha por treino do `training-results.csv` |
 | `predictions` | uma linha por análise: usuário, modelo, classe, confiança, probabilidade de cada classe (JSON), tempo e horário (sem imagem) |
 
+Relação: 1 usuário tem 0 ou N análises. `predictions.user_id` é chave estrangeira para `users.id` (`fk_predictions_user`), com o índice `idx_predictions_user_id` para a busca do histórico. A chave não apaga em cascata: a exclusão da conta apaga as análises antes do usuário, na mesma transação (`AccountService.delete`).
+
 O `ddl-auto=update` só acrescenta: ele não aumenta o tamanho de uma coluna que já existe. Num banco criado antes do limite de 255 no nome (que era 80), rode uma vez:
 
 ```sql
 ALTER TABLE users ALTER COLUMN name TYPE varchar(255);
+```
+
+### Chave estrangeira de `predictions` (bancos criados antes de 16/11/2026)
+
+Na subida, o Hibernate cria a chave estrangeira sozinho, mas não troca o nome do índice antigo de `user_id` (gerado automaticamente) e deixaria dois índices iguais. Rode este SQL uma vez em cada banco (Docker local e Neon). Ele pode rodar antes ou depois do deploy, e mais de uma vez:
+
+```sql
+-- Chave estrangeira predictions.user_id -> users.id e índice com nome fixo.
+-- Pode rodar antes ou depois do deploy, e mais de uma vez: só cria o que falta.
+
+-- 1) Conferência: precisa dar 0. Se der mais, há análises sem usuário e a chave estrangeira não entra.
+SELECT count(*) AS analises_sem_usuario
+FROM predictions p
+WHERE NOT EXISTS (SELECT 1 FROM users u WHERE u.id = p.user_id);
+
+-- 2) Alteração, numa transação só
+BEGIN;
+
+-- Índice de user_id: fica um só, com o nome idx_predictions_user_id
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_predictions_user_id') THEN
+        DROP INDEX IF EXISTS idxkqhrcalintqqxy5ubknbeppau;
+    ELSE
+        ALTER INDEX IF EXISTS idxkqhrcalintqqxy5ubknbeppau RENAME TO idx_predictions_user_id;
+    END IF;
+END $$;
+CREATE INDEX IF NOT EXISTS idx_predictions_user_id ON predictions (user_id);
+
+-- Chave estrangeira: o banco passa a recusar análise de usuário que não existe
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_predictions_user') THEN
+        ALTER TABLE predictions
+            ADD CONSTRAINT fk_predictions_user FOREIGN KEY (user_id) REFERENCES users (id);
+    END IF;
+END $$;
+
+COMMIT;
+
+-- 3) Conferência final: deve listar idx_predictions_user_id e fk_predictions_user
+SELECT indexname AS nome FROM pg_indexes WHERE tablename = 'predictions'
+UNION ALL
+SELECT conname FROM pg_constraint WHERE conrelid = 'predictions'::regclass AND contype = 'f';
 ```
 
 ### Como a pasta `data` popula o banco

@@ -450,7 +450,25 @@ User user = users.findByEmail(email).ourElse(null);
 | `trainings`   | uma linha por treino do `training-results.csv`                                                                    |
 | `predictions` | usuário, modelo, classe, confiança, probabilidade de cada classe (JSON), tempo e horário. **Sem a imagem** |
 
-A tabela `predictions` tem índice em `userId`, que é a busca do histórico.
+A tabela `predictions` tem índice em `user_id`, que é a busca do histórico.
+
+**A relação entre usuário e análise.** Um usuário tem 0 ou N análises, e cada análise pertence a um usuário. No banco, `predictions.user_id` é **chave estrangeira** para `users.id` (`fk_predictions_user`): o PostgreSQL recusa uma análise de um usuário que não existe e impede apagar um usuário que ainda tem análises. Por isso a exclusão da conta apaga as análises antes, na mesma transação. O DER lógico está em `docs/der/pixoramed_der.png`.
+
+No código, a entidade guarda as duas formas na mesma coluna:
+
+```java
+@Column(name = "user_id", nullable = false)
+private Long userId;                       // grava: o id vem do token
+
+@ManyToOne(fetch = FetchType.LAZY, optional = false)
+@JoinColumn(name = "user_id", insertable = false, updatable = false,
+        foreignKey = @ForeignKey(name = "fk_predictions_user"))
+private User user;                         // só leitura: gera a chave estrangeira
+```
+
+O `userId` continua sendo o que grava, porque o id já vem do token e não precisa carregar o usuário. O `@ManyToOne` só existe para o Hibernate criar a chave estrangeira; ele não tem getter, então os dados do usuário nunca vão para o JSON do histórico.
+
+**Pergunta de banca.** *Por que guardar o id e também o `@ManyToOne`?* Resposta: "O Hibernate só cria a chave estrangeira quando a entidade tem a associação. Mas para gravar uma análise basta o id do token, sem buscar o usuário no banco. Então o `userId` grava, e a associação fica só de leitura, para o banco garantir a integridade."
 
 **Por que sem Flyway.** O `ddl-auto=update` deixa o Hibernate criar e atualizar as tabelas sozinho. Foi uma escolha de simplicidade do grupo: três tabelas, sem histórico de migrations para manter. Em um sistema com dados reais de produção, o caminho seria Flyway, para versionar cada mudança do banco.
 
