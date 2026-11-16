@@ -1520,6 +1520,66 @@ if (cut != null && confidence < cut) {
 
 **Por que a Pele não tem inconclusivo.** Com o limiar de 18%, um caso com 35% de chance de maligno é justamente o que a triagem quer pegar. Esconder como "inconclusivo" iria contra o motivo do limiar. Por isso a classe fica, com o aviso.
 
+### Exemplos reais: como ler a tela de resultado
+
+**A regra em uma frase.** Na Pele, quem decide é o **limiar de 18%**, não a maior fatia do gráfico: se a probabilidade de maligno chega a 18%, o resultado é **maligno**, mesmo com benigno acima de 50%. Em Oral e Cérebro, a classe é a de maior probabilidade, e abaixo de 80% vira **inconclusivo**.
+
+**As faixas da Pele** (`p` = probabilidade calibrada de maligno; benigno é `1 − p`):
+
+| Probabilidade de maligno | Classe prevista | Aviso "baixa certeza" | Por quê |
+| --- | --- | --- | --- |
+| abaixo de 18% | benigno | não | benigno fica acima de 82% |
+| de 18% a 20% | **maligno** | não | passou do limiar, e benigno ainda tem 80% ou mais |
+| acima de 20% e abaixo de 80% | **maligno** | **sim** | nenhuma das duas classes chega a 80% |
+| 80% ou mais | **maligno** | não | maligno com probabilidade alta |
+
+A faixa de 18% a 20% é estreita e rara, mas existe: o resultado é maligno sem o aviso, porque o aviso olha a maior probabilidade entre as duas classes (`resultView.js`), e benigno ainda está em 80% ou mais.
+
+**De onde vêm os números 18%, 20% e 80%.** Só o 18% foi escolhido a partir dos dados; o 20% nem foi escolhido, é consequência do 80%.
+
+- **18% (limiar de maligno da Pele).** O valor está salvo no pacote do modelo, em `ai-service/models/skin_color.json` (`"threshold": 0.17999...`), e veio junto com o ensemble original. Como o código desse treino se perdeu, **não há registro de como exatamente ele foi calculado**. Na **reprodução** (`rna_Pele_EfficientNet.ipynb`), o notebook testa os limiares de 1% a 99%, mede cada um só nas imagens de **validação** dos 5 folds (nunca no teste) e fica com o de melhor **acurácia balanceada**; no empate, vale o de maior sensibilidade. Deu **19%**, bem perto dos 18% do app.
+- **Por que tão baixo.** Só cerca de **16% das lesões são malignas** no dataset. Com a probabilidade calibrada, uma lesão maligna raramente chega a 50%: com o corte em 50%, o modelo deixaria passar a maioria dos cânceres. Quando se busca equilibrar sensibilidade e especificidade, o melhor ponto costuma ficar perto dessa proporção de malignos, e foi o que aconteceu.
+- **80% (confiança mínima).** É uma **configuração do backend**: `INCONCLUSIVE_THRESHOLD`, com padrão 0,8 (`application.properties`). Em Oral e Cérebro, abaixo dela o resultado vira "inconclusivo"; na Pele, o mesmo valor vira o aviso de "baixa certeza" (`lowConfidenceThresholdFor` no `DecisionService`). **Não foi otimizado com dados**: é uma regra de projeto, "só afirmar com pelo menos 80%". O efeito foi medido depois, na Oral: 188 de 200 imagens conclusivas, com 98,4% de acerto nelas.
+- **20% (início do aviso na Pele).** A Pele tem duas classes, então benigno = 100% − maligno. O aviso aparece quando nenhuma das duas chega a 80%, o que só acontece com maligno **acima de 20% e abaixo de 80%**. Abaixo de 20% de maligno, o benigno já passa de 80%.
+
+**Pergunta de banca:** *Por que 18% e não 50%?*
+**Resposta:** "Os 18% vieram do pacote do modelo da Pele. Na reprodução do treino, escolhemos o limiar na validação, pela melhor acurácia balanceada, e deu 19%, bem parecido. É baixo porque só 16% das lesões são malignas: com 50%, perderíamos a maioria dos cânceres."
+
+**Pergunta de banca:** *E os 80%, de onde vêm?*
+**Resposta:** "São uma regra do sistema, configurável por variável de ambiente, para só afirmar uma classe com confiança alta. Não foram otimizados com dados. Em Oral e Cérebro viram o 'inconclusivo'; na Pele, o aviso de baixa certeza. O 20% da Pele é só a conta: 100% menos 80%."
+
+**O que cada parte da tela mostra.**
+
+- **Cartão "Classe prevista"**: a classe que o **backend** decidiu (`DecisionService`), com a explicação do limiar.
+- **Cartão "Probabilidade estimada de maligno"**: o número que é comparado com os 18%.
+- **Faixa amarela "Baixa certeza"**: aparece quando nenhuma classe chega a 80%.
+- **Gráfico**: o **negrito** na legenda e o número no **centro** são da **classe prevista**, não da maior fatia. Por isso, num resultado maligno com 26%, o negrito fica na fatia menor. No inconclusivo de Oral e Cérebro, nenhuma linha fica em negrito, porque "inconclusivo" não é uma fatia, e o centro mostra a maior.
+
+**Exemplo 1: isic_0034175 (Pele, da pasta de benignos).** Maligno = **26,09%** e benigno = **73,91%**.
+
+1. 26,09% é maior que 18%, então a classe prevista é **maligno**.
+2. Nenhuma classe chega a 80% (a maior é 73,91%), então aparece a faixa **"Baixa certeza"**.
+3. No gráfico, "maligno" fica em negrito e o centro mostra 26,09%, mesmo sendo a fatia menor.
+4. A imagem está na pasta de **benignos** do grupo: é um **falso alarme**. É o custo aceito do limiar baixo, e o aviso de baixa certeza deixa isso visível para o médico.
+
+**Os outros exemplos usados na demonstração** (imagens em `Desktop/teste_interno`):
+
+| Imagem | Pasta do grupo | O que o sistema mostrou | Leitura |
+| --- | --- | --- | --- |
+| `isic_0034202` (Pele) | maligno | **maligno**, 85,08%, sem aviso | Acerto com confiança alta: maligno passou dos 18% e dos 80% |
+| `isic_0034186` (Pele) | benigno | **maligno**, 34,64%, com "baixa certeza" | Falso alarme, igual ao isic_0034175 |
+| `isic_0034175` (Pele) | benigno | **maligno**, 26,09%, com "baixa certeza" | Falso alarme (Exemplo 1) |
+| `oral_normal_4963` (Oral) | normal | **inconclusivo**, 57,89% de confiança | A classe mais provável não chegou a 80% |
+
+**Pergunta de banca:** *Por que o resultado é maligno se o gráfico mostra 74% de benigno?*
+**Resposta:** "Porque na Pele a regra é o limiar de 18%, escolhido para triagem: a partir de 18% de chance de maligno, o sistema marca o caso como suspeito. Deixar passar um câncer é pior que um alarme falso. Como nenhuma classe chegou a 80%, a tela avisa baixa certeza, e o texto diz que é um caso suspeito, não uma confirmação."
+
+**Pergunta de banca:** *Esse exemplo não mostra que o modelo errou?*
+**Resposta:** "Mostra um falso alarme, e é o comportamento esperado do limiar baixo: na reprodução do treino, cerca de metade dos alarmes era falsa (valor preditivo de 51,2%), em troca de achar 89% dos malignos. O aviso de baixa certeza existe justamente para o médico ver que o caso é duvidoso."
+
+**Pergunta de banca:** *O que o negrito do gráfico indica?*
+**Resposta:** "A classe que o sistema decidiu, que vem do backend. Não é necessariamente a maior fatia: na Pele, pode ser maligno com 26%."
+
 ## Resultados e honestidade
 
 ### O que foi medido
@@ -1700,7 +1760,7 @@ Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenh
 
 **No PixoraMed.**
 
-- **Pele: 18%.** Maligno a partir de 18% de probabilidade calibrada. Aumenta a sensibilidade e aceita mais alarmes falsos.
+- **Pele: 18%.** Maligno a partir de 18% de probabilidade calibrada. Aumenta a sensibilidade e aceita mais alarmes falsos. Exemplos reais com a tela de resultado em [Exemplos reais: como ler a tela de resultado](#exemplos-reais-como-ler-a-tela-de-resultado).
 - **Oral e Cérebro: 80%.** Abaixo disso, a resposta é "inconclusivo". Na Oral, 188 das 200 imagens ficaram conclusivas (**cobertura** de 94%), e o acerto nelas subiu de 96,5% para **98,4%**.
 - O limiar é regra de negócio: fica no `DecisionService` do backend, configurável por variável de ambiente.
 
