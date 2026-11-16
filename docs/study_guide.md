@@ -1,6 +1,6 @@
 # Guia de estudo — conceitos do PixoraMed
 
-Nov 12, 2026 · Grupo PixoraMed (Bootcamp de IA II/2026, TCS e SENAI Londrina)
+Nov 16, 2026 · Grupo PixoraMed (Bootcamp de IA II/2026, TCS e SENAI Londrina)
 
 ## Como usar o guia
 
@@ -14,7 +14,7 @@ Cada conceito segue o mesmo roteiro, que é a ordem em que a banca costuma pergu
 
 A dica para a banca é responder nessa mesma ordem: definição, mecanismo, exemplo do próprio código, motivo.
 
-Os números deste guia são os medidos pelo grupo. Regra de ouro na banca: **não arredondar para cima e não chamar teste da mesma fonte de "teste externo"**. A seção [Resultados e honestidade](#resultados-e-honestidade) diz o que cada número mede e o que não mede, e a seção [Métricas e conceitos de IA](#métricas-e-conceitos-de-ia) traz a definição, a fórmula e as perguntas de banca de cada termo (acurácia, F1, matriz de confusão, AUC, overfitting, viés, alucinação...). A seção [IA: os modelos](#ia-os-modelos) tem imagens das redes, geradas com Python.
+Os números deste guia são os medidos pelo grupo. Regra de ouro na banca: **não arredondar para cima e não chamar teste da mesma fonte de "teste externo"**. A seção [Resultados e honestidade](#resultados-e-honestidade) diz o que cada número mede e o que não mede, e a seção [Métricas e conceitos de IA](#métricas-e-conceitos-de-ia) traz a definição, a fórmula e as perguntas de banca de cada termo (acurácia, F1, matriz de confusão, AUC, overfitting, viés, alucinação...). A seção [IA: os modelos](#ia-os-modelos) tem imagens das redes, geradas com Python. A seção [Tecnologias usadas](#tecnologias-usadas-slide-9) explica, no roteiro do slide 9, o que cada tecnologia faz e por que o grupo usa.
 
 ## Visão geral em uma tela
 
@@ -39,6 +39,225 @@ Navegador ──► frontend (React + Vite, Vercel)
 | ai-service | Pré-processa a imagem, roda o modelo, devolve probabilidades                      | Acessar o banco, guardar a imagem, decidir a classe |
 
 **Pergunta de banca.** *Resuma a arquitetura em 30 segundos.* Resposta: "São três serviços. O React na Vercel só mostra as telas e chama `/api`. A Vercel repassa para o backend Spring Boot no Render, que cuida do login, do histórico e da regra de decisão, e grava no PostgreSQL do Neon. Para classificar a imagem, o backend chama o ai-service em Python, que roda os modelos ONNX e devolve só as probabilidades. A IA não tem banco e não guarda imagem."
+
+## Tecnologias usadas (slide 9)
+
+Esta seção segue os três grupos do slide 9. Para cada tecnologia: **o que é**, **o que faz no PixoraMed** e **por que usamos**. A versão entre parênteses é a que aparece no slide. Na banca, a fala curta é sempre a mesma: "o que é, onde entra no nosso sistema e por que escolhemos".
+
+```
+DESENVOLVIMENTO DO SISTEMA            TREINO DOS MODELOS              FERRAMENTAS E HOSPEDAGEM
+React + Vite ── site (telas)          Kaggle ── baixa os datasets      Git + GitHub ── código e versões
+Java + Spring Boot ── API (backend)   Jupyter + Colab ── notebooks/GPU  Docker ── empacota cada serviço
+PostgreSQL + SQL ── banco             OpenCV ── lê e prepara a imagem  Terraform ── cria a nuvem
+Python + FastAPI ── serviço de IA     NumPy / Pandas ── números/tabelas Vercel ── site
+ONNX Runtime ── roda o modelo         PyTorch ── treina a rede         Render ── API e IA · Neon ── banco
+```
+
+### Desenvolvimento do sistema
+
+#### Java (21 LTS)
+
+- **O que é.** Linguagem de programação orientada a objetos, compilada para rodar na JVM (máquina virtual Java). **LTS** (*Long-Term Support*) quer dizer versão com suporte e correções por vários anos.
+- **O que faz no PixoraMed.** É a linguagem do **backend** (`backend/`): login, contas, histórico, importação dos treinos e a regra que decide a classe final (`DecisionService`).
+- **Por que usamos.** É o padrão de mercado para API com login e banco, tem tipagem forte (o compilador pega muito erro antes de rodar) e é a linguagem que o bootcamp cobre no backend. A versão LTS evita ficar sem atualização no meio do projeto.
+
+#### Spring Boot (4.1.2)
+
+- **O que é.** Framework Java que já vem configurado para criar APIs: servidor web embutido, injeção de dependência e módulos prontos ("starters").
+- **O que faz no PixoraMed.** Cada starter do `pom.xml` resolve uma parte:
+  - `webmvc`: os controllers e as rotas `/api/...` (GET, POST, PUT, PATCH, DELETE).
+  - `security` + `oauth2-resource-server`: o login com JWT e a proteção das rotas.
+  - `data-jpa`: os repositórios e o mapeamento das tabelas (Hibernate).
+  - `validation`: as regras dos DTOs (`@NotBlank`, `@Email`, tamanhos).
+  - `restclient`: a chamada HTTP do backend para o ai-service (`AiServiceClient`).
+- **Por que usamos.** Sem ele, cada uma dessas peças teria de ser montada e configurada à mão. Com o Spring Boot, o grupo escreve só a regra do sistema, nas camadas controller → service → repository.
+
+#### Python (3.12)
+
+- **O que é.** Linguagem de programação interpretada, a mais usada em ciência de dados e IA.
+- **O que faz no PixoraMed.** Duas coisas: o **treino** dos modelos nos notebooks e o **ai-service** (`ai-service/`), que roda os modelos em produção. Também os scripts de exportação para ONNX e de geração dos diagramas e gráficos (`docs/`).
+- **Por que usamos.** As bibliotecas de IA e de imagem (PyTorch, OpenCV, Pillow, NumPy, ONNX Runtime) são do mundo Python. Usar a mesma linguagem no treino e na inferência garante que a imagem seja preparada **igual** nos dois lugares.
+
+#### FastAPI (0.162.2)
+
+- **O que é.** Framework Python para criar APIs HTTP, rápido e com validação automática dos dados (Pydantic). Roda em cima do servidor **Uvicorn**.
+- **O que faz no PixoraMed.** É a "porta de entrada" do ai-service (`app/main.py`), com três rotas: `GET /health` (o Render confere se está no ar), `GET /models` e `POST /predict` (recebe a imagem e devolve as probabilidades). As duas últimas exigem o header `X-Internal-Token`.
+- **Por que usamos.** Poucas linhas para uma API completa, com validação de entrada e documentação automática. É leve, o que importa no plano gratuito do Render (512 MB).
+
+#### React (19.3.1)
+
+- **O que é.** Biblioteca JavaScript para construir interfaces com **componentes**: pedaços de tela reutilizáveis que se redesenham quando os dados mudam.
+- **O que faz no PixoraMed.** Todo o site (`frontend/`): login, nova análise, resultado com o gráfico, histórico e conta. Junto vêm o React Router (troca de tela sem recarregar), o TanStack Query (busca e cache dos dados da API) e o Recharts (gráfico de pizza das probabilidades).
+- **Por que usamos.** É a biblioteca de frontend mais usada no mercado. Um componente como o `ProbabilityPieChart` é escrito uma vez e usado no resultado e no histórico.
+
+#### Vite (6.4.5)
+
+- **O que é.** Ferramenta de desenvolvimento e de *build* do frontend: um servidor local que atualiza a tela na hora a cada mudança no código, e um empacotador que gera os arquivos finais do site.
+- **O que faz no PixoraMed.** No desenvolvimento, sobe o site em `localhost:5173` e repassa as chamadas `/api` para o backend (proxy do `vite.config.js`). No deploy, `npm run build` gera os arquivos estáticos (HTML, JS, CSS) que a Vercel publica.
+- **Por que usamos.** É bem mais rápido que as ferramentas antigas (como o Create React App, que foi descontinuado) e o proxy evita problema de CORS no desenvolvimento.
+
+#### PostgreSQL (17)
+
+- **O que é.** Banco de dados relacional (tabelas com linhas e colunas, ligadas por chaves), gratuito e de código aberto.
+- **O que faz no PixoraMed.** Guarda as três tabelas: `users`, `trainings` e `predictions` (o histórico, **sem a imagem**). Localmente roda no Docker (`postgres:17-alpine`); em produção, no Neon.
+- **Por que usamos.** É confiável, gratuito, suporta JSON (usado nas probabilidades de cada classe) e tem hospedagem gratuita no Neon. O Spring Boot conversa com ele pelo driver `postgresql`.
+
+#### SQL
+
+- **O que é.** A linguagem padrão para consultar e alterar bancos relacionais (`SELECT`, `INSERT`, `UPDATE`, `DELETE`, `ALTER TABLE`).
+- **O que faz no PixoraMed.** A maior parte do SQL é **gerada** pelo Spring Data JPA a partir do nome do método (`findByUserIdOrderByCreatedAtDesc` vira um `SELECT ... ORDER BY created_at DESC`). O SQL escrito à mão aparece quando o Hibernate não resolve sozinho, como o `ALTER TABLE users ALTER COLUMN name TYPE varchar(255)` rodado no Docker e no Neon. Também serve para conferir os dados direto no banco (pgAdmin).
+- **Por que usamos.** É como qualquer banco relacional é consultado. Saber SQL é o que permite conferir o que o JPA gravou e corrigir o que ele não muda sozinho.
+
+#### ONNX Runtime (1.31.1)
+
+- **O que é.** Motor que **executa** modelos salvos no formato ONNX (*Open Neural Network Exchange*), um formato aberto para redes neurais.
+- **O que faz no PixoraMed.** O ai-service carrega os três modelos de `ai-service/models/` (`skin_color.onnx`, `oral_color.onnx`, `brain_gray.onnx`) e roda cada análise com `session.run(...)` em CPU.
+- **Por que usamos.** O PyTorch tem centenas de MB e só é necessário para treinar. O ONNX Runtime roda o mesmo modelo, rápido em CPU, com uma imagem Docker bem menor, que cabe no Render gratuito. Detalhes em [Formatos do modelo](#formatos-do-modelo-pt-pickle-onnx-e-o-json).
+
+### Treino dos modelos
+
+> Estas tecnologias ficam no repositório de treino (**Projeto-ML-Cancer**, notebooks em `rna_cor/` e `rna_cinza/`). As exceções são NumPy e OpenCV, que também estão no ai-service, e o PyTorch, usado nos scripts de exportação.
+
+#### PyTorch
+
+- **O que é.** Biblioteca Python para criar e treinar redes neurais, com cálculo em GPU (placa de vídeo, via CUDA).
+- **O que faz no PixoraMed.** Define e treina as redes: a CNN pequena da Oral e do Cérebro (camadas `Conv2d`, `ReLU`, `MaxPool2d`, `Dropout`, `Linear`) e a EfficientNet-B0 da Pele (pelo `torchvision`, com pesos pré-treinados no ImageNet). Os pesos treinados são salvos em `.pt` (`torch.save`) e depois convertidos para ONNX com `torch.onnx.export` (`ai-service/scripts/export_onnx.py` e `export_skin_ensemble.py`).
+- **Por que usamos.** É a biblioteca de redes neurais mais usada em pesquisa e ensino, roda na GPU (o treino de imagem é pesado) e exporta direto para ONNX. Em produção **não** entra: o `requirements.txt` do ai-service não tem `torch`.
+
+#### Pandas
+
+- **O que é.** Biblioteca Python para trabalhar com **tabelas** (o *DataFrame*): ler CSV, filtrar, agrupar e resumir dados.
+- **O que faz no PixoraMed.** Nos notebooks: lê o `HAM10000_metadata.csv` da Pele (o rótulo `dx` e a lesão `lesion_id` de cada imagem), equilibra quantas imagens entram por diagnóstico (`groupby("dx")`), guarda a lista das imagens de teste e monta as tabelas de resultado por fold e por diagnóstico.
+- **Por que usamos.** Os metadados vêm em tabela, e o Pandas faz em uma linha o que levaria um laço inteiro. A separação **por lesão** (para não ter a mesma lesão no treino e no teste) depende dessa tabela.
+- **Cuidado na fala.** O slide resume como "CSV dos treinos", mas a linha de cada execução no `training-results.csv` é gravada com o módulo `csv` do próprio Python, e o backend lê esse CSV em Java. O sistema em produção **não usa Pandas**. Ver [Como os treinos entram no banco](#como-os-treinos-entram-no-banco-python-pandas-e-o-csv).
+
+#### NumPy
+
+- **O que é.** Biblioteca Python de **matrizes** (arrays de números) e operações matemáticas rápidas sobre elas. É a base de PyTorch, OpenCV e Pandas.
+- **O que faz no PixoraMed.** Uma imagem, para o computador, é uma matriz de pixels. No ai-service (`app/inference.py`), o NumPy transforma os bytes do arquivo em matriz, troca a ordem dos eixos de (altura, largura, canais) para (canais, altura, largura), divide pela escala, aplica a normalização do ImageNet na Pele e calcula o **softmax**. Nos notebooks, calcula a média e o desvio padrão das métricas entre os folds (`np.mean`, `np.std`).
+- **Por que usamos.** É o formato que o OpenCV devolve e que o ONNX Runtime recebe: a ponte entre a imagem e o modelo. Faz a conta na matriz inteira de uma vez, sem laço pixel a pixel.
+
+#### Jupyter (notebooks)
+
+- **O que é.** Ambiente de **notebooks** (`.ipynb`): um documento com células de código, texto e gráficos, que roda uma célula de cada vez e guarda a saída.
+- **O que faz no PixoraMed.** Cada treino é um notebook (`rna_Oral.ipynb`, `rna_Cerebro.ipynb`, `rna_Pele_EfficientNet.ipynb`...), com a leitura dos dados, o treino, a validação cruzada e os gráficos de resultado na mesma página.
+- **Por que usamos.** Treino é experimento: roda, olha o gráfico, ajusta e roda de novo, sem reexecutar tudo. E o notebook já serve de registro do que foi feito.
+
+#### OpenCV (5.0)
+
+- **O que é.** Biblioteca de **visão computacional**: ler, converter e transformar imagens.
+- **O que faz no PixoraMed.** No treino e no ai-service, faz a mesma preparação da Oral e do Cérebro: lê a imagem (`cv2.imread` no notebook, `cv2.imdecode` no ai-service, que recebe bytes), em cor ou em cinza, converte de **BGR para RGB** (o OpenCV lê em BGR) e redimensiona para 128x128 (`cv2.resize`). A Pele usa o **Pillow** em vez do OpenCV, porque o pacote dela foi treinado com o Pillow.
+- **Por que usamos.** É a biblioteca padrão de imagem em Python. Usar a mesma no treino e na produção garante a mesma conta: uma diferença de cor ou de redimensionamento derruba a acurácia. Ver [Pré-processamento igual ao treino](#pré-processamento-igual-ao-treino).
+
+#### Google Colab (GPU Tesla T4)
+
+- **O que é.** Serviço do Google que roda notebooks Jupyter na nuvem, com GPU gratuita (no nosso caso, uma NVIDIA Tesla T4).
+- **O que faz no PixoraMed.** Parte dos treinos rodou lá (por exemplo, o Cérebro em cor, ~27 min na T4) e também a **reprodução** do treino da Pele com a EfficientNet-B0. Os resultados eram copiados para o Google Drive.
+- **Por que usamos.** Treinar rede com imagem em CPU levaria horas. Nem todos do grupo têm GPU, e o Colab dá uma de graça, sem instalar nada. Outros treinos rodaram em GPU local (RTX A400).
+
+#### Kaggle (datasets)
+
+- **O que é.** Plataforma de ciência de dados que hospeda datasets públicos e competições.
+- **O que faz no PixoraMed.** É de onde vieram as imagens: o **Multi Cancer** (Oral e Cérebro) e o **HAM10000** (Pele). Os nomes das classes (`scc`, `menin`, `tumor`...) vêm da descrição desses datasets. Os créditos aparecem no site (`DatasetCredits`).
+- **Por que usamos.** Juntar e rotular milhares de imagens médicas não cabe num bootcamp. Datasets públicos e já rotulados permitem treinar, e outros grupos podem conferir os resultados com os mesmos dados. A limitação é que todo teste foi feito com imagens da **mesma fonte** (ver [Resultados e honestidade](#resultados-e-honestidade)).
+
+### Ferramentas e hospedagem
+
+#### Git (2.55.0)
+
+- **O que é.** Sistema de **controle de versão**: guarda o histórico de cada mudança no código (os *commits*) e permite voltar a qualquer versão.
+- **O que faz no PixoraMed.** Todo o monorepo é versionado. Foi o Git que permitiu, por exemplo, restaurar os gráficos da Pele de um commit antigo para `docs/model_results/`.
+- **Por que usamos.** Quatro pessoas mexendo no mesmo código precisam saber quem mudou o quê e quando, e poder desfazer um erro.
+
+#### GitHub
+
+- **O que é.** Site que hospeda repositórios Git na nuvem.
+- **O que faz no PixoraMed.** Guarda os dois repositórios (PixoraMed e Projeto-ML-Cancer, privados). Cada **push na main** dispara o deploy automático na Vercel e no Render.
+- **Por que usamos.** É onde o grupo compartilha o código, é o mais usado no mercado, e Vercel e Render se ligam a ele para publicar sozinhos.
+
+#### Docker (29.9.3)
+
+- **O que é.** Ferramenta que empacota um serviço com tudo de que ele precisa (sistema, linguagem, bibliotecas) numa **imagem**, que roda igual em qualquer máquina, num **container**.
+- **O que faz no PixoraMed.** Cada serviço tem o seu `Dockerfile`. No desenvolvimento, `docker compose up --build` (em `infra/`) sobe banco, ai-service, backend e site juntos. Em produção, o Render builda e roda as imagens do backend e do ai-service.
+- **Por que usamos.** Acaba com o "na minha máquina funciona": ninguém precisa instalar Java, Python e PostgreSQL na versão certa. Também é o **plano B da banca**: sem internet, o sistema inteiro roda no notebook. Ver [Docker e Dockerfile](#docker-e-dockerfile).
+
+#### Terraform (1.17.0)
+
+- **O que é.** Ferramenta de **infraestrutura como código**: a infraestrutura é descrita em arquivos `.tf`, e o Terraform cria ou altera os recursos nos provedores para ficarem iguais ao arquivo.
+- **O que faz no PixoraMed.** `infra/terraform/` cria o projeto da Vercel, os dois serviços do Render com as variáveis e usa o banco do Neon. Também gera os segredos (`JWT_SECRET`, `AI_SERVICE_TOKEN`), que ninguém digitou.
+- **Por que usamos.** A infraestrutura fica documentada e repetível: dá para recriar tudo com um comando, sem clicar em três painéis diferentes. Ver [Terraform](#terraform-infraestrutura-como-código).
+
+#### Vercel (site)
+
+- **O que é.** Plataforma de hospedagem de sites estáticos e frontends.
+- **O que faz no PixoraMed.** Publica o site React em `pixoramed.vercel.app` e repassa as chamadas `/api/*` para o backend no Render (rewrite do `vercel.json`).
+- **Por que usamos.** Plano gratuito, deploy automático a cada push e CDN (o site carrega rápido de qualquer lugar). O rewrite faz o navegador ver site e API no mesmo endereço.
+
+#### Render (API e IA)
+
+- **O que é.** Plataforma que roda serviços web a partir de um repositório ou de um Dockerfile.
+- **O que faz no PixoraMed.** Roda o backend (`pixoramed.onrender.com`) e o ai-service (`pixoramed-ia.onrender.com`), cada um com o seu Dockerfile.
+- **Por que usamos.** Plano gratuito que aceita Docker, então roda Java e Python. A limitação: os serviços **dormem depois de 15 min** sem uso e levam perto de 1 minuto para acordar. Por isso o timeout de 120 s e a dica de abrir o site uns 5 min antes da banca.
+
+#### Neon (banco de dados)
+
+- **O que é.** Serviço de PostgreSQL na nuvem (*serverless*).
+- **O que faz no PixoraMed.** É o banco de produção: contas, treinos e histórico.
+- **Por que usamos.** É PostgreSQL de verdade (o mesmo banco do Docker local, então nada muda no código), com plano gratuito. Fica separado do Render, então o banco não depende dos serviços que dormem e são refeitos a cada deploy. O Terraform protege o banco com `prevent_destroy`.
+
+### Também usados, fora do slide
+
+| Tecnologia                             | O que faz no PixoraMed                                                                                                  |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Pillow                                 | Lê e prepara a imagem da Pele (orientação EXIF, fundo branco, redimensionamento bicúbico), igual ao pacote treinado |
+| Uvicorn                                | Servidor que roda o FastAPI no ai-service                                                                               |
+| Maven                                  | Baixa as dependências e compila o backend (`pom.xml`)                                                                |
+| Hibernate / JPA                        | Transforma as classes Java em tabelas e gera o SQL                                                                      |
+| TanStack Query, React Router, Recharts | Busca de dados com cache, troca de telas e gráfico de pizza no site                                                    |
+| scikit-learn                           | Divisão da validação cruzada nos notebooks (`StratifiedKFold`)                                                     |
+| Matplotlib                             | Gráficos de resultado dos treinos e de `docs/model_results/`                                                         |
+| pytest e JUnit                         | Testes do ai-service (pytest) e do backend (JUnit, via `mvn test`)                                                    |
+
+### Revisão rápida: uma linha por tecnologia
+
+| Tecnologia             | Em uma frase                                                                |
+| ---------------------- | --------------------------------------------------------------------------- |
+| Java + Spring Boot     | O backend: login, contas, histórico e a decisão da classe final           |
+| Python + FastAPI       | O serviço de IA: recebe a imagem e devolve as probabilidades               |
+| React + Vite           | O site: React desenha as telas, Vite roda no desenvolvimento e gera o build |
+| PostgreSQL + SQL       | O banco com usuários, treinos e histórico; SQL é a linguagem dele        |
+| ONNX Runtime           | Roda os modelos em produção, sem o PyTorch                                |
+| PyTorch                | Cria e treina as redes (CNN e EfficientNet-B0) e exporta para ONNX          |
+| Pandas                 | Tabelas nos notebooks: metadados da Pele e resumos dos resultados           |
+| NumPy                  | Matrizes: a imagem vira números que o modelo entende                       |
+| Jupyter                | Os notebooks onde cada treino foi feito e registrado                        |
+| OpenCV                 | Lê, converte BGR → RGB e redimensiona a imagem, igual no treino e no app  |
+| Google Colab           | GPU gratuita (Tesla T4) para treinar na nuvem                               |
+| Kaggle                 | De onde vieram os datasets (Multi Cancer e HAM10000)                        |
+| Git + GitHub           | Histórico do código e repositório compartilhado; push na main publica    |
+| Docker                 | Empacota cada serviço; roda o sistema inteiro localmente                   |
+| Terraform              | Cria a hospedagem por código (Vercel, Render, Neon)                        |
+| Vercel / Render / Neon | Site / backend e IA / banco, todos no plano gratuito                        |
+
+### Perguntas de banca sobre as tecnologias
+
+**Pergunta de banca:** *Por que duas linguagens, Java e Python?*
+**Resposta:** "Cada uma onde é mais forte. Java com Spring Boot é o padrão para API com login, banco e regras. Python é onde estão as bibliotecas de IA e de imagem, e foi a linguagem do treino; rodar a IA em Python garante o mesmo pré-processamento do notebook. Os dois se falam por HTTP."
+
+**Pergunta de banca:** *Se vocês treinaram com PyTorch, por que ele não está no sistema?*
+**Resposta:** "O PyTorch só é necessário para treinar e pesa centenas de MB. Depois do treino, exportamos o modelo para ONNX, e o ONNX Runtime roda o mesmo modelo em CPU com uma imagem bem menor, que cabe no Render gratuito."
+
+**Pergunta de banca:** *Qual a diferença entre NumPy, Pandas e OpenCV?*
+**Resposta:** "O OpenCV lê e transforma a imagem. O NumPy guarda a imagem como matriz de números e faz as contas nela: normalização, troca de eixos, softmax. O Pandas trabalha com tabelas, como os metadados da Pele e os resumos dos resultados. Na produção ficam só o OpenCV e o NumPy; o Pandas ficou nos notebooks."
+
+**Pergunta de banca:** *Onde o Pandas entra no sistema?*
+**Resposta:** "Ele não entra no sistema em produção. Foi usado nos notebooks para ler os metadados do HAM10000, separar as imagens por lesão e montar as tabelas de resultado. O que chega ao sistema é o CSV de resultados, que o backend lê em Java."
+
+**Pergunta de banca:** *Por que Docker e Terraform, se a hospedagem já faz deploy sozinha?*
+**Resposta:** "São coisas diferentes. O Docker empacota cada serviço, e o Render roda essa imagem; localmente, ele sobe o sistema inteiro com um comando, que é o nosso plano B. O Terraform cria a hospedagem em si: os serviços do Render, o projeto da Vercel e as variáveis, de forma documentada e repetível."
+
+**Pergunta de banca:** *Por que Vercel, Render e Neon, e não um provedor só?*
+**Resposta:** "Pelo plano gratuito de cada um no que precisávamos: a Vercel é a melhor para site estático, o Render roda Docker com Java e Python, e o Neon dá PostgreSQL gratuito, o mesmo banco do Docker local. O custo é o Render dormir depois de 15 minutos sem uso."
 
 ## Estrutura do projeto
 
@@ -121,19 +340,19 @@ public PredictionResponse predict(@AuthenticationPrincipal Jwt jwt, ...) {
 
 **Onde está no código.** O PixoraMed usa os cinco métodos:
 
-| Método  | Rota                           | Login? | O que faz                                                            | Onde                     |
-| -------- | ------------------------------ | ------ | -------------------------------------------------------------------- | ------------------------ |
-| `POST` | `/api/auth/register`         | não   | Cria a conta; responde **201** (ou 409 se o e-mail já existe) | `AuthController`       |
-| `POST` | `/api/auth/login`            | não   | Confere e-mail e senha e devolve o token JWT                         | `AuthController`       |
-| `GET`  | `/api/health`                | não   | Diz se a API está no ar (usado pelo Render)                         | `TrainingController`   |
-| `GET`  | `/api/trainings`             | não   | Lista os treinos importados do CSV                                   | `TrainingController`   |
-| `GET`  | `/api/models`                | não   | Lista os modelos da IA, com os limiares                              | `PredictionController` |
-| `POST` | `/api/predictions`           | sim    | Envia a imagem (multipart) e recebe a classe e as probabilidades     | `PredictionController` |
-| `GET`  | `/api/predictions?limit=100` | sim    | Histórico do usuário logado                                        | `PredictionController` |
-| `GET`  | `/api/users/me`              | sim    | Dados da conta logada                                                | `UserController`       |
-| `PUT`  | `/api/users/me`              | sim    | Altera nome e e-mail (409 se o e-mail já for de outra conta)         | `UserController`       |
-| `PATCH` | `/api/users/me/password`    | sim    | Troca a senha, conferindo a atual; responde **204**                  | `UserController`       |
-| `DELETE` | `/api/users/me`            | sim    | Exclui a conta e o histórico (hard delete), com a senha no corpo; **204** | `UserController` |
+| Método    | Rota                           | Login? | O que faz                                                                        | Onde                     |
+| ---------- | ------------------------------ | ------ | -------------------------------------------------------------------------------- | ------------------------ |
+| `POST`   | `/api/auth/register`         | não   | Cria a conta; responde **201** (ou 409 se o e-mail já existe)             | `AuthController`       |
+| `POST`   | `/api/auth/login`            | não   | Confere e-mail e senha e devolve o token JWT                                     | `AuthController`       |
+| `GET`    | `/api/health`                | não   | Diz se a API está no ar (usado pelo Render)                                     | `TrainingController`   |
+| `GET`    | `/api/trainings`             | não   | Lista os treinos importados do CSV                                               | `TrainingController`   |
+| `GET`    | `/api/models`                | não   | Lista os modelos da IA, com os limiares                                          | `PredictionController` |
+| `POST`   | `/api/predictions`           | sim    | Envia a imagem (multipart) e recebe a classe e as probabilidades                 | `PredictionController` |
+| `GET`    | `/api/predictions?limit=100` | sim    | Histórico do usuário logado                                                    | `PredictionController` |
+| `GET`    | `/api/users/me`              | sim    | Dados da conta logada                                                            | `UserController`       |
+| `PUT`    | `/api/users/me`              | sim    | Altera nome e e-mail (409 se o e-mail já for de outra conta)                    | `UserController`       |
+| `PATCH`  | `/api/users/me/password`     | sim    | Troca a senha, conferindo a atual; responde **204**                        | `UserController`       |
+| `DELETE` | `/api/users/me`              | sim    | Exclui a conta e o histórico (hard delete), com a senha no corpo; **204** | `UserController`       |
 
 Entre o backend e o ai-service, o padrão é o mesmo:
 
@@ -457,11 +676,11 @@ export async function request(path, options = {}) {
 
 **Como o sistema trata.**
 
-| Peça | Onde | O que faz |
-| --- | --- | --- |
-| `ErrorBoundary` global | `main.jsx` | Qualquer erro de tela vira a mensagem "Algo deu errado nesta tela", com "Recarregar a página" e "Voltar ao início" |
-| `ErrorBoundary` do conteúdo | `Layout.jsx`, em volta do `Suspense` | O erro fica só no conteúdo: menu e barra do topo continuam. Trocar de página limpa o erro |
-| Recarga depois de deploy | `main.jsx` (evento `vite:preloadError`) e `utils/staleChunk.js` | Quando o arquivo de uma tela não carrega, recarrega a página **uma vez** para pegar a versão nova. Se falhar de novo em menos de 10 s, mostra a mensagem, sem ciclo de recarga |
+| Peça                          | Onde                                                                  | O que faz                                                                                                                                                                               |
+| ------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ErrorBoundary` global       | `main.jsx`                                                          | Qualquer erro de tela vira a mensagem "Algo deu errado nesta tela", com "Recarregar a página" e "Voltar ao início"                                                                    |
+| `ErrorBoundary` do conteúdo | `Layout.jsx`, em volta do `Suspense`                              | O erro fica só no conteúdo: menu e barra do topo continuam. Trocar de página limpa o erro                                                                                            |
+| Recarga depois de deploy       | `main.jsx` (evento `vite:preloadError`) e `utils/staleChunk.js` | Quando o arquivo de uma tela não carrega, recarrega a página **uma vez** para pegar a versão nova. Se falhar de novo em menos de 10 s, mostra a mensagem, sem ciclo de recarga |
 
 O que ele **não** pega: erro dentro de um clique, código assíncrono e falha de requisição. Esses ficam com o `apiClient` e o `QueryState`, que mostram "Carregando..." e "Não foi possível carregar".
 
@@ -846,16 +1065,7 @@ Aqui `weights=None` porque os pesos vêm do arquivo do grupo, já ajustados para
 
 Os passos 2 a 4 estão todos dentro do `skin_color.onnx`. O script de exportação confere se o ONNX dá a mesma saída que o PyTorch (diferença máxima de 0,0001) antes de aceitar o arquivo.
 
-**CNN do grupo × EfficientNet-B0.**
-
-|                  | CNN (Oral e Cérebro)                     | EfficientNet-B0 (Pele)               |
-| ---------------- | ----------------------------------------- | ------------------------------------ |
-| Pesos iniciais   | Aleatórios (do zero)                     | ImageNet (pré-treinada)             |
-| Profundidade     | 3 blocos convolucionais                   | 16 blocos MBConv                     |
-| Parâmetros      | ~24 mil                                   | ~4 milhões por rede, 5 redes        |
-| Entrada          | 128×128; Oral / 255, Cérebro de 0 a 255 | 224×224, normalização ImageNet    |
-| Saída           | Softmax entre as classes                  | Sigmoid calibrada (Platt) de maligno |
-| Tempo por imagem | 0,1–0,2 s                                | 1,7 s                                |
+**CNN do grupo × EfficientNet-B0.** A comparação completa (parâmetros, hiperparâmetros, saída, tempo) está em [CNN × EfficientNet-B0: o que muda](#cnn-oral-e-cérebro--efficientnet-b0-pele-o-que-muda).
 
 **Pergunta da banca:** "O que é a EfficientNet-B0?"
 **Resposta:** "É uma CNN do Google, pré-treinada em 1,28 milhão de imagens do ImageNet. A B0 é a menor da família, com cerca de 5 milhões de parâmetros. Trocamos a última camada por uma saída só, a de maligno, e ajustamos a rede com as imagens de pele."
@@ -877,6 +1087,182 @@ Os passos 2 a 4 estão todos dentro do `skin_color.onnx`. O script de exportaç�
 
 **Pergunta da banca:** "Por que 224×224 e a normalização do ImageNet?"
 **Resposta:** "Porque a EfficientNet-B0 foi pré-treinada assim. Para aproveitar o que ela aprendeu, a imagem precisa chegar no mesmo tamanho e na mesma escala do treino."
+
+### Parâmetros e hiperparâmetros dos nossos modelos
+
+**O que é.**
+
+- **Parâmetros** são os números que o modelo **aprende sozinho** durante o treino: os pesos e os vieses de cada camada. O otimizador muda esses números a cada lote. É neles que fica "o conhecimento" da rede, e é isso que vai salvo no `.pt` e no `.onnx`.
+- **Hiperparâmetros** são as escolhas que **o grupo faz antes** de treinar e que o treino não muda: quantas épocas, o tamanho do lote, a taxa de aprendizado, o otimizador, o tamanho da imagem, quantas camadas e filtros a rede tem, o Dropout.
+
+**Comparação para lembrar.** Pense num aluno estudando para uma prova. O que ele aprende (o conteúdo na cabeça) são os **parâmetros**. O plano de estudo (quantas horas por dia, quantos exercícios por vez, quantas semanas) são os **hiperparâmetros**. O plano é escolhido antes; o conteúdo vem do estudo.
+
+**Como funciona.** O treino é um laço: a rede prevê um lote, a perda mede o erro e o otimizador ajusta os **parâmetros**. Os **hiperparâmetros** definem como esse laço roda: quantas imagens por vez (lote), o tamanho de cada ajuste (taxa de aprendizado) e quantas vezes passar pelos dados (épocas). Para escolher os hiperparâmetros, o grupo treinou várias versões e comparou o resultado na validação cruzada: é o que está no CSV dos treinos.
+
+**Onde estão os parâmetros.**
+
+| Modelo | Parâmetros | Onde ficam |
+| --- | --- | --- |
+| CNN da Oral (cor, 2 classes) | **23.714** | 448 + 4.640 + 18.496 nas três convoluções, 130 na camada linear |
+| CNN do Cérebro (cinza, 3 classes) | **23.491** | Menos que a Oral: a 1ª convolução recebe 1 canal em vez de 3 (160 em vez de 448) e a linear tem 3 saídas (195) |
+| EfficientNet-B0 da Pele (1 rede) | **4.008.829** | Nos 16 blocos MBConv e na camada final `Linear(1280, 1)` |
+| Ensemble da Pele (5 redes) | **~20 milhões** | 5 × 4.008.829, mais 10 números da calibração de Platt (`a` e `b` de cada rede) |
+
+A EfficientNet-B0 original tem cerca de 5,3 milhões de parâmetros. A diferença para os 4.008.829 é a última camada: a original tem 1.000 saídas (1.280 × 1.000 pesos + 1.000 vieses); a nossa tem uma saída só (1.280 pesos + 1 viés).
+
+Os parâmetros também explicam o **tamanho do arquivo**: cada um é um número de 4 bytes (float32). 23.714 × 4 bytes dá ~95 KB (o arquivo da CNN tem ~110 KB). 20 milhões × 4 bytes dá ~80 MB, o tamanho do `skin_color.onnx`.
+
+**Os hiperparâmetros de cada treino.**
+
+| Hiperparâmetro | CNN (Oral e Cérebro) | EfficientNet-B0 (reprodução da Pele) |
+| --- | --- | --- |
+| Pesos iniciais | Aleatórios (do zero) | Do ImageNet (`EfficientNet_B0_Weights.DEFAULT`) |
+| Tamanho da imagem | 128×128 | 224×224 |
+| Pré-processamento | Oral em cor com pixels / 255; Cérebro em cinza sem divisão | Normalização do ImageNet (média e desvio por canal) |
+| Épocas | 450 | Até 12, com parada antecipada (paciência de 4 épocas sem a AUC da validação melhorar) |
+| Lote (batch) | 64 | 32 |
+| Otimizador | Adam | AdamW, com *weight decay* de 0,0001 |
+| Taxa de aprendizado | 0,001 fixa | 0,0003, diminuindo aos poucos (*cosine annealing*) |
+| Função de perda | `CrossEntropyLoss` (várias classes) | `BCEWithLogitsLoss` com peso maior para maligno (compensa o desbalanceamento) |
+| Dropout | 25% (escolhido pelo grupo) | O da própria EfficientNet |
+| Data augmentation | Não | Sim: espelhar, girar até 15° e variar um pouco brilho, contraste e cor |
+| Validação | 5 folds estratificados | 5 folds estratificados **e separados por lesão** |
+| Semente | 42 | 42 |
+
+**Cuidado na fala.** A coluna da Pele é a **reprodução** feita pelo grupo no Colab. O código do treino original do ensemble que roda no app se perdeu, então os hiperparâmetros exatos dele não são conhecidos. O que se sabe do modelo do app é a arquitetura, os pesos e a calibração, que estão no arquivo.
+
+**Por que os hiperparâmetros são tão diferentes.**
+
+- **Taxa de aprendizado menor na EfficientNet (0,0003 × 0,001).** A rede já chega sabendo reconhecer bordas e texturas. Um passo grande "apagaria" o que ela aprendeu no ImageNet; o ajuste fino precisa de passos pequenos. A CNN começa do zero e pode dar passos maiores.
+- **Muito menos épocas (12 × 450).** A EfficientNet parte de pesos bons e converge rápido. Além disso, cada época dela é muito mais cara: são 4 milhões de parâmetros e imagens de 224×224. A CNN é pequena, então cada época é rápida.
+- **Lote menor (32 × 64).** Uma rede maior com imagens maiores ocupa mais memória da GPU. O próprio notebook avisa para usar 16 se faltar memória.
+- **Augmentation e weight decay só na Pele.** Uma rede com milhões de parâmetros decora com mais facilidade (overfitting). Girar e espelhar as imagens e o *weight decay* (que puxa os pesos para valores pequenos) ajudam a rede a generalizar.
+
+**Calibração e limiar: parâmetro ou hiperparâmetro?** Os `a` e `b` da calibração de Platt são **parâmetros**: são aprendidos a partir dos dados, numa regressão logística sobre a validação de cada fold. O limiar de 18% não é aprendido pelo otimizador: é uma regra de decisão escolhida pela validação (na reprodução, o notebook testa os limiares de 1% a 99% e fica com o melhor). No sistema, ele é uma configuração do backend, como um hiperparâmetro.
+
+**Pergunta de banca:** *Qual a diferença entre parâmetro e hiperparâmetro?*
+**Resposta:** "Parâmetro é o que o modelo aprende sozinho no treino: os pesos de cada camada. A nossa CNN tem cerca de 24 mil; cada EfficientNet da Pele, 4 milhões. Hiperparâmetro é o que nós escolhemos antes do treino, como 450 épocas, lote de 64 e taxa de aprendizado de 0,001 na CNN."
+
+**Pergunta de banca:** *Como vocês escolheram os hiperparâmetros?*
+**Resposta:** "Na CNN, comparando experimentos na validação cruzada de 5 folds: cor ou cinza, e com ou sem dividir os pixels por 255. Ficou a melhor configuração de cada módulo. Na reprodução da Pele, usamos valores comuns para ajuste fino de rede pré-treinada: taxa de aprendizado pequena, poucas épocas e parada antecipada pela AUC da validação."
+
+**Pergunta de banca:** *Mais parâmetros é sempre melhor?*
+**Resposta:** "Não. Mais parâmetros dão mais capacidade, mas a rede fica mais lenta, mais pesada e decora com mais facilidade. Na Oral e no Cérebro, 24 mil parâmetros já passaram de 95% na mesma fonte. A Pele é um problema mais difícil, por isso usamos uma rede maior e pré-treinada."
+
+**Pergunta de banca:** *O número de camadas é parâmetro ou hiperparâmetro?*
+**Resposta:** "Hiperparâmetro. A arquitetura (quantas camadas, quantos filtros, o Dropout) é escolhida por nós antes do treino. Os pesos dentro dessas camadas é que são os parâmetros."
+
+### CNN (Oral e Cérebro) × EfficientNet-B0 (Pele): o que muda
+
+As duas são **redes convolucionais**: as duas usam filtros que deslizam pela imagem, ativação e pooling. A diferença está no tamanho, na construção dos blocos e principalmente em **como começaram**: a CNN foi criada e treinada do zero pelo grupo; a EfficientNet foi criada pelo Google, já veio treinada no ImageNet e o grupo só ajustou para pele.
+
+| | CNN do grupo (Oral e Cérebro) | EfficientNet-B0 (Pele) |
+| --- | --- | --- |
+| Quem criou a arquitetura | O grupo | O Google (2019) |
+| Como começou | Pesos aleatórios: treinada **do zero** | Pesos do ImageNet: **transfer learning** e fine-tuning |
+| Profundidade | 3 blocos (convolução + ReLU + MaxPool) | 16 blocos MBConv, organizados em 7 estágios |
+| Tipo de bloco | Convolução 3×3 comum | MBConv: convolução separável em profundidade, residual invertido e squeeze-and-excitation |
+| Ativação | ReLU | SiLU (com BatchNorm) |
+| Parâmetros | ~24 mil | ~4 milhões por rede, 5 redes no ensemble (~20 milhões) |
+| Arquivo | ~110 KB | ~80 MB |
+| Entrada | 128×128; Oral em cor, Cérebro em cinza | 224×224, cor, normalização do ImageNet |
+| Saída | Um logit por classe → **softmax** (as probabilidades somam 100%) | Um logit só (maligno) → **sigmoid** calibrada (Platt) → média das 5 redes |
+| Classes | Oral: normal e carcinoma; Cérebro: glioma, meningioma e hipofisário | Benigno e maligno (6 diagnósticos agrupados em 2) |
+| Decisão no backend | Classe mais provável; "inconclusivo" abaixo de 80% | Maligno a partir de 18%; aviso de baixa certeza abaixo de 80% |
+| Probabilidade calibrada? | Não: é o softmax da rede | Sim: calibração de Platt |
+| Tempo por imagem (CPU do Render) | 0,1 s (Cérebro) e 0,2 s (Oral) | 1,7 s |
+| Pré-processamento no ai-service | OpenCV (`preprocess`) | Pillow (`preprocess_pil`) |
+
+**Por que cada módulo ficou com uma rede.**
+
+- **Oral e Cérebro: CNN pequena.** Nesses datasets, as classes têm diferenças bem visíveis, e a rede pequena já passou de 95% na mesma fonte. Ela roda em uma fração de segundo na CPU gratuita. E criar a rede do zero mostrou que o grupo entende cada camada: dá para contar os 23.714 parâmetros à mão.
+- **Pele: EfficientNet-B0 pré-treinada.** As lesões de pele têm diferenças sutis e o dataset (HAM10000) é desbalanceado, com bem mais lesões benignas. Partir de uma rede que já sabe ver bordas, cores e texturas em 1,28 milhão de fotos exige menos imagens de pele e chega mais longe. Foi escolhida a B0 por ser a menor da família, já que roda em CPU.
+
+**A ideia em comum.** Nas duas redes, a imagem fica **menor** (altura e largura) e mais **funda** (mais canais) a cada bloco. No fim, um pooling global resume cada canal num número, e uma camada linear dá a resposta: 64 números na CNN, 1.280 na EfficientNet.
+
+**Pergunta de banca:** *Qual a diferença entre a CNN da Oral e a EfficientNet da Pele?*
+**Resposta:** "As duas são redes convolucionais. A da Oral e do Cérebro é nossa: 3 blocos, cerca de 24 mil parâmetros, treinada do zero. A da Pele é a EfficientNet-B0 do Google, com 16 blocos mais elaborados e 4 milhões de parâmetros, que já veio treinada no ImageNet; nós trocamos a última camada e ajustamos para pele. No app são 5 dessas redes, com a média das cinco."
+
+**Pergunta de banca:** *Por que não usar a EfficientNet nos três módulos?*
+**Resposta:** "Porque na Oral e no Cérebro a CNN pequena já resolveu bem o dataset, com 0,1 a 0,2 s por imagem. A EfficientNet seria mais lenta e pesada sem ganho medido. E o grupo quis ter as duas experiências: criar uma rede do zero e usar transfer learning."
+
+**Pergunta de banca:** *Por que a CNN usa softmax e a Pele usa sigmoid?*
+**Resposta:** "A CNN escolhe entre várias classes, então dá um número para cada uma e o softmax faz as probabilidades somarem 100%. A Pele é benigno contra maligno, com uma saída só: a sigmoid transforma esse número na probabilidade de maligno, e o benigno é o resto."
+
+### Como explicar os diagramas das duas redes na apresentação (slides 14 e 15)
+
+Os slides 14 (CNN da Oral e do Cérebro) e 15 (EfficientNet-B0 da Pele) usam o **mesmo tipo de desenho**, de propósito: quem entendeu o primeiro lê o segundo sozinho. A ideia é explicar a "gramática" do desenho uma vez, no slide 14, e no slide 15 só mostrar o que muda. Cada slide tem cerca de **40 segundos** (notas do deck).
+
+#### Como ler o desenho (vale para os dois)
+
+| O que aparece | O que significa |
+| --- | --- |
+| Da esquerda para a direita | O caminho da imagem pela rede: entra à esquerda, sai a resposta à direita |
+| **Altura** do bloco | O tamanho da imagem naquela etapa (128, 64, 32, 16... ou 224, 112, 56... 7) |
+| **Largura** do bloco | O número de canais (filtros). Na EfficientNet está em escala reduzida (logarítmica), porque de 3 a 1.280 canais não caberia |
+| Texto embaixo de cada bloco | Nome da camada, formato `canais × altura × largura` e quantos **parâmetros** ela tem |
+| Chave azul (ou verde) no alto | **Extração de características**: a parte que "enxerga" a imagem |
+| Chave laranja no alto | **Classificação**: a parte que transforma o que foi visto na resposta |
+| Linha azul em negrito | **Onde estão os parâmetros**, em número e em porcentagem |
+| Caixa cinza | Como foi o treino e qual foi o resultado |
+| Legenda no rodapé | A cor de cada tipo de camada |
+
+**Cores em comum.** Laranja-claro = entrada; azul = convolução; azul-escuro = pooling global; rosa = Dropout (só no treino); laranja = camada linear; vermelho = saída em probabilidade. Só na CNN: amarelo = MaxPool. Só na EfficientNet: verde = estágios de blocos MBConv.
+
+**A frase que resume os dois desenhos:** "a imagem vai ficando **menor** e mais **funda**". Menor em altura e largura (os blocos baixam), mais funda em canais (os blocos alargam). No fim, um pooling global resume cada canal em um número, e a camada linear dá a resposta.
+
+#### Slide 14: a CNN da Oral e do Cérebro
+
+**Roteiro (~40 s), com onde apontar.**
+
+1. *(Título e subtítulo)* "Esta é a rede que **nós criamos** para a Oral e o Cérebro, treinada do zero. Este desenho é o da Oral: imagem colorida de 128 por 128, e duas respostas, normal ou carcinoma."
+2. *(Chave azul, da esquerda para o meio)* "Leiam da esquerda para a direita. A cada convolução, a rede ganha filtros: 16, 32 e 64. A cada MaxPool, a imagem cai pela metade: 128, 64, 32, 16. Por isso os blocos vão ficando mais baixos."
+3. *(Chave laranja)* "Aqui começa a classificação. O pooling global resume cada um dos 64 filtros em um número. O Dropout desliga 25% deles no treino, para a rede não decorar. A camada linear transforma os 64 números em 2, e o softmax vira probabilidade."
+4. *(Linha azul dos parâmetros)* "A rede inteira tem só **23.714 parâmetros**, e **78% estão na última convolução**. ReLU, MaxPool e Dropout não têm parâmetro nenhum."
+5. *(Caixa cinza)* "Treinamos com PyTorch, Adam, 450 épocas, e ela acertou **96,5% (193 de 200)** em imagens separadas da mesma fonte, com 0,2 s por imagem em CPU. O Cérebro usa a mesma rede, com imagem em cinza e 3 classes."
+
+**Números para decorar:** 128×128 · filtros 16 → 32 → 64 · 23.714 parâmetros · 78% na Conv 3 · 96,5% (193/200) · 0,2 s.
+
+**Se a banca apontar para um bloco.**
+
+- *"Por que a imagem encolhe?"* "É o MaxPool 2×2: de cada quadrado de 4 pixels fica o maior valor. Diminui a conta e deixa a rede menos sensível a pequenos deslocamentos."
+- *"Por que a última convolução tem tantos parâmetros?"* "Cada filtro dela olha os 32 canais anteriores: 64 filtros × 3×3×32 pesos, mais 64 vieses, dá 18.496."
+- *"Por que a Linear tem só 130 parâmetros?"* "Porque o pooling global reduziu tudo a 64 números: 64 × 2 pesos + 2 vieses. Sem ele, seriam 16.384 entradas."
+- *"Como foi feito o desenho?"* "Com Python: torchview e VisualTorch para a estrutura e o Pillow para escrever os dados em cada camada. O script está em `docs/model_diagrams/`."
+
+#### Slide 15: a EfficientNet-B0 da Pele
+
+**Frase de transição (do 14 para o 15):** "O próximo desenho segue a mesma leitura, mas agora a rede **não é nossa**."
+
+**Roteiro (~40 s), com onde apontar.**
+
+1. *(Título e subtítulo)* "Na Pele usamos a EfficientNet-B0, uma rede pronta do Google, já treinada no ImageNet, com 1,28 milhão de fotos. Ela recebe imagem de 224 por 224 e dá uma resposta só: a probabilidade de maligno."
+2. *(Chave verde)* "A leitura é a mesma: a imagem encolhe de 224 até 7, e os canais crescem até 1.280. Cada bloco verde é um estágio, uma pilha de blocos **MBConv**. Esse bloco expande os canais, passa um filtro em cada canal separado e junta de novo, o que gasta poucos parâmetros."
+3. *(Linha azul dos parâmetros)* "São **4 milhões de parâmetros por rede**, e **metade está no estágio 6**. Compare com o slide anterior: **24 mil contra 4 milhões**."
+4. *(Chave laranja: Linear e Platt)* "O que o grupo mudou foi o final. A camada original dava 1.000 respostas, as classes do ImageNet; trocamos por **uma saída só**, a de maligno. Ela passa pela calibração de Platt, para a porcentagem ser confiável."
+5. *(Caixa cinza)* "O app usa **5 redes iguais a esta** e tira a média; maligno a partir de 18%. O código do treino original se perdeu, então refizemos o treino no Colab para medir o método: AUC de 0,939 em 1.915 imagens."
+
+**Números para decorar:** 224×224 → 7×7 · 1.280 canais · 4.008.829 parâmetros por rede · 50,5% no estágio 6 · 5 redes · limiar 18% · AUC 0,939 (reprodução) · 1,7 s.
+
+**Se a banca apontar para um bloco.**
+
+- *"O que é um bloco MBConv?"* "É o bloco da EfficientNet: uma convolução 1×1 expande os canais, um filtro 3×3 ou 5×5 passa em cada canal separado, o squeeze-and-excitation reforça os canais mais úteis e outra 1×1 comprime de novo. Faz o trabalho de uma convolução comum com muito menos parâmetros."
+- *"Por que o estágio 6 tem metade dos parâmetros?"* "Porque tem 4 blocos e trabalha com muitos canais (192). O número de pesos cresce com os canais, e não com o tamanho da imagem."
+- *"Por que tem Dropout de 20% e não 25%?"* "Os 20% são da própria EfficientNet-B0. Os 25% foram escolhidos por nós na CNN."
+- *"O que significa 'Platt + sigmoid, 2 parâmetros'?"* "É a calibração: `sigmoid(a · logit + b)`. O `a` e o `b` foram aprendidos na validação, para que '70%' signifique de fato cerca de 70%."
+- *"Por que 8 de 8 malignos, mas só 7 de 13 benignos?"* "Porque o limiar de 18% foi escolhido para não deixar passar maligno. O preço são mais alarmes falsos. São só 21 imagens, então é um teste pequeno."
+
+#### Comparação para fechar (se sobrar tempo ou se perguntarem)
+
+"As duas são redes convolucionais e o desenho se lê igual: a imagem fica menor e mais funda. A CNN é nossa, pequena e treinada do zero: 3 blocos, 24 mil parâmetros, 0,2 s. A EfficientNet é do Google, pré-treinada e ajustada para pele: 16 blocos MBConv, 4 milhões de parâmetros por rede, 5 redes, 1,7 s. Usamos a rede maior só onde o problema é mais difícil."
+
+#### O que não dizer
+
+- **Não dizer que o 96,5% ou o 98,3% é teste externo.** São imagens separadas, mas da **mesma fonte** dos dados de treino.
+- **Não dizer que a AUC de 0,939 é do modelo do app.** É da **reprodução** do treino no Colab; o treino original se perdeu.
+- **Não dizer que a EfficientNet foi criada pelo grupo.** O grupo trocou a última camada e fez o ajuste fino.
+- **Não dizer que o desenho mostra proporções exatas.** As alturas e larguras são ilustrativas (na EfficientNet, a largura está em escala logarítmica). Os números exatos são os escritos embaixo de cada bloco.
+- **Não confundir 23.714 com o Cérebro.** O desenho é da Oral; o Cérebro tem 23.491, porque a imagem é cinza (1 canal) e são 3 classes.
 
 ### Como desenhar um modelo com Python (pesquisa pedida pelo professor)
 
@@ -1391,9 +1777,9 @@ Amostra pequena: serve para explicar as fórmulas, não para afirmar o desempenh
 
 ### Parâmetros e hiperparâmetros
 
-**O que é.** **Parâmetros** são aprendidos pelo modelo durante o treino: os pesos da rede. **Hiperparâmetros** são escolhidos por nós antes do treino.
+**O que é.** **Parâmetros** são aprendidos pelo modelo durante o treino: os pesos da rede. **Hiperparâmetros** são escolhidos por nós antes do treino (épocas, lote, taxa de aprendizado, arquitetura).
 
-**No PixoraMed.** A CNN tem **~24 mil parâmetros**. Hiperparâmetros: 450 épocas, lote de 64, taxa de aprendizado 0,001, Dropout de 25%, 5 folds, cor ou cinza e com ou sem divisão por 255 (as configurações comparadas no CSV dos treinos).
+**No PixoraMed.** A CNN tem **~24 mil parâmetros** e cada EfficientNet-B0 da Pele, **~4 milhões**. Hiperparâmetros da CNN: 450 épocas, lote de 64, taxa de aprendizado 0,001, Dropout de 25%, 5 folds, cor ou cinza e com ou sem divisão por 255. A explicação completa, com a tabela dos dois modelos, está em [Parâmetros e hiperparâmetros dos nossos modelos](#parâmetros-e-hiperparâmetros-dos-nossos-modelos).
 
 **Pergunta da banca:** "Qual a diferença entre parâmetro e hiperparâmetro?"
 **Resposta:** "Parâmetro o modelo aprende sozinho, como os pesos. Hiperparâmetro nós definimos antes, como o número de épocas e a taxa de aprendizado."

@@ -1,0 +1,320 @@
+================================================================================
+HANDOFF -- PixoraMed -- Sessão SLIDES, GRÁFICOS DOS MODELOS E CRUD DA CONTA
+================================================================================
+
+Documento de continuidade. Resume o que foi feito nesta sessão (13 a
+15/11/2026), o estado atual do projeto e os próximos passos. Continua de
+resumo_9 (guia de estudo, slides e ajustes de tela) e foi escrito para valer
+sozinho: o que ainda vale do resumo_9 está aqui.
+
+Marcação: NÃO CONFERIDO = não verifiquei diretamente.
+
+ÍNDICE
+ 1. Contexto e stack
+ 2. O que foi feito nesta sessão
+ 3. Decisões fechadas
+ 4. Convenções em vigor
+ 5. Entregas desta sessão
+ 6. Pendências
+ 7. Perguntas abertas
+ 8. Próximos passos (em ordem)
+ 9. Referência: endereços, como rodar e armadilhas
+
+
+1. CONTEXTO E STACK
+-------------------
+- Projeto integrador do Bootcamp de IA II/2026 (TCS / SENAI Londrina).
+  Grupo: João Pedro Gonçalves Ferreira (usuário), Samuel Rosa Costa, Ramon
+  Camilo Figueiredo, Henrique Pereira da Silva. Orientador: André Maurício
+  dos Santos. Data da banca ainda em aberto: 19/11 (slide 1) ou 23/11
+  (resumo_8).
+- PixoraMed classifica imagens de câncer de Pele, Oral e Cérebro e guarda o
+  histórico de cada usuário. Protótipo acadêmico: não faz diagnóstico. O
+  usuário pensado é um médico.
+- Monorepo: backend/ (Java 21, Spring Boot 4.1.2, Maven), frontend/ (React 19
+  + Vite 6, JavaScript, TanStack Query 5), ai-service/ (Python 3.12, FastAPI,
+  ONNX Runtime, OpenCV, Pillow), infra/ (docker compose local e Terraform),
+  docs/.
+- Produção: site na Vercel, backend e ai-service no Render (plano gratuito,
+  dormem após 15 min), PostgreSQL no Neon. Deploy automático a cada push na
+  main.
+- Modelos:
+  - Oral (oral_color): CNN pequena do zero, cor, 128x128, scale 255.
+  - Cérebro (brain_gray): mesma CNN, cinza, 128x128, scale 1 (sem /255).
+  - Pele (skin_color): ensemble de 5 EfficientNet-B0, calibração de Platt,
+    224x224, normalização ImageNet, limiar 0,18.
+  - CNN: 3 convs 3x3 (16, 32, 64 filtros) + MaxPool, pooling global,
+    Dropout 25%, Linear. 23.714 parâmetros na Oral.
+  - EfficientNet-B0 do app (Linear(1280, 1)): 4.008.829 parâmetros por rede.
+- Rotas da API: agora usam GET, POST, PUT, PATCH e DELETE (mudou nesta
+  sessão; ver 2.4).
+
+
+2. O QUE FOI FEITO NESTA SESSÃO
+-------------------------------
+2.1 Slides (docs/PixoraMed_final_presentation.pptx, agora 21 slides)
+- Antigo slide 16, hoje 18: mostrava gráficos e falava do modelo de Mama,
+  que não existe no sistema. Saiu tudo de Mama. Título novo: "Maior
+  limitação: só testamos com imagens da mesma fonte". Gráfico nativo com
+  Oral (200 imagens) 96,5% e Cérebro (300 imagens) 98,3%, legenda e notas
+  reescritas. Como Mama era o único teste com fonte externa, o slide agora
+  diz que o teste externo ainda não foi feito.
+- Slide 15 novo, "A EfficientNet-B0 por dentro: o modelo da Pele": diagrama
+  anotado no mesmo estilo do da CNN (slide 14), com formatos, parâmetros por
+  estágio, treino da reprodução e resultado. Notas para o Samuel.
+- Slide 9 novo, "Tecnologias usadas", antes de "Apresentação do sistema"
+  (slide 10), no modelo do deck do estágio. Três linhas de cartões com logo:
+  Desenvolvimento do sistema (Java, Spring Boot, Python, FastAPI, React,
+  Vite, PostgreSQL, SQL, ONNX Runtime), Treino dos modelos (PyTorch, Pandas,
+  NumPy, Jupyter, OpenCV, Google Colab, Kaggle) e Ferramentas e hospedagem
+  (Git, GitHub, Docker, Terraform, Vercel, Render, Neon). SQL foi pedido
+  depois e ficou sem legenda embaixo. VS Code, IntelliJ e Postman ficaram
+  de fora por não estarem conferidos no projeto.
+- Dúvidas respondidas (sem mudança no código): por que o Cérebro é cinza
+  (ressonância já é em tons de cinza e o experimento cinza sem /255 teve a
+  melhor acurácia, 95,17%) e por que o slide 10 tem BGR e RGB (o OpenCV lê
+  em BGR e o ai-service converte para RGB, como no treino).
+
+2.2 Gráficos dos resultados dos modelos (docs/model_results/)
+- Os gráficos saíram do site no commit c35aa8e (12/11). O João pediu para
+  guardá-los no projeto, caso a banca pergunte.
+- skin/: 5 imagens da reprodução da Pele, restauradas do git (c35aa8e^).
+- oral/ e brain/: imagens de resumo de cada treino, copiadas do
+  Projeto-ML-Cancer/resultados e conferidas com o CSV.
+- comparisons/: cor x cinza e efeito da divisão por 255, gerados por
+  generate.py a partir do training-results.csv (só Oral e Cérebro).
+- README.md com cuidados de leitura e os 3 resumos que faltam localmente.
+
+2.3 Diagrama da EfficientNet
+- docs/model_diagrams/annotated_efficientnet.py gera
+  efficientnet_skin_annotated.png (4176x2000), reaproveitando funções do
+  annotated_cnn.py.
+
+2.4 CRUD da conta (commit f15eab0, no GitHub)
+- Pedido: deixar o usuário alterar nome, e-mail e senha e excluir a conta,
+  com hard delete, usando o backend do Sistema de Reserva de Salas como
+  referência (C:\Users\joaop\OneDrive\Desktop\SistemaDeReservaDeSalas).
+- Rotas novas (UserController + AccountService):
+  GET /api/users/me, PUT /api/users/me (nome e e-mail),
+  PATCH /api/users/me/password (senha atual e nova, responde 204),
+  DELETE /api/users/me (senha no corpo; apaga histórico e conta na mesma
+  transação, responde 204).
+- Regras (dto/AccountRules.java, repetidas em
+  frontend/src/utils/accountRules.js), valem no cadastro e na edição:
+  nome 2 a 255 caracteres; e-mail com formato, 6 a 254 caracteres,
+  minúsculo e sem espaços; senha mínimo 8 caracteres e máximo 72 bytes
+  UTF-8 (limite do BCrypt; acento conta 2 bytes).
+- Ajustes junto: senha atual errada responde 400 (não 401, que o site trata
+  como sessão vencida); token de conta excluída recebe 401 nas rotas da
+  conta e na análise; JSON malformado responde 400 em vez de 500; CORS
+  liberou PUT, PATCH e DELETE.
+- Tela "Conta e segurança" com cartões: dados, sair, editar dados, trocar
+  senha e excluir conta (senha + caixa de confirmação). O AuthContext
+  ganhou updateUser para trocar o usuário guardado sem novo login.
+- Banco: o Hibernate (ddl-auto=update) não aumenta coluna existente. O
+  ALTER TABLE users ALTER COLUMN name TYPE varchar(255) foi rodado no
+  Docker local (por mim) e no Neon (pelo João, que confirmou que deu
+  certo).
+- Testes: mvn test passou (11 testes, 4 novos em AccountRulesTest), npm run
+  lint e npm run build passaram. Teste de ponta a ponta no Docker local pela
+  API e pela tela (edição, troca de senha, senha errada, exclusão, histórico
+  apagado, análise recusada depois da exclusão). Produção NÃO CONFERIDO.
+- Documentação atualizada: backend/README.md (rotas, regras, SQL do
+  ALTER), docs/study_guide.md (tabela de rotas e perguntas de banca sobre
+  PUT x PATCH, 72 bytes e hard delete), skills de arquitetura do backend e
+  do frontend, frontend/README.md.
+
+2.5 Perguntas de estudo respondidas no chat (sem arquivo)
+- Por que treinar com imagem pesa mais que regressão com números: entrada
+  muito maior, convolução repete a conta em cada pixel, treino ~3x o
+  forward, GPU faz as multiplicações em paralelo.
+- Conta de um experimento (1.000 por classe, 450 épocas, 5 folds): ~45 mi
+  de multiplicações por imagem no forward; Oral ~1 quatrilhão de operações
+  (37 min na RTX A400), Cérebro cor ~1,5 quatrilhão (27 min na T4). Conta
+  nossa, não está no guia de estudo.
+- RTX 5070: ~31 trilhões de operações FP32 por segundo (teórico); o treino
+  da Oral levaria uns 4 a 6 min, estimativa.
+- JXL para salvar as imagens: não compensa (suporte incompleto em
+  navegador, Pillow e OpenCV; ganho pequeno; com perda muda os pixels).
+
+2.6 Sugestão do professor: salvar as fotos dos testes no backend
+- O João pediu para NÃO alterar nada; vai conversar com o professor.
+  Pontos levantados: a promessa de privacidade atual (imagem descartada) e
+  LGPD, o disco do Render gratuito é apagado a cada deploy, imagens não
+  devem ir para o Git, e uma pasta em docs/ com poucos exemplos pode
+  bastar se o objetivo for só documentar.
+
+
+3. DECISÕES FECHADAS
+--------------------
+- Slides só falam dos três modelos do sistema (Pele, Oral, Cérebro).
+- Gráficos dos resultados ficam em docs/model_results, não no site.
+- Rotas da conta em /api/users/me (o "me" vem do token, sem id na URL).
+  PUT para nome e e-mail juntos, PATCH só para a senha.
+- Exclusão da conta é hard delete (sem soft delete), apaga o histórico.
+- Senha limitada em bytes (72), não em caracteres, por causa do BCrypt.
+- Troca de senha e exclusão pedem a senha atual; edição de nome e e-mail
+  não pede (igual à referência da Reserva de Salas).
+- Mudança de tamanho de coluna é feita com SQL manual, não com script
+  automático na subida (segue a skill do backend).
+- Revogado: o guia de estudo dizia que o sistema "só usa GET e POST" e que
+  não tinha edição de conta. Corrigido.
+- Revogado: limites antigos do cadastro (nome até 80, senha até 128
+  caracteres). Agora valem as regras de 2.4.
+
+
+4. CONVENÇÕES EM VIGOR
+----------------------
+- Português do Brasil, objetivo, nas respostas ao João. Código, nomes de
+  arquivos e rotas em inglês; textos de tela, README, skills e comentários
+  em português. Cabeçalho curto no topo de todo arquivo que aceita
+  comentário.
+- Commit e push só quando o João pede. Ele pode pedir só o commit e o push
+  depois, separado. Mensagens em inglês, com Co-Authored-By: Claude Opus
+  5.5 <noreply@anthropic.com>. Só a branch main.
+- Toda mudança de tela: npm run lint, npm run build e teste no Docker local
+  antes do commit. Backend: mvn test.
+- O João faz commits próprios entre tarefas (ex.: "add sql em tecnologias
+  usadas"); isso é dele, não reverter.
+- Frontend: fontes só pelas variáveis --font-size-*; API só por src/api
+  (sendJson para PUT, PATCH e DELETE); regras e formatação em utils/.
+- Backend: controller -> service -> repository; erro esperado é
+  ApiException; log só com id do usuário (nunca e-mail, senha ou token).
+- Cor vermelha #d03b3b só para classe maligna.
+- Guia de estudo: "O que é / Como funciona / Onde está no código / Por que"
+  e perguntas "Pergunta de banca:" / "Resposta:".
+- Slides: editar com python-pptx a partir de uma cópia, conferir abrindo no
+  PowerPoint (COM) e exportando PNG; atualizar a numeração salva dos
+  slides. Cartões do slide 9 usam as cores do tema DARK_1/DARK_2 (TEXT_2
+  fica quase branco neste deck).
+- Honestidade dos resultados: não arredondar para cima, "mesma fonte" não é
+  teste externo, reprodução da Pele não é o modelo do app.
+- terraform apply só depois de mostrar o plan e o João aprovar. Nunca pedir
+  nem exibir chaves. Contas de teste só no banco local do Docker. Mudança
+  no banco de produção (Neon) só com aprovação do João.
+
+
+5. ENTREGAS DESTA SESSÃO
+------------------------
+Raiz: C:\Users\joaop\OneDrive\Desktop\Projetos\PixoraMed
+- docs\PixoraMed_final_presentation.pptx (21 slides; novos 9 e 15; antigo
+  16 virou 18)
+- docs\model_results\ (README.md, generate.py, comparisons\, skin\, oral\,
+  brain\)
+- docs\model_diagrams\annotated_efficientnet.py e
+  efficientnet_skin_annotated.png
+- README.md da raiz (linha do docs cita model_results)
+- backend: controller\UserController.java, service\AccountService.java,
+  dto\AccountRules.java, UpdateAccountRequest.java,
+  ChangePasswordRequest.java, DeleteAccountRequest.java (novos);
+  RegisterRequest, User, UserRepository, PredictionRepository,
+  SecurityConfig, AuthService, PredictionService, GlobalExceptionHandler
+  (alterados); src\test\java\com\pixoramed\dto\AccountRulesTest.java
+- frontend: src\api\usersApi.js e src\utils\accountRules.js (novos);
+  apiClient.js, AuthContext.jsx, pages\Account.jsx, pages\Login.jsx,
+  styles\models-account.css (alterados)
+- Documentação: backend\README.md, docs\study_guide.md, frontend\README.md,
+  skills backend-architecture e frontend-architecture
+- resumo_10.txt (este arquivo). resumo_9.txt fica OBSOLETO, substituído por
+  este.
+Commits desta sessão, do mais antigo ao novo (todos na main e no GitHub):
+  4d3694c remoção de mama dos slides (João)
+  bbafeff add imagens dos treinos (João)
+  a1ea065 add tecnologias usadas (João)
+  a3b6345 add sql em tecnologias usadas (João)
+  f15eab0 Add account update and deletion (full account CRUD)
+
+
+6. PENDÊNCIAS
+-------------
+- Conferir a conta em produção depois do deploy do f15eab0: editar nome
+  e e-mail, trocar senha e, numa conta de teste, excluir. NÃO CONFERIDO.
+- Conferir produção dos deploys do resumo_9 (legenda, aviso de
+  carregamento, texto do limiar, passo 2, Error Boundary, gráfico ao abrir
+  pelo Histórico). NÃO CONFERIDO.
+- Faltam 3 imagens de resumo em docs/model_results (Oral cinza /255 2ª
+  execução, Oral cinza sem /255, Cérebro cor sem /255 do Colab). Pedir ao
+  grupo.
+- Guia de estudo (linhas ~1062, 1067, 1295, 1298, 1574) e relatório de
+  entrega (linha ~798) ainda citam Mama. Não foi alterado nesta sessão.
+- Banco local do Docker tem contas de teste teste.crud.*@example.com e
+  t*@example.com que sobraram dos testes. NÃO CONFERIDO quantas (o Docker
+  estava desligado ao fechar a sessão).
+- Token antigo continua válido até vencer depois de trocar a senha (sem
+  revogação de token). Opcional.
+- Notas dos slides ainda com nomes e tempos; decidir se saem.
+- Ensaiar a apresentação (deck ganhou os slides 9 e 15).
+- Gravar o vídeo de backup da demonstração.
+- Dar acesso à banca ao repositório (privado).
+- Criar a conta do grupo no site de produção (o João cria).
+- docs/save_model.md ainda usa mama_cor.pt como exemplo.
+- Apagar a pasta C:\c; levar o backup dos segredos para cofre/pendrive.
+- Token da Vercel vence por volta de 10/12 (só importa para o Terraform).
+- Opcionais: limite de tentativas de login, testes de rota, testes de
+  componentes React.
+
+
+7. PERGUNTAS ABERTAS
+--------------------
+- Salvar as imagens dos testes (sugestão do professor): com qual objetivo
+  (auditoria, demonstração, retreino)? Onde guardar? Como fica a promessa
+  de privacidade? O João conversa com o professor em 16/11.
+- A banca é em 19/11 (slide 1) ou 23/11 (resumo_8)? E a entrega?
+- Tirar nomes e tempos também das notas dos slides?
+- Como foram divididos os dados entre as 5 EfficientNet-B0 da Pele?
+- As imagens _4901 a _5000 do Cérebro ficaram fora do treino?
+- Se o professor contar Pandas como requisito do sistema: hoje está só nos
+  notebooks. Preparar a fala.
+
+
+8. PRÓXIMOS PASSOS (EM ORDEM)
+-----------------------------
+O João não definiu uma ordem nesta sessão; esta é a ordem pelos prazos:
+ 1. Conversar com o professor sobre salvar as imagens (16/11) e só então
+    decidir se algo muda no sistema.
+ 2. Confirmar a data da banca (19/11 ou 23/11).
+ 3. Conferir produção (conta, análise, Histórico, telas alteradas).
+ 4. Tirar Mama do guia de estudo e do relatório; ensaiar com o deck novo.
+ 5. Vídeo de backup, acesso da banca ao repositório, conta do grupo no
+    site.
+ 6. Pendências de operação (C:\c, backup em cofre, save_model.md).
+
+
+9. REFERÊNCIA: ENDEREÇOS, COMO RODAR E ARMADILHAS
+-------------------------------------------------
+Endereços
+- GitHub: https://github.com/joaopgf/PixoraMed (privado, só main)
+- Treino: https://github.com/joaopgf/Projeto-ML-Cancer (notebooks)
+- Site: https://pixoramed.vercel.app
+- Backend: https://pixoramed.onrender.com/api/health
+- ai-service: https://pixoramed-ia.onrender.com/health
+- Imagens de teste: C:\Users\joaop\OneDrive\Desktop\teste_interno
+- Referência de CRUD de conta:
+  C:\Users\joaop\OneDrive\Desktop\SistemaDeReservaDeSalas
+
+Como rodar
+- Docker: em infra/, docker compose up --build. Site em localhost:5173, API
+  em localhost:8080. Usa só o infra/.env.
+- Testes: backend mvn test (11); ai-service pytest (20); frontend npm run
+  lint e npm run build.
+- Gráficos: python docs/model_results/generate.py (precisa de matplotlib).
+- Diagramas: python docs/model_diagrams/annotated_cnn.py e
+  annotated_efficientnet.py (Pillow); generate.py precisa de torch,
+  torchview, visualtorch e Graphviz.
+- Slides: python-pptx para editar; PowerPoint via COM para exportar PNG.
+
+Armadilhas
+- ddl-auto=update só acrescenta: aumentar ou renomear coluna exige SQL
+  manual, primeiro no Docker local e depois no Neon.
+- O navegador embutido do app só abre 127.0.0.1, e o backend local só
+  aceita a origem localhost:5173 (CORS). Para testar a tela por ele, subir
+  o backend com CORS_ALLOWED_ORIGINS incluindo http://127.0.0.1:5173 só
+  durante o teste, sem mudar o docker-compose.yml.
+- No Git Bash do Windows, curl com acento no corpo não manda UTF-8: testar
+  a API com script Python.
+- 204 não tem corpo: o apiClient devolve null nesse caso.
+- Google Slides converte gráficos em imagem; conferir os gráficos depois.
+- Depois de um deploy, aba antiga pode pedir arquivo que não existe mais; o
+  site recarrega sozinho uma vez.
+- Banca: abrir o site uns 5 min antes e fazer uma análise para acordar o
+  Render.
