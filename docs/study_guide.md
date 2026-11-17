@@ -442,9 +442,7 @@ User user = users.findByEmail(email).ourElse(null);
 
 **O que é.** O PixoraMed guarda os dados num banco **PostgreSQL**: no Docker em desenvolvimento, no Neon em produção. São só três tabelas, criadas pelo Hibernate a partir das entidades do backend (`User`, `Prediction` e `Training`). O DER abaixo foi gerado pelo pgAdmin direto do banco (botão direito no banco → **ERD For Database**).
 
-![DER lógico do PixoraMed gerado pelo pgAdmin: users ligada a predictions (1 para N) e trainings separada](<DER Lógico.png>)
-
-Há também uma versão comentada, com legenda e observações, em [der/pixoramed_der.png](der/pixoramed_der.png), gerada por `docs/der/generate_der.py`.
+![DER lógico do PixoraMed gerado pelo pgAdmin: users ligada a predictions (1 para N) e trainings separada](<der/DER Lógico.png>)
 
 **Como ler o DER.**
 
