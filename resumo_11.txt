@@ -1,0 +1,319 @@
+================================================================================
+HANDOFF -- PixoraMed -- Sessão GUIA DE ESTUDO, DER, SLIDES E DOC. DE ENTREGA
+================================================================================
+
+Documento de continuidade. Resume o que foi feito nesta sessão (16 e
+17/11/2026), o estado atual do projeto e os próximos passos. Continua de
+resumo_10 (slides, gráficos dos modelos e CRUD da conta) e foi escrito para
+valer sozinho: o que ainda vale do resumo_10 está aqui.
+
+Marcação: NÃO CONFERIDO = não verifiquei diretamente.
+
+ÍNDICE
+ 1. Contexto e stack
+ 2. O que foi feito nesta sessão
+ 3. Decisões fechadas
+ 4. Convenções em vigor
+ 5. Entregas desta sessão
+ 6. Pendências
+ 7. Perguntas abertas
+ 8. Próximos passos (em ordem)
+ 9. Referência: endereços, como rodar e armadilhas
+
+
+1. CONTEXTO E STACK
+-------------------
+- Projeto integrador do Bootcamp de IA II/2026 (TCS / SENAI Londrina).
+  Grupo: João Pedro Gonçalves Ferreira (usuário), Samuel Rosa Costa, Ramon
+  Camilo Figueiredo, Henrique Pereira da Silva. Orientador: André Maurício
+  dos Santos. Banca: 19/11/2026 (slide 1 e capa do PDF); o resumo_8 dizia
+  23/11, ainda não confirmado. Apresentação de no máximo 20 minutos.
+  Entregáveis vão até 48 h antes da banca (guia do curso).
+- Guia do curso: C:\Users\joaop\OneDrive\Desktop\Estudos\BootcampIA\
+  guia_projeto_final.pdf (requisitos, tempos, critérios e entregáveis).
+- PixoraMed classifica imagens de câncer de Pele, Oral e Cérebro e guarda o
+  histórico de cada usuário. Protótipo acadêmico, não faz diagnóstico.
+- Monorepo: backend/ (Java 21, Spring Boot 4.1.2), frontend/ (React 19 +
+  Vite 6), ai-service/ (Python 3.12, FastAPI, ONNX Runtime, OpenCV, Pillow),
+  infra/ (Docker Compose e Terraform), docs/.
+- Produção: Vercel (site), Render (backend e ai-service, dormem após 15
+  min), Neon (PostgreSQL). Deploy automático a cada push na main.
+- Repositórios PixoraMed e Projeto-ML-Cancer agora são PÚBLICOS.
+- Modelos: Oral e Cérebro com CNN pequena do zero (23.714 e 23.491
+  parâmetros); Pele com ensemble de 5 EfficientNet-B0 (4.008.829 parâmetros
+  cada), calibração de Platt, limiar 0,18.
+
+
+2. O QUE FOI FEITO NESTA SESSÃO
+-------------------------------
+2.1 Guia de estudo (docs/study_guide.md), seções novas
+- "Tecnologias usadas (slide 10)": as 23 tecnologias do slide, cada uma com
+  o que é, o que faz no PixoraMed e por que usamos; tabela "também usados";
+  revisão em uma linha; perguntas de banca. Achado: o Pandas NÃO grava o
+  training-results.csv (é o módulo csv do Python); o Pandas lê o metadata
+  do HAM10000, filtra, isna, value_counts e groupby. Avisos no guia e nas
+  notas.
+- "Parâmetros e hiperparâmetros dos nossos modelos" e "CNN (Oral e Cérebro)
+  x EfficientNet-B0 (Pele): o que muda". Hiperparâmetros conferidos nos
+  notebooks: CNN Adam 0,001, lote 64, 450 épocas, sem augmentation;
+  reprodução da Pele AdamW 3e-4 com cosine, lote 32, até 12 épocas,
+  paciência 4, BCE com pos_weight, augmentation, StratifiedGroupKFold.
+- "Como explicar os diagramas das duas redes" (slides 15 e 16): como ler o
+  desenho, roteiro de 40 s por slide, números, respostas por bloco e o que
+  não dizer.
+- "O banco do sistema: as 3 tabelas e o DER (slide 8)": por que só três
+  tabelas, o que cada uma guarda, a relação passo a passo, a chave
+  estrangeira e 7 perguntas (incluindo a tabela de treinos).
+- "Exemplos reais: como ler a tela de resultado": faixas da Pele (abaixo de
+  18% benigno; 18 a 20% maligno sem aviso; acima de 20% e abaixo de 80%
+  maligno com baixa certeza; 80% ou mais sem aviso), o exemplo
+  isic_0034175 (26,09%, da pasta de benignos: falso alarme) e a origem dos
+  números 18%, 20% e 80%.
+- "Guia do projeto final x PixoraMed": checklist dos requisitos, tempos
+  recomendados x nossos, critérios da banca, entregáveis e 12 perguntas
+  (agentic coding, vibecoding, Pandas e nulos, EDA, por que não GenAI, RAG
+  x fine-tuning, segurança, LGPD, custo, ROI, divisão do trabalho, internet
+  caindo). A resposta da divisão do trabalho está marcada "A completar
+  pelo grupo".
+- Referências a slides renumeradas depois do slide 8 novo.
+
+2.2 Por que a CNN e a EfficientNet (pergunta do grupo)
+- O grupo queria dizer que a EfficientNet foi pior em Oral e Cérebro. FALSO:
+  ela nunca foi treinada nesses módulos. Fala corrigida: a CNN pequena já
+  resolvia Oral e Cérebro (mais de 95% na mesma fonte, 0,2 s); na Pele a
+  CNN pequena ficou com F1 perto de 50% em 7 classes. Está no guia, nas
+  notas dos slides 16 e 22 e no PDF.
+
+2.3 Slides (docs/PixoraMed_final_presentation.pptx, agora 22 slides)
+- Notas dos slides reescritas com a divisão nova: Samuel 1-3 e 20-22,
+  Henrique 4-8 e 19, João 9-14, Ramon 15-18. Cada nota tem tempo, fala,
+  dicas, perguntas prováveis e passagem. Tempos fecham em 19:30.
+- Slide 8 novo, "Banco de dados: 3 tabelas e nenhuma imagem guardada",
+  depois do workflow 3: DER do pgAdmin à esquerda, um cartão por tabela e
+  um cartão escuro com a relação 1:N. Nota do Henrique (30 s). Números de
+  página 8 a 21 atualizados (campos slidenum). Demo caiu para 4 min 30 s.
+- Nota da demo (slide 11): plano B com Docker local, sem vídeo.
+
+2.4 Dados dos treinos (docs/model_results/)
+- Os 3 resumos que faltavam foram achados e conferidos com o CSV:
+  brain/brain_color_raw.png (Drive do grupo, Colab, 94,37 +- 1,81),
+  oral/oral_gray_div255_run2.png (76,80 +- 1,64) e oral/oral_gray_raw.png
+  (75,20 +- 1,93), estes dois de Desktop\resultados\Oral. README atualizado:
+  as 8 configurações de Oral e Cérebro estão completas.
+- O zip do Drive e o rna_CerebrCor.ipynb eram do Cérebro cor sem /255, não
+  da Pele. Os dados do slide 18 (reprodução da Pele) existem e conferem com
+  docs/model_results/skin/test_confusion_matrix.png (275/309, 1.344/1.606).
+  Os arquivos brutos da reprodução (historico_epocas.csv etc.) não foram
+  achados; não são necessários.
+- Treinos que só existem nos CSVs do Desktop\resultados: Cérebro cinza /255
+  na RTX 5070 (88,90%) e com 1.500 épocas na T4 (94,60%). O de 1.500
+  épocas mostra que a divisão por 255 deixou o treino mais lento, não pior.
+  Não entraram no sistema.
+
+2.5 Banco: chave estrangeira entre análises e usuários
+- Problema: o DER do pgAdmin saía com as tabelas soltas, porque
+  Prediction guardava só userId (Long), sem associação.
+- Mudança (commit 9d7611c): Prediction mantém userId gravando a coluna
+  user_id e ganhou um @ManyToOne só de leitura (insertable/updatable
+  false, sem getter) com @ForeignKey fk_predictions_user. O índice ganhou
+  nome fixo idx_predictions_user_id, porque o nome gerado mudou e o
+  ddl-auto criou um índice duplicado no primeiro teste. Sem cascata: a
+  exclusão da conta já apaga as análises antes do usuário.
+- Testes: mvn test passou; Docker local com cadastro, 2 análises,
+  histórico, exclusão da conta (204) e recusa de análise com user_id
+  inexistente pela FK.
+- Neon: o João rodou o SQL (passo 1 deu 0 órfãs); a conferência final
+  listou predictions_pkey, idx_predictions_user_id e fk_predictions_user.
+  O ERD For Database do pgAdmin passou a desenhar a linha 1-N sozinho.
+- DER: docs/der/generate_der.py gera docs/der/pixoramed_der.png (claro, em
+  alta resolução, com observações). O João salvou o DER do pgAdmin em
+  docs/DER Lógico.png (escuro, 722x964, baixa resolução).
+
+2.6 Documento de entrega (docs/delivery/PixoraMed_report.html e .pdf)
+- Atualizado e gerado de novo com Chrome headless (commit 248507d): banca
+  19/11 e repositórios públicos na capa; sem Mama; CRUD da conta e regras
+  novas de cadastro; Cérebro em cinza sem /255 (estava errado); Pandas e
+  valores nulos (3.3); seção 3.4 Banco de dados e DER (usa
+  der/pixoramed_der.png); "Por que estes modelos" (ML x GenAI, do zero x
+  fine-tuning); origem do limiar; 11 testes no backend; rotas PUT, PATCH e
+  DELETE; 3.10 Desenvolvimento com agentic coding; LGPD com correção e
+  eliminação; segurança com conta e integridade.
+
+2.7 Dúvidas respondidas sem mudança de código
+- Microsserviço de IA demorar a acordar: normal (Render gratuito dorme
+  após 15 min; timeout de 120 s).
+- Negrito no gráfico da Pele: está certo. O negrito e o centro mostram a
+  classe prevista pelo backend (pelo limiar de 18%), não a maior fatia.
+- Tabela trainings: usada só no backend (importação do CSV na subida e
+  GET /api/trainings pública). Nenhuma tela lê. Bloco "Desempenho na
+  validação" do Result.jsx nunca aparece (metrics vazio nos .json).
+- Origem dos números: 18% veio do pacote do modelo (reprodução deu 19%,
+  pela melhor acurácia balanceada na validação); 80% é a configuração
+  INCONCLUSIVE_THRESHOLD; 20% é 100% - 80%.
+- Como gerar o DER no pgAdmin (botão direito no banco, ERD For Database).
+  O servidor PixoraMed (Docker) usa 127.0.0.1:5433 (DB_PORT do infra/.env);
+  a árvore só apareceu depois de Refresh.
+
+
+3. DECISÕES FECHADAS
+--------------------
+- predictions.user_id é chave estrangeira (fk_predictions_user), sem
+  cascata; userId continua gravando e o @ManyToOne é só leitura, sem
+  getter, para não expor o usuário no JSON.
+- Índice com nome fixo idx_predictions_user_id (evita duplicar no
+  ddl-auto).
+- Tabela trainings: manter e explicar na banca; o site não volta a mostrar.
+- Slide 8 do DER fica com o Henrique; a demo tem 4 min 30 s.
+- Sem vídeo de backup: plano B é o Docker local. Revoga o "gravar vídeo de
+  backup" do resumo_10.
+- Repositórios públicos. Revoga a pendência "dar acesso à banca".
+- Mama fora também do guia de estudo e do relatório. Revoga a pendência do
+  resumo_10 sobre o guia e o relatório (save_model.md ainda cita).
+- Não dizer que a EfficientNet foi pior em Oral e Cérebro (não testada).
+- Na Pele, o resultado segue o limiar, não a maior fatia; o negrito do
+  gráfico marca a classe prevista. Sem mudança no frontend.
+- PDF de entrega usa o DER claro (der/pixoramed_der.png); o do pgAdmin fica
+  no slide 8.
+
+
+4. CONVENÇÕES EM VIGOR
+----------------------
+- Português do Brasil, objetivo, nas respostas ao João. Código, nomes de
+  arquivos e rotas em inglês; textos de tela, README, skills e comentários
+  em português. Cabeçalho curto no topo de todo arquivo que aceita
+  comentário.
+- Commit e push só quando o João pede; ele costuma commitar sozinho entre
+  as tarefas. Mensagens em inglês com Co-Authored-By: Claude Opus 5.5
+  <noreply@anthropic.com>. Só a branch main.
+- Backend: mvn test; controller -> service -> repository; ApiException; log
+  só com id do usuário. Mudança de banco: SQL manual testado no Docker
+  local antes do Neon, com aprovação do João (a skill sugere testar num
+  branch do Neon). Nomes de índice e chave fixos.
+- Frontend: npm run lint, npm run build e teste no Docker antes do commit.
+- Guia de estudo: "O que é / Como funciona / Onde está no código / Por
+  que" e perguntas "Pergunta de banca:" / "Resposta:". Números com fonte;
+  o que não tem prova fica dito.
+- Notas dos slides: NOME · início -> fim (duração), FALA, DICAS, SE
+  PERGUNTAREM, PASSAGEM. Ao inserir slide, atualizar o texto salvo nos
+  campos slidenum (posição 11064240, 6355080) e as referências a slides no
+  guia e nas notas.
+- Slides: editar com python-pptx numa cópia no scratchpad, abrir no
+  PowerPoint (COM) e exportar PNG para conferir, depois copiar para docs/.
+  Cartões: lt2 (claro), dk1 (escuro), títulos accent2, textos dk2/lt2.
+- Relatório: editar o HTML e gerar o PDF com Chrome headless
+  (docs/delivery/README.md). Imagem fora de seção .wide precisa de style
+  com width 100%.
+- Honestidade: não arredondar para cima; "mesma fonte" não é teste
+  externo; reprodução da Pele não é o modelo do app.
+- Python lendo arquivos do grupo/baixados: python -I -X utf8 (o console
+  é cp1252).
+
+
+5. ENTREGAS DESTA SESSÃO
+------------------------
+Raiz: C:\Users\joaop\OneDrive\Desktop\Projetos\PixoraMed
+- docs\study_guide.md (seções da 2.1; 2.218 linhas)
+- docs\PixoraMed_final_presentation.pptx (22 slides; slide 8 novo; notas
+  novas em todos)
+- docs\delivery\PixoraMed_report.html e PixoraMed_report.pdf
+- docs\der\generate_der.py e docs\der\pixoramed_der.png
+- docs\DER Lógico.png (salvo pelo João, do pgAdmin)
+- docs\model_results\brain\brain_color_raw.png, oral\oral_gray_div255_run2.png,
+  oral\oral_gray_raw.png e README.md
+- backend\src\main\java\com\pixoramed\model\Prediction.java, backend\README.md
+  (seção da chave estrangeira com o SQL do Neon), skill backend-architecture
+- resumo_11.txt (este arquivo). resumo_10.txt fica OBSOLETO, substituído
+  por este.
+Commits (todos do João, na main): 2b1e547, f9ca88f, 043983d, 9d7611c,
+98c08a3, b234b3c, a424c13, 248507d.
+Fora do commit: docs\study_guide.md tem só realinhamento das tabelas
+markdown (feito pelo editor do João, sem mudança de conteúdo).
+
+
+6. PENDÊNCIAS
+-------------
+- Entregáveis até 48 h antes: se a banca é 19/11, o prazo é 17/11. O PDF já
+  foi commitado; confirmar a entrega no canal do curso. NÃO CONFERIDO.
+- Guia de estudo: completar "Como o grupo dividiu o trabalho?" com
+  exemplos reais (critério de 15%).
+- Conferir produção depois dos deploys: análise e Histórico após a chave
+  estrangeira; conta (editar, trocar senha, excluir numa conta de teste).
+  NÃO CONFERIDO.
+- Números sem arquivo de prova no projeto: F1 de ~50% da CNN na Pele (7
+  classes; está no site, no guia, na nota do slide 22 e no PDF); Oral
+  193/200 e as 12 inconclusivas (teste_externo.ipynb só tem a saída do
+  Cérebro salva); Pele no app 8/8 e 7/13 (21 imagens). Sugestão: rodar o
+  teste da Oral e o das 21 imagens e salvar as saídas.
+- Docker local para o plano B: construir os containers na véspera e ter
+  uma conta de teste no banco local.
+- DER do pgAdmin no slide 8 tem baixa resolução; exportar de novo com zoom
+  maior, se quiserem nitidez.
+- Ensaio cronometrado com o deck de 22 slides.
+- Criar a conta do grupo no site de produção (o João cria).
+- docs/save_model.md ainda usa mama_cor.pt como exemplo.
+- Bloco "Desempenho na validação" do Result.jsx nunca aparece (opcional:
+  apagar ou preencher metrics).
+- Faixa de 18% a 20% de maligno mostra maligno sem aviso (documentado; sem
+  mudança).
+- Banco local do Docker tem contas de teste (teste.crud.*, t*, teste.fk.*
+  @example.com). A do teste da FK foi excluída pelo próprio teste.
+- Apagar a pasta C:\c; backup dos segredos em cofre/pendrive. Token da
+  Vercel vence por volta de 10/12.
+- Opcionais antigos: limite de tentativas de login, revogação de token,
+  testes de rota e de componentes React.
+
+
+7. PERGUNTAS ABERTAS
+--------------------
+- Banca em 19/11 ou 23/11? (o PDF e o slide dizem 19/11)
+- Quem fez o quê no grupo (para a resposta da divisão do trabalho)?
+- Por que a queratose actínica (akiec) ficou fora do treino da Pele?
+- Como foram divididos os dados entre as 5 EfficientNet-B0 da Pele?
+- As imagens _4901 a _5000 do Cérebro ficaram fora do treino?
+- Quem tem o resumo ou a linha do CSV do treino da CNN na Pele (F1 ~50%)?
+- Resultado da conversa com o professor sobre salvar as imagens dos testes
+  (resumo_10, item 2.6). NÃO CONFERIDO.
+
+
+8. PRÓXIMOS PASSOS (EM ORDEM)
+-----------------------------
+O João não definiu uma ordem; esta é a ordem pelos prazos:
+ 1. Entregar o PDF, o deck e os links dos repositórios (prazo de 48 h).
+ 2. Completar a divisão do trabalho no guia e combinar as falas.
+ 3. Conferir produção (análise, Histórico, conta) depois dos deploys.
+ 4. Ensaio cronometrado; preparar o Docker local como plano B.
+ 5. Se der tempo: rodar os testes da Oral e das 21 imagens da Pele e
+    salvar as saídas em docs/model_results.
+ 6. Pendências de operação (C:\c, backup, save_model.md).
+
+
+9. REFERÊNCIA: ENDEREÇOS, COMO RODAR E ARMADILHAS
+-------------------------------------------------
+Endereços
+- GitHub: https://github.com/joaopgf/PixoraMed (público, só main)
+- Treino: https://github.com/joaopgf/Projeto-ML-Cancer (público)
+- Site: https://pixoramed.vercel.app
+- Backend: https://pixoramed.onrender.com/api/health
+- ai-service: https://pixoramed-ia.onrender.com/health
+- Imagens de teste: C:\Users\joaop\OneDrive\Desktop\teste_interno
+  (pele\pele_benigno, pele\pele_maligno, oral\..., cerebro\...)
+- Resultados dos treinos do grupo: C:\Users\joaop\OneDrive\Desktop\
+  resultados (imagens por configuração e CSVs)
+
+Como rodar
+- Docker: em infra/, docker compose up --build. Site localhost:5173, API
+  localhost:8080, banco 127.0.0.1:5433 (pgAdmin: servidor "PixoraMed
+  (Docker)", banco e usuário pixoramed).
+- Testes: backend mvn test (11); ai-service pytest (20); frontend npm run
+  lint e npm run build.
+- DER: python docs/der/generate_der.py (Pillow).
+- Relatório: comando do Chrome headless em docs/delivery/README.md.
+
+Armadilhas
+- ddl-auto=update só acrescenta; mudar nome de índice gera índice novo.
+- O navegador embutido do app não carrega imagens locais (file://).
+- Python 3.14 do Windows: python -I ignora PYTHONIOENCODING; use -X utf8.
+- O número de página dos slides é um campo slidenum com texto salvo.
+- No pgAdmin, se o servidor expandido não mostrar nada, dar Refresh.
+- Banca: abrir o site uns 5 min antes e fazer uma análise por módulo para
+  acordar o Render.

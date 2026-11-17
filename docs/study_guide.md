@@ -455,11 +455,11 @@ Há também uma versão comentada, com legenda e observações, em [der/pixorame
 
 **Por que só três tabelas.** Cada tabela responde a uma pergunta do sistema, e nada além disso fica no banco:
 
-| Pergunta | Tabela |
-| --- | --- |
-| Quem usa o sistema? | `users` |
+| Pergunta                                           | Tabela          |
+| -------------------------------------------------- | --------------- |
+| Quem usa o sistema?                                | `users`       |
 | O que cada pessoa analisou e qual foi o resultado? | `predictions` |
-| Como os modelos foram escolhidos? | `trainings` |
+| Como os modelos foram escolhidos?                  | `trainings`   |
 
 O que **não** tem tabela, e por quê:
 
@@ -469,11 +469,11 @@ O que **não** tem tabela, e por quê:
 
 **O que cada tabela guarda e o valor disso.**
 
-| Tabela | O que guarda | Para que serve no sistema | O que nunca guarda |
-| --- | --- | --- | --- |
-| `users` | `name`, `email` (único), `password_hash` (BCrypt), `created_at` | Login e "dono" do histórico. O e-mail único impede duas contas iguais | A senha em texto, o token |
-| `predictions` | `user_id`, `model_id`, `predicted_class` (decidida pelo backend), `confidence`, `probabilities` (JSON com a probabilidade de cada classe), `time_ms`, `created_at` | O **Histórico**: tabela, cards de resumo e reabrir o gráfico de um resultado antigo, que é desenhado a partir de `probabilities` | **A imagem** e qualquer dado de paciente |
-| `trainings` | Uma linha por experimento do `training-results.csv` (29 treinos): dataset, cor ou cinza, divisão por 255, épocas, lote, GPU, tempo, acurácia e F1 por fold | Registro dos experimentos que escolheram a configuração de cada modelo (slide 13). Fecha o caminho de dados: notebook → CSV → backend → SQL | Dados de usuário |
+| Tabela          | O que guarda                                                                                                                                                                     | Para que serve no sistema                                                                                                                        | O que nunca guarda                             |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| `users`       | `name`, `email` (único), `password_hash` (BCrypt), `created_at`                                                                                                         | Login e "dono" do histórico. O e-mail único impede duas contas iguais                                                                          | A senha em texto, o token                      |
+| `predictions` | `user_id`, `model_id`, `predicted_class` (decidida pelo backend), `confidence`, `probabilities` (JSON com a probabilidade de cada classe), `time_ms`, `created_at` | O **Histórico**: tabela, cards de resumo e reabrir o gráfico de um resultado antigo, que é desenhado a partir de `probabilities`      | **A imagem** e qualquer dado de paciente |
+| `trainings`   | Uma linha por experimento do `training-results.csv` (29 treinos): dataset, cor ou cinza, divisão por 255, épocas, lote, GPU, tempo, acurácia e F1 por fold                  | Registro dos experimentos que escolheram a configuração de cada modelo (slide 13). Fecha o caminho de dados: notebook → CSV → backend → SQL | Dados de usuário                              |
 
 Sobre `trainings`: o site não mostra mais esses gráficos (eles foram para `docs/model_results/`), mas a tabela continua sendo importada a cada subida e pode ser consultada por SQL no pgAdmin ou pela rota pública `GET /api/trainings`.
 
@@ -1184,12 +1184,12 @@ Os passos 2 a 4 estão todos dentro do `skin_color.onnx`. O script de exportaç�
 
 **Onde estão os parâmetros.**
 
-| Modelo | Parâmetros | Onde ficam |
-| --- | --- | --- |
-| CNN da Oral (cor, 2 classes) | **23.714** | 448 + 4.640 + 18.496 nas três convoluções, 130 na camada linear |
-| CNN do Cérebro (cinza, 3 classes) | **23.491** | Menos que a Oral: a 1ª convolução recebe 1 canal em vez de 3 (160 em vez de 448) e a linear tem 3 saídas (195) |
-| EfficientNet-B0 da Pele (1 rede) | **4.008.829** | Nos 16 blocos MBConv e na camada final `Linear(1280, 1)` |
-| Ensemble da Pele (5 redes) | **~20 milhões** | 5 × 4.008.829, mais 10 números da calibração de Platt (`a` e `b` de cada rede) |
+| Modelo                             | Parâmetros            | Onde ficam                                                                                                         |
+| ---------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| CNN da Oral (cor, 2 classes)       | **23.714**       | 448 + 4.640 + 18.496 nas três convoluções, 130 na camada linear                                                 |
+| CNN do Cérebro (cinza, 3 classes) | **23.491**       | Menos que a Oral: a 1ª convolução recebe 1 canal em vez de 3 (160 em vez de 448) e a linear tem 3 saídas (195) |
+| EfficientNet-B0 da Pele (1 rede)   | **4.008.829**    | Nos 16 blocos MBConv e na camada final `Linear(1280, 1)`                                                         |
+| Ensemble da Pele (5 redes)         | **~20 milhões** | 5 × 4.008.829, mais 10 números da calibração de Platt (`a` e `b` de cada rede)                             |
 
 A EfficientNet-B0 original tem cerca de 5,3 milhões de parâmetros. A diferença para os 4.008.829 é a última camada: a original tem 1.000 saídas (1.280 × 1.000 pesos + 1.000 vieses); a nossa tem uma saída só (1.280 pesos + 1 viés).
 
@@ -1197,20 +1197,20 @@ Os parâmetros também explicam o **tamanho do arquivo**: cada um é um número 
 
 **Os hiperparâmetros de cada treino.**
 
-| Hiperparâmetro | CNN (Oral e Cérebro) | EfficientNet-B0 (reprodução da Pele) |
-| --- | --- | --- |
-| Pesos iniciais | Aleatórios (do zero) | Do ImageNet (`EfficientNet_B0_Weights.DEFAULT`) |
-| Tamanho da imagem | 128×128 | 224×224 |
-| Pré-processamento | Oral em cor com pixels / 255; Cérebro em cinza sem divisão | Normalização do ImageNet (média e desvio por canal) |
-| Épocas | 450 | Até 12, com parada antecipada (paciência de 4 épocas sem a AUC da validação melhorar) |
-| Lote (batch) | 64 | 32 |
-| Otimizador | Adam | AdamW, com *weight decay* de 0,0001 |
-| Taxa de aprendizado | 0,001 fixa | 0,0003, diminuindo aos poucos (*cosine annealing*) |
-| Função de perda | `CrossEntropyLoss` (várias classes) | `BCEWithLogitsLoss` com peso maior para maligno (compensa o desbalanceamento) |
-| Dropout | 25% (escolhido pelo grupo) | O da própria EfficientNet |
-| Data augmentation | Não | Sim: espelhar, girar até 15° e variar um pouco brilho, contraste e cor |
-| Validação | 5 folds estratificados | 5 folds estratificados **e separados por lesão** |
-| Semente | 42 | 42 |
+| Hiperparâmetro     | CNN (Oral e Cérebro)                                        | EfficientNet-B0 (reprodução da Pele)                                                     |
+| ------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Pesos iniciais      | Aleatórios (do zero)                                        | Do ImageNet (`EfficientNet_B0_Weights.DEFAULT`)                                          |
+| Tamanho da imagem   | 128×128                                                     | 224×224                                                                                   |
+| Pré-processamento  | Oral em cor com pixels / 255; Cérebro em cinza sem divisão | Normalização do ImageNet (média e desvio por canal)                                     |
+| Épocas             | 450                                                          | Até 12, com parada antecipada (paciência de 4 épocas sem a AUC da validação melhorar) |
+| Lote (batch)        | 64                                                           | 32                                                                                         |
+| Otimizador          | Adam                                                         | AdamW, com *weight decay* de 0,0001                                                      |
+| Taxa de aprendizado | 0,001 fixa                                                   | 0,0003, diminuindo aos poucos (*cosine annealing*)                                       |
+| Função de perda   | `CrossEntropyLoss` (várias classes)                       | `BCEWithLogitsLoss` com peso maior para maligno (compensa o desbalanceamento)            |
+| Dropout             | 25% (escolhido pelo grupo)                                   | O da própria EfficientNet                                                                 |
+| Data augmentation   | Não                                                         | Sim: espelhar, girar até 15° e variar um pouco brilho, contraste e cor                   |
+| Validação         | 5 folds estratificados                                       | 5 folds estratificados **e separados por lesão**                                    |
+| Semente             | 42                                                           | 42                                                                                         |
 
 **Cuidado na fala.** A coluna da Pele é a **reprodução** feita pelo grupo no Colab. O código do treino original do ensemble que roda no app se perdeu, então os hiperparâmetros exatos dele não são conhecidos. O que se sabe do modelo do app é a arquitetura, os pesos e a calibração, que estão no arquivo.
 
@@ -1239,22 +1239,22 @@ Os parâmetros também explicam o **tamanho do arquivo**: cada um é um número 
 
 As duas são **redes convolucionais**: as duas usam filtros que deslizam pela imagem, ativação e pooling. A diferença está no tamanho, na construção dos blocos e principalmente em **como começaram**: a CNN foi criada e treinada do zero pelo grupo; a EfficientNet foi criada pelo Google, já veio treinada no ImageNet e o grupo só ajustou para pele.
 
-| | CNN do grupo (Oral e Cérebro) | EfficientNet-B0 (Pele) |
-| --- | --- | --- |
-| Quem criou a arquitetura | O grupo | O Google (2019) |
-| Como começou | Pesos aleatórios: treinada **do zero** | Pesos do ImageNet: **transfer learning** e fine-tuning |
-| Profundidade | 3 blocos (convolução + ReLU + MaxPool) | 16 blocos MBConv, organizados em 7 estágios |
-| Tipo de bloco | Convolução 3×3 comum | MBConv: convolução separável em profundidade, residual invertido e squeeze-and-excitation |
-| Ativação | ReLU | SiLU (com BatchNorm) |
-| Parâmetros | ~24 mil | ~4 milhões por rede, 5 redes no ensemble (~20 milhões) |
-| Arquivo | ~110 KB | ~80 MB |
-| Entrada | 128×128; Oral em cor, Cérebro em cinza | 224×224, cor, normalização do ImageNet |
-| Saída | Um logit por classe → **softmax** (as probabilidades somam 100%) | Um logit só (maligno) → **sigmoid** calibrada (Platt) → média das 5 redes |
-| Classes | Oral: normal e carcinoma; Cérebro: glioma, meningioma e hipofisário | Benigno e maligno (6 diagnósticos agrupados em 2) |
-| Decisão no backend | Classe mais provável; "inconclusivo" abaixo de 80% | Maligno a partir de 18%; aviso de baixa certeza abaixo de 80% |
-| Probabilidade calibrada? | Não: é o softmax da rede | Sim: calibração de Platt |
-| Tempo por imagem (CPU do Render) | 0,1 s (Cérebro) e 0,2 s (Oral) | 1,7 s |
-| Pré-processamento no ai-service | OpenCV (`preprocess`) | Pillow (`preprocess_pil`) |
+|                                  | CNN do grupo (Oral e Cérebro)                                          | EfficientNet-B0 (Pele)                                                                       |
+| -------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Quem criou a arquitetura         | O grupo                                                                 | O Google (2019)                                                                              |
+| Como começou                    | Pesos aleatórios: treinada **do zero**                           | Pesos do ImageNet: **transfer learning** e fine-tuning                                 |
+| Profundidade                     | 3 blocos (convolução + ReLU + MaxPool)                                | 16 blocos MBConv, organizados em 7 estágios                                                 |
+| Tipo de bloco                    | Convolução 3×3 comum                                                 | MBConv: convolução separável em profundidade, residual invertido e squeeze-and-excitation |
+| Ativação                       | ReLU                                                                    | SiLU (com BatchNorm)                                                                         |
+| Parâmetros                      | ~24 mil                                                                 | ~4 milhões por rede, 5 redes no ensemble (~20 milhões)                                     |
+| Arquivo                          | ~110 KB                                                                 | ~80 MB                                                                                       |
+| Entrada                          | 128×128; Oral em cor, Cérebro em cinza                                | 224×224, cor, normalização do ImageNet                                                    |
+| Saída                           | Um logit por classe → **softmax** (as probabilidades somam 100%) | Um logit só (maligno) → **sigmoid** calibrada (Platt) → média das 5 redes          |
+| Classes                          | Oral: normal e carcinoma; Cérebro: glioma, meningioma e hipofisário   | Benigno e maligno (6 diagnósticos agrupados em 2)                                           |
+| Decisão no backend              | Classe mais provável; "inconclusivo" abaixo de 80%                     | Maligno a partir de 18%; aviso de baixa certeza abaixo de 80%                                |
+| Probabilidade calibrada?         | Não: é o softmax da rede                                              | Sim: calibração de Platt                                                                   |
+| Tempo por imagem (CPU do Render) | 0,1 s (Cérebro) e 0,2 s (Oral)                                         | 1,7 s                                                                                        |
+| Pré-processamento no ai-service | OpenCV (`preprocess`)                                                 | Pillow (`preprocess_pil`)                                                                  |
 
 **Por que cada módulo ficou com uma rede.**
 
@@ -1278,17 +1278,17 @@ Os slides 15 (CNN da Oral e do Cérebro) e 16 (EfficientNet-B0 da Pele) usam o *
 
 #### Como ler o desenho (vale para os dois)
 
-| O que aparece | O que significa |
-| --- | --- |
-| Da esquerda para a direita | O caminho da imagem pela rede: entra à esquerda, sai a resposta à direita |
-| **Altura** do bloco | O tamanho da imagem naquela etapa (128, 64, 32, 16... ou 224, 112, 56... 7) |
-| **Largura** do bloco | O número de canais (filtros). Na EfficientNet está em escala reduzida (logarítmica), porque de 3 a 1.280 canais não caberia |
-| Texto embaixo de cada bloco | Nome da camada, formato `canais × altura × largura` e quantos **parâmetros** ela tem |
-| Chave azul (ou verde) no alto | **Extração de características**: a parte que "enxerga" a imagem |
-| Chave laranja no alto | **Classificação**: a parte que transforma o que foi visto na resposta |
-| Linha azul em negrito | **Onde estão os parâmetros**, em número e em porcentagem |
-| Caixa cinza | Como foi o treino e qual foi o resultado |
-| Legenda no rodapé | A cor de cada tipo de camada |
+| O que aparece                 | O que significa                                                                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Da esquerda para a direita    | O caminho da imagem pela rede: entra à esquerda, sai a resposta à direita                                                     |
+| **Altura** do bloco     | O tamanho da imagem naquela etapa (128, 64, 32, 16... ou 224, 112, 56... 7)                                                     |
+| **Largura** do bloco    | O número de canais (filtros). Na EfficientNet está em escala reduzida (logarítmica), porque de 3 a 1.280 canais não caberia |
+| Texto embaixo de cada bloco   | Nome da camada, formato `canais × altura × largura` e quantos **parâmetros** ela tem                                 |
+| Chave azul (ou verde) no alto | **Extração de características**: a parte que "enxerga" a imagem                                                        |
+| Chave laranja no alto         | **Classificação**: a parte que transforma o que foi visto na resposta                                                   |
+| Linha azul em negrito         | **Onde estão os parâmetros**, em número e em porcentagem                                                               |
+| Caixa cinza                   | Como foi o treino e qual foi o resultado                                                                                        |
+| Legenda no rodapé            | A cor de cada tipo de camada                                                                                                    |
 
 **Cores em comum.** Laranja-claro = entrada; azul = convolução; azul-escuro = pooling global; rosa = Dropout (só no treino); laranja = camada linear; vermelho = saída em probabilidade. Só na CNN: amarelo = MaxPool. Só na EfficientNet: verde = estágios de blocos MBConv.
 
@@ -1526,12 +1526,12 @@ if (cut != null && confidence < cut) {
 
 **As faixas da Pele** (`p` = probabilidade calibrada de maligno; benigno é `1 − p`):
 
-| Probabilidade de maligno | Classe prevista | Aviso "baixa certeza" | Por quê |
-| --- | --- | --- | --- |
-| abaixo de 18% | benigno | não | benigno fica acima de 82% |
-| de 18% a 20% | **maligno** | não | passou do limiar, e benigno ainda tem 80% ou mais |
-| acima de 20% e abaixo de 80% | **maligno** | **sim** | nenhuma das duas classes chega a 80% |
-| 80% ou mais | **maligno** | não | maligno com probabilidade alta |
+| Probabilidade de maligno     | Classe prevista   | Aviso "baixa certeza" | Por quê                                          |
+| ---------------------------- | ----------------- | --------------------- | ------------------------------------------------- |
+| abaixo de 18%                | benigno           | não                  | benigno fica acima de 82%                         |
+| de 18% a 20%                 | **maligno** | não                  | passou do limiar, e benigno ainda tem 80% ou mais |
+| acima de 20% e abaixo de 80% | **maligno** | **sim**         | nenhuma das duas classes chega a 80%              |
+| 80% ou mais                  | **maligno** | não                  | maligno com probabilidade alta                    |
 
 A faixa de 18% a 20% é estreita e rara, mas existe: o resultado é maligno sem o aviso, porque o aviso olha a maior probabilidade entre as duas classes (`resultView.js`), e benigno ainda está em 80% ou mais.
 
@@ -1564,12 +1564,12 @@ A faixa de 18% a 20% é estreita e rara, mas existe: o resultado é maligno sem 
 
 **Os outros exemplos usados na demonstração** (imagens em `Desktop/teste_interno`):
 
-| Imagem | Pasta do grupo | O que o sistema mostrou | Leitura |
-| --- | --- | --- | --- |
-| `isic_0034202` (Pele) | maligno | **maligno**, 85,08%, sem aviso | Acerto com confiança alta: maligno passou dos 18% e dos 80% |
-| `isic_0034186` (Pele) | benigno | **maligno**, 34,64%, com "baixa certeza" | Falso alarme, igual ao isic_0034175 |
-| `isic_0034175` (Pele) | benigno | **maligno**, 26,09%, com "baixa certeza" | Falso alarme (Exemplo 1) |
-| `oral_normal_4963` (Oral) | normal | **inconclusivo**, 57,89% de confiança | A classe mais provável não chegou a 80% |
+| Imagem                      | Pasta do grupo | O que o sistema mostrou                        | Leitura                                                      |
+| --------------------------- | -------------- | ---------------------------------------------- | ------------------------------------------------------------ |
+| `isic_0034202` (Pele)     | maligno        | **maligno**, 85,08%, sem aviso           | Acerto com confiança alta: maligno passou dos 18% e dos 80% |
+| `isic_0034186` (Pele)     | benigno        | **maligno**, 34,64%, com "baixa certeza" | Falso alarme, igual ao isic_0034175                          |
+| `isic_0034175` (Pele)     | benigno        | **maligno**, 26,09%, com "baixa certeza" | Falso alarme (Exemplo 1)                                     |
+| `oral_normal_4963` (Oral) | normal         | **inconclusivo**, 57,89% de confiança   | A classe mais provável não chegou a 80%                    |
 
 **Pergunta de banca:** *Por que o resultado é maligno se o gráfico mostra 74% de benigno?*
 **Resposta:** "Porque na Pele a regra é o limiar de 18%, escolhido para triagem: a partir de 18% de chance de maligno, o sistema marca o caso como suspeito. Deixar passar um câncer é pior que um alarme falso. Como nenhuma classe chegou a 80%, a tela avisa baixa certeza, e o texto diz que é um caso suspeito, não uma confirmação."
@@ -2081,28 +2081,28 @@ Esta seção cruza o **guia de orientação do projeto integrador** (requisitos,
 
 ### Requisitos técnicos mínimos
 
-| Requisito do guia | Atendido? | Onde está no PixoraMed |
-| --- | --- | --- |
-| BPMN 2.0 do processo | Sim | 3 workflows (slides 5 a 7), `docs/bpmn/` (arquivos `.bpmn` e `.png`) |
-| Python e Pandas (limpeza, nulos, estruturação) | Sim, nos notebooks | Notebook da Pele (Projeto-ML-Cancer); ver a pergunta sobre nulos abaixo |
-| SQL (consultas ou persistência) | Sim | PostgreSQL, Spring Data JPA, SQL manual no Neon, DER (slide 8) |
-| Visualização (Matplotlib/Seaborn ou dashboard) | Sim | Gráficos dos notebooks, `docs/model_results/`, gráfico e cards do Histórico no site |
-| Modelo de ML (supervisionado ou não) **ou** GenAI | Sim, ML supervisionado | CNN do zero (Oral e Cérebro) e EfficientNet-B0 com fine-tuning (Pele) |
-| Interface funcional | Sim | Site React em pixoramed.vercel.app |
-| Boas práticas e agentic coding | Sim | Camadas, testes, `CLAUDE.md` e skills em cada pasta |
-| Arquitetura e deploy (Terraform ou containers) | Sim | Docker em cada serviço, Docker Compose local, Terraform para Vercel, Render e Neon |
-| Governança e ética (viabilidade, limitações, viés, confiabilidade) | Sim | Slides 19 e 20, página de Limitações, documento de entrega (seção 4) |
+| Requisito do guia                                                       | Atendido?              | Onde está no PixoraMed                                                                  |
+| ----------------------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------- |
+| BPMN 2.0 do processo                                                    | Sim                    | 3 workflows (slides 5 a 7), `docs/bpmn/` (arquivos `.bpmn` e `.png`)               |
+| Python e Pandas (limpeza, nulos, estruturação)                        | Sim, nos notebooks     | Notebook da Pele (Projeto-ML-Cancer); ver a pergunta sobre nulos abaixo                  |
+| SQL (consultas ou persistência)                                        | Sim                    | PostgreSQL, Spring Data JPA, SQL manual no Neon, DER (slide 8)                           |
+| Visualização (Matplotlib/Seaborn ou dashboard)                        | Sim                    | Gráficos dos notebooks, `docs/model_results/`, gráfico e cards do Histórico no site |
+| Modelo de ML (supervisionado ou não) **ou** GenAI                | Sim, ML supervisionado | CNN do zero (Oral e Cérebro) e EfficientNet-B0 com fine-tuning (Pele)                   |
+| Interface funcional                                                     | Sim                    | Site React em pixoramed.vercel.app                                                       |
+| Boas práticas e agentic coding                                         | Sim                    | Camadas, testes, `CLAUDE.md` e skills em cada pasta                                    |
+| Arquitetura e deploy (Terraform ou containers)                          | Sim                    | Docker em cada serviço, Docker Compose local, Terraform para Vercel, Render e Neon      |
+| Governança e ética (viabilidade, limitações, viés, confiabilidade) | Sim                    | Slides 19 e 20, página de Limitações, documento de entrega (seção 4)                |
 
 ### Estrutura da apresentação (recomendada × nossa)
 
-| Etapa do guia | Tempo recomendado | Nossos slides | Nosso tempo |
-| --- | --- | --- | --- |
-| 1. Contexto e problema | 00:00 – 03:00 | 1 a 3 (e 4, bases) | 00:00 – 03:10 |
-| 2. Mapeamento e arquitetura | 03:00 – 06:00 | 5 a 10 (BPMN, DER, arquitetura, tecnologias) | 03:10 – 06:50 |
-| 3. Demonstração ao vivo | 06:00 – 12:00 | 11 | 06:50 – 11:20 (4 min 30 s) |
-| 4. Detalhamento técnico | 12:00 – 16:00 | 12 a 18 | 11:20 – 16:20 |
-| 5. Governança, ética e impacto | 16:00 – 18:00 | 19 e 20 | 16:20 – 18:10 |
-| 6. Conclusão e encerramento | 18:00 – 20:00 | 21 e 22 | 18:10 – 19:30 |
+| Etapa do guia                    | Tempo recomendado | Nossos slides                                | Nosso tempo                 |
+| -------------------------------- | ----------------- | -------------------------------------------- | --------------------------- |
+| 1. Contexto e problema           | 00:00 – 03:00    | 1 a 3 (e 4, bases)                           | 00:00 – 03:10              |
+| 2. Mapeamento e arquitetura      | 03:00 – 06:00    | 5 a 10 (BPMN, DER, arquitetura, tecnologias) | 03:10 – 06:50              |
+| 3. Demonstração ao vivo        | 06:00 – 12:00    | 11                                           | 06:50 – 11:20 (4 min 30 s) |
+| 4. Detalhamento técnico         | 12:00 – 16:00    | 12 a 18                                      | 11:20 – 16:20              |
+| 5. Governança, ética e impacto | 16:00 – 18:00    | 19 e 20                                      | 16:20 – 18:10              |
+| 6. Conclusão e encerramento     | 18:00 – 20:00    | 21 e 22                                      | 18:10 – 19:30              |
 
 A demo é mais curta que a recomendada (4 min 30 s × 6 min) porque o deck tem mais slides de arquitetura. Se sobrar tempo, ela pode crescer até o Histórico completo.
 
@@ -2110,22 +2110,22 @@ A demo é mais curta que a recomendada (4 min 30 s × 6 min) porque o deck tem m
 
 ### Critérios de avaliação e onde mostrar cada um
 
-| Critério (peso) | O que a banca procura | Onde o PixoraMed mostra |
-| --- | --- | --- |
-| Inovação e valor de negócio (20%) | Dor relevante, ganho de eficiência ou custo | Slides 2 e 3 (dor, proposta de valor, cenário hipotético de tempo) |
-| Qualidade técnica e arquitetura (30%) | Python, Pandas e SQL; maturidade do modelo; BPMN e DevOps | Slides 5 a 10 e 12 a 18; guia, seções de banco, modelos e infraestrutura |
-| Protótipo funcional e usabilidade (20%) | Funciona de ponta a ponta, interface amigável | Demo (slide 11) |
-| Governança, ética e uso responsável (15%) | Viés, alucinação, segurança de dados, uso ético | Slides 19 e 20, página de Limitações, perguntas abaixo |
-| Comunicação e trabalho em equipe (15%) | Oratória, tempo, divisão entre os membros | Divisão nas notas do slide 1; ensaio cronometrado |
+| Critério (peso)                             | O que a banca procura                                     | Onde o PixoraMed mostra                                                    |
+| -------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Inovação e valor de negócio (20%)         | Dor relevante, ganho de eficiência ou custo              | Slides 2 e 3 (dor, proposta de valor, cenário hipotético de tempo)       |
+| Qualidade técnica e arquitetura (30%)       | Python, Pandas e SQL; maturidade do modelo; BPMN e DevOps | Slides 5 a 10 e 12 a 18; guia, seções de banco, modelos e infraestrutura |
+| Protótipo funcional e usabilidade (20%)     | Funciona de ponta a ponta, interface amigável            | Demo (slide 11)                                                            |
+| Governança, ética e uso responsável (15%) | Viés, alucinação, segurança de dados, uso ético      | Slides 19 e 20, página de Limitações, perguntas abaixo                  |
+| Comunicação e trabalho em equipe (15%)     | Oratória, tempo, divisão entre os membros               | Divisão nas notas do slide 1; ensaio cronometrado                         |
 
 ### Entregáveis (até 48 horas antes da banca)
 
-| Entregável | Situação |
-| --- | --- |
-| Repositório Git com código, README (arquitetura, pré-requisitos, execução) e scripts de infraestrutura | `github.com/joaopgf/PixoraMed` (público) |
-| Notebooks | `github.com/joaopgf/Projeto-ML-Cancer` (público) |
-| Documentação em PDF (BPMN, justificativa técnica, ética e segurança) | `docs/delivery/PixoraMed_report.pdf`, atualizado em 16/11/2026 |
-| Deck (PDF ou PPTX) | `docs/PixoraMed_final_presentation.pptx` |
+| Entregável                                                                                                 | Situação                                                       |
+| ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Repositório Git com código, README (arquitetura, pré-requisitos, execução) e scripts de infraestrutura | `github.com/joaopgf/PixoraMed` (público)                      |
+| Notebooks                                                                                                   | `github.com/joaopgf/Projeto-ML-Cancer` (público)              |
+| Documentação em PDF (BPMN, justificativa técnica, ética e segurança)                                   | `docs/delivery/PixoraMed_report.pdf`, atualizado em 16/11/2026 |
+| Deck (PDF ou PPTX)                                                                                          | `docs/PixoraMed_final_presentation.pptx`                       |
 
 ### Perguntas que os critérios sugerem
 
