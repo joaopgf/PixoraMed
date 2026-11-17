@@ -14,7 +14,7 @@ Cada conceito segue o mesmo roteiro, que é a ordem em que a banca costuma pergu
 
 A dica para a banca é responder nessa mesma ordem: definição, mecanismo, exemplo do próprio código, motivo.
 
-Os números deste guia são os medidos pelo grupo. Regra de ouro na banca: **não arredondar para cima e não chamar teste da mesma fonte de "teste externo"**. A seção [Resultados e honestidade](#resultados-e-honestidade) diz o que cada número mede e o que não mede, e a seção [Métricas e conceitos de IA](#métricas-e-conceitos-de-ia) traz a definição, a fórmula e as perguntas de banca de cada termo (acurácia, F1, matriz de confusão, AUC, overfitting, viés, alucinação...). A seção [IA: os modelos](#ia-os-modelos) tem imagens das redes, geradas com Python. A seção [Tecnologias usadas](#tecnologias-usadas-slide-10) explica, no roteiro do slide 10, o que cada tecnologia faz e por que o grupo usa.
+Os números deste guia são os medidos pelo grupo. Regra de ouro na banca: **não arredondar para cima e não chamar teste da mesma fonte de "teste externo"**. A seção [Resultados e honestidade](#resultados-e-honestidade) diz o que cada número mede e o que não mede, e a seção [Métricas e conceitos de IA](#métricas-e-conceitos-de-ia) traz a definição, a fórmula e as perguntas de banca de cada termo (acurácia, F1, matriz de confusão, AUC, overfitting, viés, alucinação...). A seção [IA: os modelos](#ia-os-modelos) tem imagens das redes, geradas com Python. A seção [Tecnologias usadas](#tecnologias-usadas-slide-10) explica, no roteiro do slide 10, o que cada tecnologia faz e por que o grupo usa. A seção [Guia do projeto final × PixoraMed](#guia-do-projeto-final--pixoramed) cruza os requisitos, os critérios e os entregáveis do guia do curso com o projeto, e traz as perguntas que eles sugerem.
 
 ## Visão geral em uma tela
 
@@ -2074,6 +2074,96 @@ Na banca, a pergunta costuma vir como "onde está a lógica de X?". Responda seg
 | Nome por extenso das classes (scc, menin)         | `CLASS_NAMES` e `className` em `utils/modules.js`                                                         |
 | Cards de resumo do histórico                     | `summarizeHistory` em `utils/resultView.js` e `HistorySummary`                                            |
 | Importação dos treinos sem duplicar             | `TrainingService.importCsv` (chave data/hora + dataset)                                                       |
+
+## Guia do projeto final × PixoraMed
+
+Esta seção cruza o **guia de orientação do projeto integrador** (requisitos, estrutura da apresentação, critérios da banca e entregáveis) com o que o PixoraMed tem, e traz as perguntas que esses critérios sugerem.
+
+### Requisitos técnicos mínimos
+
+| Requisito do guia | Atendido? | Onde está no PixoraMed |
+| --- | --- | --- |
+| BPMN 2.0 do processo | Sim | 3 workflows (slides 5 a 7), `docs/bpmn/` (arquivos `.bpmn` e `.png`) |
+| Python e Pandas (limpeza, nulos, estruturação) | Sim, nos notebooks | Notebook da Pele (Projeto-ML-Cancer); ver a pergunta sobre nulos abaixo |
+| SQL (consultas ou persistência) | Sim | PostgreSQL, Spring Data JPA, SQL manual no Neon, DER (slide 8) |
+| Visualização (Matplotlib/Seaborn ou dashboard) | Sim | Gráficos dos notebooks, `docs/model_results/`, gráfico e cards do Histórico no site |
+| Modelo de ML (supervisionado ou não) **ou** GenAI | Sim, ML supervisionado | CNN do zero (Oral e Cérebro) e EfficientNet-B0 com fine-tuning (Pele) |
+| Interface funcional | Sim | Site React em pixoramed.vercel.app |
+| Boas práticas e agentic coding | Sim | Camadas, testes, `CLAUDE.md` e skills em cada pasta |
+| Arquitetura e deploy (Terraform ou containers) | Sim | Docker em cada serviço, Docker Compose local, Terraform para Vercel, Render e Neon |
+| Governança e ética (viabilidade, limitações, viés, confiabilidade) | Sim | Slides 19 e 20, página de Limitações, documento de entrega (seção 4) |
+
+### Estrutura da apresentação (recomendada × nossa)
+
+| Etapa do guia | Tempo recomendado | Nossos slides | Nosso tempo |
+| --- | --- | --- | --- |
+| 1. Contexto e problema | 00:00 – 03:00 | 1 a 3 (e 4, bases) | 00:00 – 03:10 |
+| 2. Mapeamento e arquitetura | 03:00 – 06:00 | 5 a 10 (BPMN, DER, arquitetura, tecnologias) | 03:10 – 06:50 |
+| 3. Demonstração ao vivo | 06:00 – 12:00 | 11 | 06:50 – 11:20 (4 min 30 s) |
+| 4. Detalhamento técnico | 12:00 – 16:00 | 12 a 18 | 11:20 – 16:20 |
+| 5. Governança, ética e impacto | 16:00 – 18:00 | 19 e 20 | 16:20 – 18:10 |
+| 6. Conclusão e encerramento | 18:00 – 20:00 | 21 e 22 | 18:10 – 19:30 |
+
+A demo é mais curta que a recomendada (4 min 30 s × 6 min) porque o deck tem mais slides de arquitetura. Se sobrar tempo, ela pode crescer até o Histórico completo.
+
+**Plano B da demonstração (sem vídeo).** O grupo não vai gravar vídeo de backup. Se a internet ou a nuvem falharem, a demo roda no notebook: `docker compose up --build` dentro de `infra/`, site em `localhost:5173`. Deixe os containers já construídos antes da banca (um `docker compose up --build` na véspera), para a subida levar segundos, e tenha uma conta de teste criada no banco local.
+
+### Critérios de avaliação e onde mostrar cada um
+
+| Critério (peso) | O que a banca procura | Onde o PixoraMed mostra |
+| --- | --- | --- |
+| Inovação e valor de negócio (20%) | Dor relevante, ganho de eficiência ou custo | Slides 2 e 3 (dor, proposta de valor, cenário hipotético de tempo) |
+| Qualidade técnica e arquitetura (30%) | Python, Pandas e SQL; maturidade do modelo; BPMN e DevOps | Slides 5 a 10 e 12 a 18; guia, seções de banco, modelos e infraestrutura |
+| Protótipo funcional e usabilidade (20%) | Funciona de ponta a ponta, interface amigável | Demo (slide 11) |
+| Governança, ética e uso responsável (15%) | Viés, alucinação, segurança de dados, uso ético | Slides 19 e 20, página de Limitações, perguntas abaixo |
+| Comunicação e trabalho em equipe (15%) | Oratória, tempo, divisão entre os membros | Divisão nas notas do slide 1; ensaio cronometrado |
+
+### Entregáveis (até 48 horas antes da banca)
+
+| Entregável | Situação |
+| --- | --- |
+| Repositório Git com código, README (arquitetura, pré-requisitos, execução) e scripts de infraestrutura | `github.com/joaopgf/PixoraMed` (público) |
+| Notebooks | `github.com/joaopgf/Projeto-ML-Cancer` (público) |
+| Documentação em PDF (BPMN, justificativa técnica, ética e segurança) | `docs/delivery/PixoraMed_report.pdf`, atualizado em 16/11/2026 |
+| Deck (PDF ou PPTX) | `docs/PixoraMed_final_presentation.pptx` |
+
+### Perguntas que os critérios sugerem
+
+**Pergunta de banca:** *Como vocês usaram agentic coding (ou vibecoding)?*
+**Resposta:** "Usamos assistentes de programação para escrever parte do código, mas com regras. Cada serviço tem um `CLAUDE.md` e skills de arquitetura e boas práticas em `.claude/skills/`, que dizem ao assistente as camadas, o contrato da API, as regras de segurança e o que não pode mudar. Toda mudança passou pelos testes (`mvn test`, testes do ai-service, lint e build do frontend) e por teste no Docker local, e os números e decisões foram conferidos pelo grupo. Nenhuma mudança no banco de produção foi feita sem aprovação."
+
+**Pergunta de banca:** *Qual a diferença entre vibecoding e agentic coding?*
+**Resposta:** "Vibecoding é pedir o código em linguagem natural e aceitar o que vem, olhando mais o resultado do que o código. Agentic coding é o assistente executar tarefas de várias etapas (ler o projeto, editar, rodar testes) dentro de regras e com revisão. Nós usamos o segundo: o assistente segue as skills do repositório, e a mudança só entra depois dos testes e da revisão do grupo."
+
+**Pergunta de banca:** *Onde vocês usaram Pandas para limpeza e tratamento de valores nulos?*
+**Resposta:** "Nos notebooks de treino. Na Pele, o Pandas lê o metadata do HAM10000, filtra os diagnósticos usados, confere com `isna()` se alguma imagem do metadata está faltando no disco, e para o treino se faltar, mostra a distribuição das classes com `value_counts()` e organiza os dados por diagnóstico e por lesão com `groupby`, que é a base da separação por lesão. Os campos usados (imagem, diagnóstico e lesão) não têm nulos; campos com nulos, como a idade, não entram no modelo, que usa só a imagem. Em Oral e Cérebro os dados são pastas de imagens por classe, sem tabela para limpar."
+
+**Pergunta de banca:** *Fizeram análise exploratória dos dados?*
+**Resposta:** "Sim, focada no que muda o treino: a distribuição das classes (no HAM10000, nevo é cerca de 67% e dermatofibroma cerca de 1%, por isso agrupamos em benigno e maligno e usamos peso maior para maligno), a proporção de malignos (cerca de 16%, que explica o limiar baixo) e o número de lesões, para separar por lesão. Nos dados de Oral e Cérebro, vimos que o dataset já vem aumentado, o que pode deixar o resultado otimista."
+
+**Pergunta de banca:** *Por que não usaram IA generativa, LLM ou RAG?*
+**Resposta:** "O guia aceita machine learning ou GenAI, e o nosso problema é de visão computacional: classificar imagens em classes fixas e medir o erro com métricas claras. Uma rede convolucional supervisionada faz isso direto, roda em CPU no plano gratuito e não inventa texto. Um LLM não ajudaria a ler a imagem e traria o risco de alucinação num contexto de saúde. A parte de APIs, BPMN, agentic coding e Terraform do eixo de GenAI e automação está no sistema."
+
+**Pergunta de banca:** *RAG ou fine-tuning?*
+**Resposta:** "RAG é para dar a um modelo de texto acesso a documentos; não se aplica à classificação de imagens. Fine-tuning sim: foi o que fizemos na Pele. A EfficientNet-B0 veio pré-treinada no ImageNet, trocamos a última camada por uma saída só, a de maligno, e ajustamos a rede com as imagens de pele. Em Oral e Cérebro, preferimos treinar uma CNN pequena do zero, porque ela já resolvia o dataset e é muito mais leve."
+
+**Pergunta de banca:** *Como vocês garantem a segurança dos dados?*
+**Resposta:** "Em camadas. A imagem não é guardada: é processada em memória e descartada. A senha fica só como hash BCrypt. O login é um token JWT assinado, válido por 8 horas, e cada pessoa só vê as próprias análises, porque o id vem do token. A IA só aceita pedidos do backend, com um token interno. Os segredos ficam em variáveis de ambiente, gerados pelo Terraform, e nada disso vai para o git nem para o log. No banco, a chave estrangeira impede análise sem dono, e a exclusão da conta apaga também o histórico."
+
+**Pergunta de banca:** *O sistema está de acordo com a LGPD?*
+**Resposta:** "É um protótipo, não passou por avaliação jurídica, mas seguimos os princípios: minimização (não guardamos a imagem nem dados de paciente), consentimento antes de cada análise (o usuário confirma que o material é autorizado e desidentificado), acesso só aos próprios dados, e correção e eliminação pelo próprio usuário, que edita a conta e pode excluí-la com todo o histórico. Dado de saúde é dado sensível, e por isso não guardar a imagem foi uma decisão de projeto."
+
+**Pergunta de banca:** *Quanto custa rodar o sistema? Seria viável como produto?*
+**Resposta:** "Hoje o custo é zero: Vercel, Render e Neon no plano gratuito. O preço disso é o Render dormir depois de 15 minutos. Para virar produto, faltam três coisas que custam mais que a infraestrutura: dados com licença comercial (os atuais não permitem), validação clínica com exames de outra origem e a regulação de software como dispositivo médico. A infraestrutura em si escalaria trocando o plano e, se precisar, colocando mais de uma instância do serviço de IA."
+
+**Pergunta de banca:** *Qual é o ROI?*
+**Resposta:** "Não calculamos ROI em reais, por dois motivos: a licença dos datasets proíbe uso comercial e o ganho de tempo não foi medido num serviço real. O que mostramos é a lógica da conta, como cenário hipotético: se a triagem cair de 5 para 3 minutos por exame, 100 exames por dia economizam 3 horas e 20 minutos. Para comprovar, mediríamos o tempo com e sem a ferramenta, num serviço real."
+
+**Pergunta de banca:** *Como o grupo dividiu o trabalho?*
+**Resposta:** **A completar pelo grupo, com exemplos reais** (quem treinou cada modelo, quem fez backend, frontend, infraestrutura, BPMN, slides e testes). A banca avalia a divisão de participação, então a resposta precisa ser concreta e verdadeira. Na apresentação, a fala é dividida assim: Samuel abre e fecha (slides 1 a 3 e 20 a 22), Henrique apresenta bases, BPMN, banco e limitações (4 a 8 e 19), João mostra arquitetura, tecnologias, demo e dados (9 a 14) e Ramon explica as redes e os resultados da Pele (15 a 18).
+
+**Pergunta de banca:** *E se a internet cair durante a demonstração?*
+**Resposta:** "Rodamos o sistema inteiro no notebook com o Docker Compose: banco, serviço de IA, backend e site sobem com um comando, com os mesmos modelos da nuvem. Os containers ficam construídos antes da banca, então a subida leva segundos."
 
 ## Perguntas rápidas de banca
 

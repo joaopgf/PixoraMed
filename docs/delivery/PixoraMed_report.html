@@ -245,9 +245,11 @@
           <dt>Orientador</dt>
           <dd>Prof. André Maurício dos Santos</dd>
           <dt>Banca</dt>
-          <dd>23/11/2026</dd>
+          <dd>19/11/2026</dd>
           <dt>Sistema</dt>
           <dd>https://pixoramed.vercel.app</dd>
+          <dt>Código (públicos)</dt>
+          <dd>github.com/joaopgf/PixoraMed · github.com/joaopgf/Projeto-ML-Cancer</dd>
         </dl>
       </div>
     </section>
@@ -271,11 +273,13 @@
             <li>Arquitetura</li>
             <li>Escolha das tecnologias</li>
             <li>Dados: Python, Pandas e SQL</li>
+            <li>Banco de dados e DER</li>
             <li>Modelos de machine learning</li>
             <li>Resultados medidos</li>
             <li>Infraestrutura: Docker e Terraform</li>
             <li>Qualidade e testes</li>
             <li>Rotas da API e métodos HTTP</li>
+            <li>Desenvolvimento com agentic coding</li>
           </ol>
         </li>
         <li>
@@ -306,8 +310,7 @@
       </p>
       <p>
         O <b>PixoraMed</b> é um protótipo que classifica imagens de três tipos
-        de câncer e mostra, no mesmo site, o resultado de cada análise e o
-        desempenho medido de cada modelo, com os limites dessa medida:
+        de câncer e mostra, no mesmo site, o resultado de cada análise com as probabilidades, os avisos de incerteza e os limites de cada modelo:
       </p>
       <table>
         <tr>
@@ -344,6 +347,7 @@
       </p>
       <ul>
         <li>criar conta e entrar com login seguro;</li>
+        <li>editar nome e e-mail, trocar a senha e excluir a conta junto com o histórico;</li>
         <li>
           escolher o módulo, enviar uma imagem e receber a classe prevista com
           as probabilidades de cada classe;
@@ -353,7 +357,7 @@
           suspeitas de câncer, inconclusivas e baixa certeza), e exportá-lo em
           CSV;
         </li>
-        <li>ler os modelos disponíveis e as limitações de cada um.</li>
+        <li>ler as limitações de cada modelo, numa página própria.</li>
       </ul>
       <h3>Público e valor</h3>
       <p>
@@ -364,9 +368,7 @@
         financeiro.
       </p>
       <div class="note">
-        Escopo deliberadamente limitado a três módulos. Outros cânceres testados
-        nos notebooks (por exemplo, mama) ficaram fora do sistema por resultados
-        ruins em imagens de outra fonte (seção 3.5).
+        Escopo deliberadamente limitado a três módulos. Outros cânceres testados nos notebooks ficaram fora do sistema.
       </div>
     </section>
 
@@ -432,11 +434,14 @@
       <div class="cols">
         <ul>
           <li>
-            O navegador confere se a senha e a confirmação são iguais; o backend
-            valida de novo nome (2 a 80 letras), e-mail e senha (8 a 128
-            caracteres), porque validação no navegador pode ser contornada.
+            O navegador confere se a senha e a confirmação são iguais; o backend valida de novo nome (2 a 255 caracteres), e-mail (formato válido, 6 a 254 caracteres) e senha (mínimo de 8 caracteres e máximo de 72 bytes, o limite do BCrypt), porque validação no navegador pode ser contornada.
           </li>
           <li>A senha nunca é gravada: o banco guarda só o hash BCrypt.</li>
+          <li>
+            Depois do login, a tela "Conta e segurança" permite editar nome e
+            e-mail, trocar a senha (pede a atual) e excluir a conta (pede a
+            senha), o que apaga também todo o histórico.
+          </li>
           <li>
             E-mail inexistente e senha errada recebem a mesma mensagem, para não
             revelar quem tem conta.
@@ -484,8 +489,7 @@
         </ul>
         <ul>
           <li>
-            O pré-processamento repete o do treino: Oral e Cérebro com OpenCV
-            (BGR para RGB, 128×128, divisão por 255); Pele com PIL (224×224,
+            O pré-processamento repete o do treino: Oral e Cérebro com OpenCV, em 128×128 (Oral em cor, de BGR para RGB, com divisão por 255; Cérebro em cinza, sem divisão); Pele com PIL (224×224,
             normalização ImageNet).
           </li>
           <li>
@@ -646,7 +650,7 @@
           <td>Docker Compose, Terraform</td>
           <td>
             Compose sobe os quatro serviços no notebook com um comando;
-            Terraform descreve a nuvem como código (seção 3.6).
+            Terraform descreve a nuvem como código (seção 3.7).
           </td>
         </tr>
         <tr>
@@ -665,34 +669,94 @@
       <ul>
         <li>
           <b>Python e Pandas</b> ficam nos notebooks de treino (repositório
-          Projeto-ML-Cancer): leitura dos metadados, separação estratificada em
-          5 folds, cálculo das métricas por fold e geração da tabela de
-          resultados dos treinos. O sistema em produção não usa Pandas.
+          Projeto-ML-Cancer). Na Pele, o Pandas lê o
+          <code>HAM10000_metadata.csv</code>, filtra os diagnósticos usados
+          (benigno e maligno, sem a queratose actínica), confere com
+          <code>isna()</code> se alguma imagem do metadata está faltando no disco
+          (o treino para se faltar), mostra a distribuição das classes com
+          <code>value_counts()</code> e organiza os dados por diagnóstico e por
+          lesão (<code>groupby</code>), base da separação por lesão. Também monta
+          as tabelas de resultado por fold e por diagnóstico. O sistema em
+          produção não usa Pandas.
+        </li>
+        <li>
+          <b>Valores nulos</b>: os campos usados no treino (imagem, diagnóstico
+          e lesão) não têm nulos no HAM10000; o único faltante possível é a
+          imagem do disco, que é conferido antes do treino. Campos com nulos,
+          como idade, não entram no modelo, que usa só a imagem. Em Oral e
+          Cérebro, os dados são pastas de imagens por classe, sem tabela.
         </li>
         <li>
           <b>A tabela de resultados</b> (<code>training-results.csv</code>, 29
-          execuções) entra no backend e é importada para a tabela
-          <code>trainings</code> toda vez que o backend sobe. A importação é
-          idempotente: compara pela chave data/hora + dataset e insere só as
-          linhas novas.
+          execuções) é gravada pelos notebooks, entra no backend e é importada
+          para a tabela <code>trainings</code> toda vez que o backend sobe. A
+          importação é idempotente: compara pela chave data/hora + dataset e
+          insere só as linhas novas.
         </li>
         <li>
-          <b>SQL</b>: o PostgreSQL guarda usuários, treinos e análises. O Spring
-          Data JPA gera as consultas (por exemplo, o histórico do usuário
-          ordenado por data, com limite de 100 linhas), e as tabelas são criadas
-          pelo Hibernate a partir das entidades.
+          <b>SQL</b>: o PostgreSQL guarda usuários, treinos e análises (seção
+          3.4). O Spring Data JPA gera as consultas (por exemplo, o histórico do
+          usuário ordenado por data, com limite de 100 linhas). Mudanças que o
+          Hibernate não faz sozinho, como aumentar uma coluna ou criar a chave
+          estrangeira num banco já existente, foram feitas com SQL manual,
+          primeiro no banco local e depois no Neon.
         </li>
         <li>
           <b>Visualização</b>: nos notebooks, o Matplotlib gera os gráficos do
           treino (curvas de treino, matriz de confusão e, na Pele, curva ROC e
-          calibração). No site, o médico vê um gráfico de rosca com as
-          probabilidades de cada classe no resultado e cards com o resumo do
-          próprio histórico. As métricas de treino ficaram fora das telas, que
-          mostram só o essencial para o uso.
+          calibração); eles estão guardados em <code>docs/model_results/</code>.
+          No site, o médico vê um gráfico de rosca com as probabilidades de cada
+          classe no resultado e cards com o resumo do próprio histórico. As
+          métricas de treino ficaram fora das telas, que mostram só o essencial
+          para o uso.
         </li>
       </ul>
+      <h3>3.4 Banco de dados e DER</h3>
+      <img
+        src="../der/pixoramed_der.png"
+        style="width: 100%; height: auto; display: block; margin: 6pt 0"
+        alt="DER lógico do PixoraMed: users ligada a predictions, 1 para N, e trainings separada"
+      />
+      <p style="font-size: 9pt; color: #555">
+        DER lógico gerado a partir das entidades do backend
+        (<code>docs/der/generate_der.py</code>); a mesma relação aparece no DER
+        do pgAdmin (<code>docs/DER Lógico.png</code>), gerado direto do banco.
+      </p>
+      <div>
+        <ul>
+          <li>
+            <b><code>users</code></b>: nome, e-mail único e hash BCrypt da
+            senha. É o login e o dono do histórico.
+          </li>
+          <li>
+            <b><code>predictions</code></b>: cada análise, com modelo, classe
+            decidida pelo backend, confiança, probabilidade de cada classe (JSON),
+            tempo e horário. Nunca a imagem.
+          </li>
+          <li>
+            <b><code>trainings</code></b>: os 29 experimentos importados do CSV.
+            Não pertence a nenhum usuário; documenta como a configuração de
+            cada modelo foi escolhida.
+          </li>
+          <li>
+            <b>Relação 1 para N</b>: <code>predictions.user_id</code> é chave
+            estrangeira para <code>users.id</code>
+            (<code>fk_predictions_user</code>), com índice para a busca do
+            histórico. O id vem do token JWT, então cada pessoa só vê as
+            próprias análises; o banco recusa análise de usuário inexistente, e a
+            exclusão da conta apaga as análises antes do usuário, na mesma
+            transação.
+          </li>
+        </ul>
+      </div>
+      <p>
+        Só três tabelas porque cada uma responde a uma pergunta (quem usa, o
+        que cada um analisou, como os modelos foram escolhidos). A imagem não é
+        guardada, o login é por token (sem sessão no banco) e os modelos ficam
+        no ai-service, como arquivos <code>.onnx</code> e <code>.json</code>.
+      </p>
 
-      <h3>3.4 Modelos de machine learning</h3>
+      <h3>3.5 Modelos de machine learning</h3>
       <table>
         <tr>
           <th>Módulo</th>
@@ -731,9 +795,7 @@
         fração de CPU.
       </p>
       <p>
-        Na Pele, o limiar baixo (18%) foi escolhido para errar menos casos
-        malignos, ao custo de mais alarmes falsos, o que faz sentido numa
-        triagem. Na Oral e no Cérebro, o limiar de 80% troca algumas respostas
+        Na Pele, o limiar baixo (18%) serve para errar menos casos malignos, ao custo de mais alarmes falsos, o que faz sentido numa triagem. O valor veio no pacote do modelo original; na reprodução do treino, o limiar escolhido na validação pela melhor acurácia balanceada foi 19%, bem próximo. Ele é baixo porque só cerca de 16% das lesões do dataset são malignas. Na Oral e no Cérebro, o limiar de 80% troca algumas respostas
         por "inconclusivo" para reduzir erros de baixa confiança.
       </p>
       <div class="note">
@@ -745,7 +807,31 @@
     </section>
 
     <section>
-      <h3>3.5 Resultados medidos</h3>
+      <h3>Por que estes modelos</h3>
+      <ul>
+        <li>
+          <b>Machine learning de visão, e não IA generativa.</b> O problema é
+          classificar imagens com classes fixas e medir o erro com métricas
+          claras (acurácia, sensibilidade, AUC). Uma rede convolucional
+          supervisionada faz isso diretamente, roda em CPU no plano gratuito e
+          não inventa texto. Um LLM ou RAG não ajudaria a ler a imagem e traria
+          o risco de alucinação num contexto de saúde.
+        </li>
+        <li>
+          <b>Do zero ou ajuste fino (fine-tuning).</b> Usamos os dois caminhos
+          de propósito. Em Oral e Cérebro, a CNN pequena treinada do zero passou
+          de 95% na mesma fonte, com ~24 mil parâmetros. Na Pele, problema mais
+          difícil (diferenças sutis e dataset desbalanceado), a EfficientNet-B0
+          pré-treinada no ImageNet foi ajustada com as imagens de pele, trocando
+          a última camada por uma saída só. Nos testes do grupo, a CNN pequena
+          na Pele ficou com F1 perto de 50% em 7 classes; a EfficientNet não foi
+          testada em Oral e Cérebro.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h3>3.6 Resultados medidos</h3>
       <table>
         <tr>
           <th>Módulo</th>
@@ -794,10 +880,10 @@
           aprendeu o dataset, não se funciona em outro hospital.
         </li>
         <li>
-          <b>Evidência de mudança de domínio.</b> Um modelo de mama treinado no
-          mesmo processo teve 96,6% na mesma fonte e 34,5% em 29 imagens de
-          outra fonte, e 19 desses erros passaram pelo limiar de 80%. Por isso o
-          módulo foi retirado do sistema.
+          <b>Sem teste externo.</b> Nenhum dos três módulos foi testado com
+          imagens de outra fonte (outro hospital ou aparelho). Esse é o próximo
+          passo antes de qualquer uso real.
+        </li>
         </li>
         <li>
           <b>Pele: reprodução não é o modelo do app.</b> O código original do
@@ -816,7 +902,7 @@
         0,1 s, Oral 0,2 s, Pele 1,7 s.
       </p>
 
-      <h3>3.6 Infraestrutura: Docker e Terraform</h3>
+      <h3>3.7 Infraestrutura: Docker e Terraform</h3>
       <ul>
         <li>
           <b>Docker</b>: backend e ai-service têm Dockerfile próprio, rodam com
@@ -841,11 +927,10 @@
         </li>
       </ul>
 
-      <h3>3.7 Qualidade e testes</h3>
+      <h3>3.8 Qualidade e testes</h3>
       <ul>
         <li>
-          Backend: 5 testes automatizados (regra de decisão da classe e leitura
-          do CSV real de treinos).
+          Backend: 11 testes automatizados (regra de decisão da classe, leitura do CSV real de treinos, conversão das probabilidades e regras da conta).
         </li>
         <li>
           ai-service: 20 testes automatizados (rotas, token interno,
@@ -867,13 +952,12 @@
     </section>
 
     <section>
-      <h3>3.8 Rotas da API e métodos HTTP</h3>
+      <h3>3.9 Rotas da API e métodos HTTP</h3>
       <p>
         Cada requisição HTTP tem um método, que diz o que o cliente quer fazer
         com o recurso da URL: <code>GET</code> lê, <code>POST</code> cria ou
         envia dados para processar, <code>PUT</code> e <code>PATCH</code>
-        alteram e <code>DELETE</code> apaga. O PixoraMed usa só
-        <code>GET</code> e <code>POST</code>:
+        alteram e <code>DELETE</code> apaga. O PixoraMed usa os cinco:
       </p>
       <table>
         <tr>
@@ -924,6 +1008,30 @@
           <td>sim</td>
           <td>Histórico do usuário logado (até 100 análises)</td>
         </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/users/me</code></td>
+          <td>sim</td>
+          <td>Dados da conta logada</td>
+        </tr>
+        <tr>
+          <td><code>PUT</code></td>
+          <td><code>/api/users/me</code></td>
+          <td>sim</td>
+          <td>Atualiza nome e e-mail juntos</td>
+        </tr>
+        <tr>
+          <td><code>PATCH</code></td>
+          <td><code>/api/users/me/password</code></td>
+          <td>sim</td>
+          <td>Troca a senha (pede a atual); responde 204</td>
+        </tr>
+        <tr>
+          <td><code>DELETE</code></td>
+          <td><code>/api/users/me</code></td>
+          <td>sim</td>
+          <td>Exclui a conta e o histórico (pede a senha); responde 204</td>
+        </tr>
       </table>
       <p>
         Entre o backend e o ai-service, o padrão é o mesmo:
@@ -944,11 +1052,43 @@
           logs dos servidores.
         </li>
         <li>
-          <b>Sem PUT, PATCH e DELETE</b>: o sistema não tem dados para editar
-          nem apagar. O histórico é um registro do que foi feito, e o logout não
-          precisa de rota, porque o token não fica no banco. O CORS do backend
-          também libera só <code>GET</code> e <code>POST</code>: rotas e métodos
-          sem uso seriam só mais superfície para proteger.
+          <b>PUT, PATCH e DELETE para a conta</b>: <code>PUT</code> troca nome e
+          e-mail juntos (o recurso inteiro), <code>PATCH</code> altera só a
+          senha e <code>DELETE</code> exclui a conta. A rota usa
+          <code>/me</code>: o usuário vem do token, sem id na URL, então ninguém
+          altera a conta de outra pessoa. Senha atual errada responde 400, e não
+          401, porque 401 significa sessão vencida. O histórico de análises não
+          tem edição: é um registro do que foi feito.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h3>3.10 Desenvolvimento com agentic coding</h3>
+      <p>
+        O código foi escrito com apoio de assistentes de programação (agentic
+        coding), com regras para que o resultado seguisse a arquitetura do
+        projeto e fosse revisado pelo grupo:
+      </p>
+      <ul>
+        <li>
+          <b>Contexto escrito no repositório</b>: cada serviço tem um
+          <code>CLAUDE.md</code> e skills de arquitetura e boas práticas em
+          <code>.claude/skills/</code> (camadas, contrato da API, segurança,
+          banco e regra de decisão). O assistente lê essas regras antes de
+          mudar o código.
+        </li>
+        <li>
+          <b>Verificação antes do commit</b>: <code>mvn test</code> no
+          backend, testes do ai-service, <code>npm run lint</code> e
+          <code>npm run build</code> no frontend, e teste de ponta a ponta no
+          Docker local.
+        </li>
+        <li>
+          <b>Revisão humana</b>: números, textos de tela e decisões (como o
+          limiar, a exclusão definitiva da conta e a chave estrangeira) foram
+          conferidos pelo grupo; commits e mudanças no banco de produção só com
+          aprovação.
         </li>
       </ul>
     </section>
@@ -1033,6 +1173,11 @@
           <b>Dados de cadastro:</b> só nome, e-mail e hash da senha. Não há
           dados de pacientes no banco nem seed com dados pessoais.
         </li>
+        <li>
+          <b>Correção e eliminação:</b> o próprio usuário edita os dados da
+          conta e pode excluí-la; a exclusão é definitiva e apaga também todo o
+          histórico de análises.
+        </li>
       </ul>
     </section>
 
@@ -1108,6 +1253,20 @@
             O backend registra cadastros, logins aceitos e recusados e cada
             análise (concluída ou não). O usuário aparece só pelo id: e-mail,
             senha, token e imagem nunca vão para o log.
+          </td>
+        </tr>
+        <tr>
+          <td>Conta</td>
+          <td>
+            Trocar a senha e excluir a conta exigem a senha atual; um token de
+            conta excluída é recusado nas rotas da conta e na análise.
+          </td>
+        </tr>
+        <tr>
+          <td>Integridade dos dados</td>
+          <td>
+            Chave estrangeira entre análises e usuários: o banco recusa análise
+            sem dono e não deixa apagar um usuário que ainda tem análises.
           </td>
         </tr>
         <tr>
