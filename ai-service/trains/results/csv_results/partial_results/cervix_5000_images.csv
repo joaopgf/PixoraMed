@@ -1,0 +1,2 @@
+﻿data_hora;dataset;modo;normalizado;imagens_total;imagens_por_classe;tamanho;epocas;batch;lr;folds;gpu;tempo_total;acc_media_%;acc_desvio_%;f1_media_%;f1_desvio_%;acc_por_fold_%;f1_por_fold_%;pasta_graficos
+2026-10-29 16:18:06;Colo do útero cor;RGB;Sim;5000;dyk: 1000 | koc: 1000 | mep: 1000 | pab: 1000 | sfi: 1000;128x128;450;64;0,001;5/5;Tesla T4;00:46:24;98,34;0,37;98,34;0,37;99,00 | 98,10 | 98,00 | 98,50 | 98,10;99,00 | 98,10 | 98,00 | 98,50 | 98,10;../graficos/Colo_do_útero_cor_norm/2026-10-29_16-18-06

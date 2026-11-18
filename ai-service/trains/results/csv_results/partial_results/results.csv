@@ -1,0 +1,2 @@
+data_hora;dataset;modo;normalizado;imagens_total;imagens_por_classe;tamanho;epocas;batch;lr;folds;gpu;tempo_total;acc_media_%;acc_desvio_%;f1_media_%;f1_desvio_%;acc_por_fold_%;f1_por_fold_%;pasta_graficos
+2026-10-29 01:36:47;Rim cor;RGB;Sim;2000;normal: 1000 | tumor: 1000;128x128;450;64;0,001;5/5;Tesla T4;00:17:40;99,95;0,10;99,95;0,10;99,75 | 100,00 | 100,00 | 100,00 | 100,00;99,75 | 100,00 | 100,00 | 100,00 | 100,00;../graficos/Rim_cor_norm/2026-10-29_01-19-01

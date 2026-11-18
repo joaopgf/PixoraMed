@@ -1,0 +1,2 @@
+﻿data_hora;dataset;modo;normalizado;imagens_total;imagens_por_classe;tamanho;epocas;batch;lr;folds;gpu;tempo_total;acc_media_%;acc_desvio_%;f1_media_%;f1_desvio_%;acc_por_fold_%;f1_por_fold_%;pasta_graficos
+2026-10-30 00:37:46;Cérebro cor;RGB;Sim;3000;glioma: 1000 | menin: 1000 | tumor: 1000;128x128;450;64;0,001;5/5;Tesla T4;00:27:36;90,13;0,97;90,11;0,95;89,50 | 88,67 | 90,33 | 91,50 | 90,67;89,61 | 88,63 | 90,29 | 91,47 | 90,54;../graficos/Cérebro_cor_norm/2026-10-30_00-10-04
