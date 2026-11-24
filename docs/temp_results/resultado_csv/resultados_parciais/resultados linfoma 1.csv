@@ -1,0 +1,2 @@
+﻿data_hora;dataset;modo;normalizado;imagens_total;imagens_por_classe;tamanho;epocas;batch;lr;folds;gpu;tempo_total;acc_media_%;acc_desvio_%;f1_media_%;f1_desvio_%;acc_por_fold_%;f1_por_fold_%;pasta_graficos
+2026-10-30 14:36:49;Linfoma cor;RGB;Sim;3000;cll: 1000 | fl: 1000 | mcl: 1000;128x128;450;64;0,001;5/5;Tesla T4;00:37:49;97,87;0,71;97,86;0,71;96,83 | 98,83 | 97,33 | 98,33 | 98,00;96,82 | 98,83 | 97,34 | 98,33 | 98,01;../graficos/Linfoma_cor_norm/2026-10-30_13-58-53

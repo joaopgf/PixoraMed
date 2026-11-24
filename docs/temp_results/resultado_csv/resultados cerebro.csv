@@ -1,0 +1,2 @@
+﻿data_hora;dataset;modo;normalizado;imagens_total;imagens_por_classe;tamanho;epocas;batch;lr;folds;gpu;tempo_total;acc_media_%;acc_desvio_%;f1_media_%;f1_desvio_%;acc_por_fold_%;f1_por_fold_%;pasta_graficos
+2026-11-04 22:53:16;Cérebro cinza;Cinza;Sim;3000;glioma: 1000 | menin: 1000 | tumor: 1000;128x128;1500;64;0,001;5/5;Tesla T4;01:33:21;94,60;1,11;94,59;1,12;94,50 | 92,83 | 94,67 | 94,67 | 96,33;94,52 | 92,80 | 94,67 | 94,65 | 96,33;../graficos/Cérebro_cinza_norm/2026-11-04_21-19-47
